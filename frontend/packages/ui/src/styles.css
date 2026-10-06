@@ -1,0 +1,242 @@
+/*
+ * ScoreCode design tokens (docs/09 §5).
+ *
+ * Two kinds of tokens:
+ *   - Brand tokens (--sc-brand*, --sc-font-family) are set per tenant at runtime from /api/v1/tenant/config.
+ *   - Semantic tokens (surfaces, text, success/warning/danger/info) are fixed so meaning stays
+ *     consistent and accessible no matter how an institution is branded.
+ *
+ * Apps import this file once:  @import "@scorecode/ui/styles.css";
+ */
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@source "./";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Brand (tenant-overridable) */
+  --sc-brand: #2952cc;
+  --sc-brand-contrast: #ffffff;
+  /* Brand colour used as text on light surfaces; tenants set --sc-brand-ink-light (darkened for AA). */
+  --sc-brand-ink: var(--sc-brand-ink-light, var(--sc-brand));
+  --sc-accent: #0f766e;
+  --sc-font-family: "Inter Variable";
+
+  /* Neutrals */
+  --sc-bg: #f6f7f9;
+  --sc-surface: #ffffff;
+  --sc-surface-2: #f2f4f7;
+  --sc-surface-3: #eaecf0;
+  --sc-border: #e4e7ec;
+  --sc-border-strong: #d0d5dd;
+  --sc-fg: #101828;
+  --sc-fg-muted: #475467;
+  --sc-fg-subtle: #667085;
+  --sc-fg-disabled: #98a2b3;
+  --sc-overlay: rgb(16 24 40 / 0.45);
+
+  /* Semantic (fixed) */
+  --sc-success: #067647;
+  --sc-success-soft: #ecfdf3;
+  --sc-success-border: #abefc6;
+  --sc-warning: #b54708;
+  --sc-warning-soft: #fffaeb;
+  --sc-warning-border: #fedf89;
+  --sc-danger: #c01048;
+  --sc-danger-solid: #d92d20;
+  --sc-danger-soft: #fef3f2;
+  --sc-danger-border: #fecdca;
+  --sc-info: #175cd3;
+  --sc-info-soft: #eff8ff;
+  --sc-info-border: #b2ddff;
+
+  --sc-shadow-xs: 0 1px 2px rgb(16 24 40 / 0.05);
+  --sc-shadow-sm: 0 1px 3px rgb(16 24 40 / 0.08), 0 1px 2px rgb(16 24 40 / 0.04);
+  --sc-shadow-md: 0 4px 8px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
+  --sc-shadow-lg: 0 12px 16px -4px rgb(16 24 40 / 0.08), 0 4px 6px -2px rgb(16 24 40 / 0.03);
+  --sc-shadow-xl: 0 20px 24px -4px rgb(16 24 40 / 0.1), 0 8px 8px -4px rgb(16 24 40 / 0.04);
+
+  color-scheme: light;
+}
+
+.dark {
+  --sc-bg: #0b0e14;
+  --sc-surface: #11151d;
+  --sc-surface-2: #171c26;
+  --sc-surface-3: #1f2531;
+  --sc-border: #252b37;
+  --sc-border-strong: #333b4a;
+  --sc-fg: #f2f4f7;
+  --sc-fg-muted: #b0b8c6;
+  --sc-fg-subtle: #8892a4;
+  --sc-fg-disabled: #5b6577;
+  --sc-overlay: rgb(0 0 0 / 0.6);
+  /* On dark surfaces, lighten the brand so links stay readable whatever the tenant picked. */
+  --sc-brand-ink: color-mix(in oklab, var(--sc-brand) 45%, white);
+
+  --sc-success: #47cd89;
+  --sc-success-soft: rgb(6 118 71 / 0.16);
+  --sc-success-border: rgb(71 205 137 / 0.3);
+  --sc-warning: #fdb022;
+  --sc-warning-soft: rgb(181 71 8 / 0.18);
+  --sc-warning-border: rgb(253 176 34 / 0.3);
+  --sc-danger: #fda29b;
+  --sc-danger-solid: #f04438;
+  --sc-danger-soft: rgb(217 45 32 / 0.16);
+  --sc-danger-border: rgb(253 162 155 / 0.3);
+  --sc-info: #84caff;
+  --sc-info-soft: rgb(23 92 211 / 0.18);
+  --sc-info-border: rgb(132 202 255 / 0.3);
+
+  --sc-shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+  --sc-shadow-sm: 0 1px 3px rgb(0 0 0 / 0.4);
+  --sc-shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.45);
+  --sc-shadow-lg: 0 12px 16px -4px rgb(0 0 0 / 0.5);
+  --sc-shadow-xl: 0 20px 24px -4px rgb(0 0 0 / 0.55);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --font-sans:
+    var(--sc-font-family), "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  --color-bg: var(--sc-bg);
+  --color-surface: var(--sc-surface);
+  --color-surface-2: var(--sc-surface-2);
+  --color-surface-3: var(--sc-surface-3);
+  --color-border: var(--sc-border);
+  --color-border-strong: var(--sc-border-strong);
+  --color-fg: var(--sc-fg);
+  --color-fg-muted: var(--sc-fg-muted);
+  --color-fg-subtle: var(--sc-fg-subtle);
+  --color-fg-disabled: var(--sc-fg-disabled);
+  --color-overlay: var(--sc-overlay);
+
+  --color-brand: var(--sc-brand);
+  --color-brand-fg: var(--sc-brand-contrast);
+  --color-brand-ink: var(--sc-brand-ink);
+  --color-brand-soft: color-mix(in oklab, var(--sc-brand) 9%, var(--sc-surface));
+  --color-brand-muted: color-mix(in oklab, var(--sc-brand) 18%, var(--sc-surface));
+  --color-brand-hover: color-mix(in oklab, var(--sc-brand) 88%, black);
+  --color-accent: var(--sc-accent);
+
+  --color-success: var(--sc-success);
+  --color-success-soft: var(--sc-success-soft);
+  --color-success-border: var(--sc-success-border);
+  --color-warning: var(--sc-warning);
+  --color-warning-soft: var(--sc-warning-soft);
+  --color-warning-border: var(--sc-warning-border);
+  --color-danger: var(--sc-danger);
+  --color-danger-solid: var(--sc-danger-solid);
+  --color-danger-soft: var(--sc-danger-soft);
+  --color-danger-border: var(--sc-danger-border);
+  --color-info: var(--sc-info);
+  --color-info-soft: var(--sc-info-soft);
+  --color-info-border: var(--sc-info-border);
+
+  --shadow-xs: var(--sc-shadow-xs);
+  --shadow-sm: var(--sc-shadow-sm);
+  --shadow-md: var(--sc-shadow-md);
+  --shadow-lg: var(--sc-shadow-lg);
+  --shadow-xl: var(--sc-shadow-xl);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+
+  --animate-fade-in: sc-fade-in 160ms ease-out;
+  --animate-scale-in: sc-scale-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-in-right: sc-slide-in-right 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: sc-slide-up 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-shimmer: sc-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes sc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sc-scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes sc-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes sc-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes sc-shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-bg text-fg font-sans text-sm;
+    font-feature-settings:
+      "cv11",
+      "ss01",
+      "tnum" 0;
+  }
+  :focus-visible {
+    outline: 2px solid var(--sc-brand);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--sc-brand) 22%, transparent);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

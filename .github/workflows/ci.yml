@@ -36,6 +36,10 @@ jobs:
         run: uv run mypy app
       - name: module boundaries (import-linter)
         run: uv run lint-imports
+      - name: OpenAPI contract is committed and current
+        run: |
+          uv run python -m app.openapi > /tmp/openapi.json
+          diff -u openapi.json /tmp/openapi.json || (echo "backend/openapi.json is stale: run 'make openapi'"; exit 1)
       - name: no tenant slugs or plan codes in code (docs/06 §5, docs/12)
         run: |
           set -e
@@ -75,6 +79,26 @@ jobs:
         if: failure()
         run: docker compose logs --tail 200
 
+  frontend:
+    name: Frontend · lint, types, tests, build
+    runs-on: ubuntu-24.04
+    defaults: { run: { working-directory: frontend } }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - run: pnpm install --frozen-lockfile
+      - name: Generated API types match backend/openapi.json
+        run: pnpm --filter @scorecode/api-client generate && git diff --exit-code -- packages/api-client/src/schema.d.ts
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Bundle budget (student entry < 150 KB gz is the P10.5 target; reported now)
+        run: pnpm budget
+
   security:
     name: Security scans
     runs-on: ubuntu-24.04
@@ -95,6 +119,12 @@ jobs:
       - name: bandit (SAST, medium+)
         working-directory: backend
         run: uvx bandit -q -r app -ll
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - name: pnpm audit (high+)
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile && pnpm audit --audit-level high
 
   docker:
     name: Docker image build & scan

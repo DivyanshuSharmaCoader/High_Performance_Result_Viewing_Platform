@@ -15,6 +15,7 @@ from app.modules.branding.service import BrandingService
 from app.modules.entitlements.catalogue import FEATURES, LIMIT_TO_USAGE_METRIC, F
 from app.modules.entitlements.service import EntitlementService
 from app.modules.identity.permissions import P
+from app.modules.tenancy import onboarding
 from app.modules.tenancy.models import TenantSettings
 
 router = APIRouter(prefix="/api/v1/admin", tags=["settings"])
@@ -155,3 +156,62 @@ async def subscription(
         features={f.key: ent.values.get(f.key) for f in FEATURES if f.kind != "limit"},
         overrides=ent.overrides,
     )
+
+
+class OnboardingStep(BaseModel):
+    key: str
+    title: str
+    description: str
+    href: str
+    required_for_publishing: bool
+    done: bool
+    detail: str | None
+
+
+class OnboardingOut(BaseModel):
+    steps: list[OnboardingStep]
+    completed: int
+    total: int
+    dismissed: bool
+
+
+@router.get("/onboarding")
+async def get_onboarding(uow: UoW, _: Principal = require(P.SETTINGS_MANAGE)) -> OnboardingOut:
+    items = []
+    for step in onboarding.steps():
+        result = await step.check(uow)
+        items.append(
+            OnboardingStep(
+                key=step.key,
+                title=step.title,
+                description=step.description,
+                href=step.href,
+                required_for_publishing=step.required_for_publishing,
+                done=result.done,
+                detail=result.detail,
+            )
+        )
+    s = (await uow.session.scalars(select(TenantSettings))).one()
+    return OnboardingOut(
+        steps=items,
+        completed=sum(1 for i in items if i.done),
+        total=len(items),
+        dismissed=s.onboarding_dismissed_at is not None,
+    )
+
+
+class DismissIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    dismissed: bool
+
+
+@router.put("/onboarding")
+async def dismiss_onboarding(
+    body: DismissIn, uow: UoW, _: Principal = require(P.SETTINGS_MANAGE)
+) -> OnboardingOut:
+    from app.core.clock import utcnow
+
+    s = (await uow.session.scalars(select(TenantSettings).with_for_update())).one()
+    s.onboarding_dismissed_at = utcnow() if body.dismissed else None
+    await uow.flush()
+    return await get_onboarding(uow)

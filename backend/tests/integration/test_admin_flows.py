@@ -393,3 +393,26 @@ async def test_platform_api_is_unreachable_from_tenant_hosts_and_anonymous(app, 
         assert (await c.get("/api/v1/platform/tenants")).status_code == 404
     async with Client(app, "admin.localhost") as anon:
         assert (await anon.get("/api/v1/platform/tenants")).status_code == 401
+
+
+async def test_onboarding_checklist_reflects_data(app, infra) -> None:
+    t = await make_tenant(infra, plan="starter")
+    async with Client(app, t.host) as owner:
+        await owner.login(t.owner_email)
+        data = (await owner.get("/api/v1/admin/onboarding")).json()
+        keys = [s["key"] for s in data["steps"]]
+        assert keys[:3] == ["profile", "logo", "staff"]
+        assert data["completed"] == 0 and not data["dismissed"]
+        s = (await owner.get("/api/v1/admin/settings")).json()
+        payload = {k: s[k] for k in s if k not in ("special_codes", "version")}
+        payload.update(version=s["version"], address="1 College Road", contact_email="office@example.com")
+        assert (await owner.put("/api/v1/admin/settings", json=payload)).status_code == 200
+        await owner.post(
+            "/api/v1/admin/staff",
+            json={"email": f"t@{t.slug}.example.com", "full_name": "T T", "role": "faculty"},
+        )
+        data = (await owner.get("/api/v1/admin/onboarding")).json()
+        done = {s["key"]: s["done"] for s in data["steps"]}
+        assert done["profile"] and done["staff"] and not done["logo"]
+        dismissed = (await owner.put("/api/v1/admin/onboarding", json={"dismissed": True})).json()
+        assert dismissed["dismissed"] is True

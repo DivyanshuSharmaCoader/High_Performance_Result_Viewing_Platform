@@ -1,0 +1,22 @@
+{
+  "name": "@scorecode/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "openapi-typescript ../../../backend/openapi.json -o src/schema.d.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.104.1"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.2",
+    "openapi-typescript": "^7.13.0",
+    "vitest": "^5.0.3"
+  }
+}

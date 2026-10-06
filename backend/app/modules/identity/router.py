@@ -205,6 +205,13 @@ class TenantSummary(BaseModel):
     name: str
 
 
+class PlanSummary(BaseModel):
+    code: str
+    name: str
+    status: str
+    period_end: str | None
+
+
 class MeOut(BaseModel):
     id: str
     full_name: str
@@ -215,7 +222,7 @@ class MeOut(BaseModel):
     permissions: list[str]
     tenant: TenantSummary
     features: dict[str, Any]
-    plan: dict[str, Any]
+    plan: PlanSummary
     reauthenticated_at: datetime | None
 
 
