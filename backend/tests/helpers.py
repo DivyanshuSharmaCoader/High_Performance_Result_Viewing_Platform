@@ -234,6 +234,7 @@ class Structure:
     session_code: str
     cohort_code: str
     sibling_cohort_code: str
+    course_code: str = ""
 
 
 async def make_structure(infra: Infra, tenant: TenantFixture, *, current: bool = True) -> Structure:
@@ -279,6 +280,7 @@ async def make_structure(infra: Infra, tenant: TenantFixture, *, current: bool =
             session_code=sess.code,
             cohort_code=a.code,
             sibling_cohort_code=b.code,
+            course_code=course.code,
         )
 
 

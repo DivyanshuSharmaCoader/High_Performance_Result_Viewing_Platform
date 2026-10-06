@@ -253,6 +253,10 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
         "user_ids": [],
     },
     ("POST", "/api/v1/admin/exams/{exam_id}/transitions"): {"action": "open_entry"},
+    ("PUT", "/api/v1/exams/{exam_id}/papers/{paper_id}/cohorts/{cohort_id}/marks"): {
+        "changes": [{"student_id": str(uuid.uuid4()), "components": {"T": "1"}}]
+    },
+    ("POST", "/api/v1/exams/{exam_id}/papers/{paper_id}/cohorts/{cohort_id}/marks/return"): {"reason": "xyz"},
     ("POST", "/api/v1/admin/grading-schemes/{scheme_id}/versions"): {
         "config": {"strategy": "marks_only"},
         "based_on": 1,
@@ -317,7 +321,14 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                 )
             )
         ).scalar_one()
-    return audit, users, roles, jobs, students, members, imports, schemes, exams
+        marks = (
+            await uow.session.execute(
+                text(
+                    "SELECT string_agg(student_id::text || version::text, ',' ORDER BY student_id) FROM mark_entries"
+                )
+            )
+        ).scalar_one()
+    return audit, users, roles, jobs, students, members, imports, schemes, exams, marks
 
 
 async def _call(c: Client, route: RouteInfo, url: str) -> Any:

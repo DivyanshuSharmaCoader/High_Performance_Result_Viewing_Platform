@@ -45,6 +45,7 @@ class ImportJob(UUIDPrimaryKey, TenantScoped, Timestamps, Base):
         CheckConstraint(f"status IN {IMPORT_STATUSES}", name="status"),
         CheckConstraint("kind IN ('students', 'marks')", name="kind"),
         tenant_fk("supersedes_id", "import_jobs"),
+        tenant_fk("target_exam_id", "examinations"),
         Index("ix_import_jobs__tenant_created", "tenant_id", "created_at"),
         # The same bytes can be "in flight" only once per kind/target: re-uploading resumes that job,
         # and a file that was already committed is reported instead of being imported twice (docs/13 §2).
@@ -65,7 +66,7 @@ class ImportJob(UUIDPrimaryKey, TenantScoped, Timestamps, Base):
     file_id: Mapped[uuid.UUID]
     file_name: Mapped[str | None] = mapped_column(String(255))
     file_sha256: Mapped[bytes] = mapped_column(LargeBinary(32))
-    target_exam_id: Mapped[uuid.UUID | None]  # marks imports (Phase 8); FK added with the exams table
+    target_exam_id: Mapped[uuid.UUID | None]  # marks imports: the exam the file belongs to
     supersedes_id: Mapped[uuid.UUID | None]  # the job this re-upload replaced
     params: Mapped[dict[str, Any]] = mapped_column(JSONB, server_default="{}")  # e.g. {"session_id": ...}
     sheet_name: Mapped[str | None] = mapped_column(String(100))

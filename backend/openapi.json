@@ -772,6 +772,60 @@
         "title": "BrandingOut",
         "type": "object"
       },
+      "ChangeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "attendance": {
+            "default": "present",
+            "enum": [
+              "present",
+              "absent",
+              "exempt",
+              "malpractice",
+              "withheld"
+            ],
+            "title": "Attendance",
+            "type": "string"
+          },
+          "components": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "maxProperties": 10,
+            "title": "Components",
+            "type": "object"
+          },
+          "student_id": {
+            "format": "uuid",
+            "title": "Student Id",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "student_id"
+        ],
+        "title": "ChangeIn",
+        "type": "object"
+      },
       "ChangePasswordIn": {
         "additionalProperties": false,
         "properties": {
@@ -1223,6 +1277,75 @@
           "dismissed"
         ],
         "title": "DismissIn",
+        "type": "object"
+      },
+      "EntryOut": {
+        "properties": {
+          "attendance": {
+            "enum": [
+              "present",
+              "absent",
+              "exempt",
+              "malpractice",
+              "withheld"
+            ],
+            "title": "Attendance",
+            "type": "string"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "boolean"
+          },
+          "components": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Components",
+            "type": "object"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By Name"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "components",
+          "attendance",
+          "total",
+          "version",
+          "complete",
+          "updated_at",
+          "updated_by_name"
+        ],
+        "title": "EntryOut",
         "type": "object"
       },
       "ExamActionOut": {
@@ -4222,6 +4345,22 @@
         "title": "ResetIn",
         "type": "object"
       },
+      "ReturnIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ReturnIn",
+        "type": "object"
+      },
       "RoleIn": {
         "additionalProperties": false,
         "properties": {
@@ -4320,6 +4459,43 @@
           "next_after"
         ],
         "title": "RowsPage",
+        "type": "object"
+      },
+      "SaveIn": {
+        "additionalProperties": false,
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeIn"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Changes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "changes"
+        ],
+        "title": "SaveIn",
+        "type": "object"
+      },
+      "SavedEntryOut": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/EntryOut"
+          },
+          "student_id": {
+            "format": "uuid",
+            "title": "Student Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "entry"
+        ],
+        "title": "SavedEntryOut",
         "type": "object"
       },
       "SchemeCreateIn": {
@@ -4866,6 +5042,250 @@
           "version"
         ],
         "title": "SettingsOut",
+        "type": "object"
+      },
+      "SheetComponentOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "max": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max",
+            "type": "string"
+          },
+          "min_pass": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Pass"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "max",
+          "min_pass"
+        ],
+        "title": "SheetComponentOut",
+        "type": "object"
+      },
+      "SheetOut": {
+        "properties": {
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_return": {
+            "title": "Can Return",
+            "type": "boolean"
+          },
+          "can_submit": {
+            "title": "Can Submit",
+            "type": "boolean"
+          },
+          "cohort_code": {
+            "title": "Cohort Code",
+            "type": "string"
+          },
+          "cohort_id": {
+            "format": "uuid",
+            "title": "Cohort Id",
+            "type": "string"
+          },
+          "cohort_name": {
+            "title": "Cohort Name",
+            "type": "string"
+          },
+          "complete": {
+            "title": "Complete",
+            "type": "integer"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/SheetComponentOut"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "course_code": {
+            "title": "Course Code",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "exam_id": {
+            "format": "uuid",
+            "title": "Exam Id",
+            "type": "string"
+          },
+          "exam_name": {
+            "title": "Exam Name",
+            "type": "string"
+          },
+          "exam_status": {
+            "title": "Exam Status",
+            "type": "string"
+          },
+          "marks_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marks Deadline"
+          },
+          "max_total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Total",
+            "type": "string"
+          },
+          "paper_id": {
+            "format": "uuid",
+            "title": "Paper Id",
+            "type": "string"
+          },
+          "pass_total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pass Total"
+          },
+          "return_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Reason"
+          },
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/SheetStudentOut"
+            },
+            "title": "Students",
+            "type": "array"
+          },
+          "submission_status": {
+            "enum": [
+              "open",
+              "submitted",
+              "returned",
+              "locked"
+            ],
+            "title": "Submission Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "submitted_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted By Name"
+          }
+        },
+        "required": [
+          "exam_id",
+          "exam_name",
+          "exam_status",
+          "marks_deadline",
+          "paper_id",
+          "course_code",
+          "course_name",
+          "components",
+          "max_total",
+          "pass_total",
+          "cohort_id",
+          "cohort_code",
+          "cohort_name",
+          "submission_status",
+          "submitted_at",
+          "submitted_by_name",
+          "return_reason",
+          "can_edit",
+          "can_submit",
+          "can_return",
+          "complete",
+          "students"
+        ],
+        "title": "SheetOut",
+        "type": "object"
+      },
+      "SheetStudentOut": {
+        "properties": {
+          "enrollment_no": {
+            "title": "Enrollment No",
+            "type": "string"
+          },
+          "entry": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntryOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "student_id": {
+            "format": "uuid",
+            "title": "Student Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "enrollment_no",
+          "full_name",
+          "entry"
+        ],
+        "title": "SheetStudentOut",
         "type": "object"
       },
       "SignupIn": {
@@ -6024,6 +6444,91 @@
           "created_by_name"
         ],
         "title": "VersionOut",
+        "type": "object"
+      },
+      "WorkItemOut": {
+        "properties": {
+          "cohort_code": {
+            "title": "Cohort Code",
+            "type": "string"
+          },
+          "cohort_id": {
+            "format": "uuid",
+            "title": "Cohort Id",
+            "type": "string"
+          },
+          "course_code": {
+            "title": "Course Code",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "entered": {
+            "title": "Entered",
+            "type": "integer"
+          },
+          "exam_id": {
+            "format": "uuid",
+            "title": "Exam Id",
+            "type": "string"
+          },
+          "exam_name": {
+            "title": "Exam Name",
+            "type": "string"
+          },
+          "exam_status": {
+            "title": "Exam Status",
+            "type": "string"
+          },
+          "marks_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marks Deadline"
+          },
+          "paper_id": {
+            "format": "uuid",
+            "title": "Paper Id",
+            "type": "string"
+          },
+          "students": {
+            "title": "Students",
+            "type": "integer"
+          },
+          "submission_status": {
+            "enum": [
+              "open",
+              "submitted",
+              "returned",
+              "locked"
+            ],
+            "title": "Submission Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "exam_id",
+          "exam_name",
+          "exam_status",
+          "marks_deadline",
+          "paper_id",
+          "course_code",
+          "course_name",
+          "cohort_id",
+          "cohort_code",
+          "submission_status",
+          "students",
+          "entered"
+        ],
+        "title": "WorkItemOut",
         "type": "object"
       }
     }
@@ -10602,6 +11107,280 @@
         ]
       }
     },
+    "/api/v1/exams/{exam_id}/papers/{paper_id}/cohorts/{cohort_id}/marks": {
+      "get": {
+        "operationId": "get_sheet_api_v1_exams__exam_id__papers__paper_id__cohorts__cohort_id__marks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Paper Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "cohort_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cohort Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Sheet",
+        "tags": [
+          "marks"
+        ]
+      },
+      "put": {
+        "operationId": "save_marks_api_v1_exams__exam_id__papers__paper_id__cohorts__cohort_id__marks_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Paper Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "cohort_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cohort Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SavedEntryOut"
+                  },
+                  "title": "Response Save Marks Api V1 Exams  Exam Id  Papers  Paper Id  Cohorts  Cohort Id  Marks Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Marks",
+        "tags": [
+          "marks"
+        ]
+      }
+    },
+    "/api/v1/exams/{exam_id}/papers/{paper_id}/cohorts/{cohort_id}/marks/return": {
+      "post": {
+        "operationId": "return_paper_api_v1_exams__exam_id__papers__paper_id__cohorts__cohort_id__marks_return_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Paper Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "cohort_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cohort Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReturnIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Return Paper",
+        "tags": [
+          "marks"
+        ]
+      }
+    },
+    "/api/v1/exams/{exam_id}/papers/{paper_id}/cohorts/{cohort_id}/marks/submit": {
+      "post": {
+        "operationId": "submit_paper_api_v1_exams__exam_id__papers__paper_id__cohorts__cohort_id__marks_submit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Paper Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "cohort_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cohort Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Paper",
+        "tags": [
+          "marks"
+        ]
+      }
+    },
     "/api/v1/jobs/{job_id}": {
       "get": {
         "operationId": "job_status_api_v1_jobs__job_id__get",
@@ -10642,6 +11421,32 @@
         "summary": "Job Status",
         "tags": [
           "jobs"
+        ]
+      }
+    },
+    "/api/v1/marking": {
+      "get": {
+        "description": "Papers \u00d7 cohorts the signed-in person can enter marks for right now.",
+        "operationId": "my_marking_api_v1_marking_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkItemOut"
+                  },
+                  "title": "Response My Marking Api V1 Marking Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "My Marking",
+        "tags": [
+          "marks"
         ]
       }
     },

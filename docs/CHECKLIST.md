@@ -20,8 +20,8 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 7 — Examinations & grading engine** (Phases 0–6 complete; Gates M1–M3 passed) |
-| Next step | **P7.6** exam setup UI written (tick after CI); then Phase 8 — marks entry & marks import |
+| Current phase | **Phase 8 — Marks entry & marks import** (Phases 0–7 complete; Gates M1–M3 passed) |
+| Next step | **P8.1, P8.2, P8.4** backend written (tick after CI); then P8.3 marks grid UI, P8.5 marks import, P8.6 templates, P8.7 measurement |
 | Last updated | 2026-10-07 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -35,7 +35,7 @@
 | 4 | Onboarding, plans & entitlements, basic branding, platform console v0 | 8 | 8 |
 | 5 | Academic structure | 4 | 4 |
 | 6 | Directory & generic import framework | 8 | 8 |
-| 7 | Examinations & grading engine | 6 | 5 |
+| 7 | Examinations & grading engine | 6 | 6 |
 | 8 | Marks entry & marks import | 7 | 0 |
 | 9 | Result processing, preview, approval | 5 | 0 |
 | 10 | Publication, read model, student portal | 6 | 0 |
@@ -136,7 +136,7 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [x] **P7.3** Grading schemes schema & UI · Done when: Immutability trigger test
 - [x] **P7.4** Exams schema · Done when: Migrations + tests
 - [x] **P7.5** Exam state machine · Done when: Exhaustive transition tests
-- [ ] **P7.6** Exam setup UI · Done when: Playwright
+- [x] **P7.6** Exam setup UI · Done when: Playwright
 
 ### Phase 8 — Marks entry & marks import
 

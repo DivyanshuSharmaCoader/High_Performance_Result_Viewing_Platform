@@ -12,6 +12,7 @@ from app.modules.files import models as _files  # noqa: F401
 from app.modules.grading import models as _grading  # noqa: F401
 from app.modules.identity import models as _identity  # noqa: F401
 from app.modules.ingestion import models as _ingestion  # noqa: F401
+from app.modules.marks import models as _marks  # noqa: F401
 from app.modules.tenancy import models as _tenancy  # noqa: F401
 
 metadata = Base.metadata
