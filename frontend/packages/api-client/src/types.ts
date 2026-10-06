@@ -46,3 +46,74 @@ export interface TenantConfig {
 export type Onboarding = Schemas["OnboardingOut"];
 export type OnboardingStep = Schemas["OnboardingStep"];
 export type LimitUsage = Schemas["LimitUsage"];
+
+// ---- Platform console (responses typed loosely server-side as dicts) ------------------------------
+export interface TenantList {
+  items: TenantRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface TenantDetail {
+  id: string;
+  slug: string;
+  name: string;
+  type: string;
+  status: string;
+  status_reason: string | null;
+  timezone: string;
+  created_at: string;
+  host: string;
+  official_name: string;
+  contact_email: string | null;
+  current_plan: string | null;
+  subscriptions: {
+    id: string;
+    plan_code: string;
+    plan_name: string;
+    status: string;
+    period_start: string;
+    period_end: string | null;
+    billing_ref: string | null;
+    created_at: string;
+  }[];
+  overrides: { feature_key: string; value: unknown; reason: string; expires_at: string | null }[];
+  usage: Record<string, number>;
+  users: { staff: number; students: number };
+  last_activity_at: string | null;
+}
+
+export interface PlansCatalog {
+  plans: {
+    code: string;
+    name: string;
+    description: string;
+    price_paise_yearly: number | null;
+    is_public: boolean;
+    active: boolean;
+    values: Record<string, unknown>;
+  }[];
+  features: { key: string; kind: "boolean" | "limit" | "enum_set"; description: string }[];
+}
+
+export interface PlatformOverview {
+  tenants: { by_status: Record<string, number>; by_plan: Record<string, number>; new_last_7_days: number };
+  users: { active_students: number; staff: number };
+  queues: { queue: string; status: string; count: number; oldest_seconds: number }[];
+  publications: { last_7_days: number; live: number };
+  process_metrics: {
+    scope: string;
+    redis_cache_hit_rate: number | null;
+    requests_total: number;
+    errors_5xx: number;
+    p95_upper_bound_ms_by_route_class: Record<string, number | null>;
+  };
+}
+
+export interface DeepHealth {
+  checks: { name: string; status: string; latency_ms: number; error?: string; circuit_breaker?: string }[];
+  checked_at: string;
+}
+
+export type PlatformAuditEntry = Schemas["PlatformAuditEntry"];

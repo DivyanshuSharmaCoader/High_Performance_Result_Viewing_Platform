@@ -1,4 +1,5 @@
-import { Input, cn } from "@scorecode/ui";
+import { cn } from "../lib/cn";
+import { Input } from "./input";
 import { Eye, EyeOff } from "lucide-react";
 import { forwardRef, useState, type InputHTMLAttributes } from "react";
 

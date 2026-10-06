@@ -1,10 +1,9 @@
 import { api, ApiError } from "@scorecode/api-client";
-import { Button, Callout, Dialog, DialogContent, Field } from "@scorecode/ui";
+import { Button, Callout, Dialog, DialogContent, Field, PasswordInput } from "@scorecode/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 
 import { meKey } from "../lib/session";
-import { PasswordInput } from "./password-input";
 
 type Run = <T>(action: () => Promise<T>) => Promise<T>;
 const ReauthContext = createContext<Run | null>(null);

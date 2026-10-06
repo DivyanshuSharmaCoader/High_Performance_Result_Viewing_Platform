@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { api, ApiError, type SessionOut } from "@scorecode/api-client";
-import { Button, Callout, Field, Input } from "@scorecode/ui";
+import { Button, Callout, Field, Input, PasswordInput } from "@scorecode/ui";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -8,7 +8,6 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 import { z } from "zod";
 
 import { AuthLayout } from "../../components/auth-layout";
-import { PasswordInput } from "../../components/password-input";
 import { homePathFor, meKey, safeNext } from "../../lib/session";
 import type { Me } from "@scorecode/api-client";
 

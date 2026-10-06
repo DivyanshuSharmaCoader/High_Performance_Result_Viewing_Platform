@@ -37,6 +37,10 @@ async def create_platform_user(
     if problems:
         raise ValidationFailed(" ".join(problems), field="password")
     secret = totp_secret or pyotp.random_base32()
+    try:
+        pyotp.TOTP(secret).now()  # rejects secrets that aren't valid base32 before they're stored
+    except ValueError as exc:
+        raise ValidationFailed("TOTP secret must be base32 (A–Z, 2–7).", field="totp_secret") from exc
     async with infra.db.platform_uow() as uow:
         exists = (
             await uow.session.scalars(select(PlatformUser.id).where(PlatformUser.email == email))

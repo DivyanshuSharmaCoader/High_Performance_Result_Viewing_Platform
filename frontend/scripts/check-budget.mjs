@@ -19,6 +19,8 @@ for (const app of readdirSync("apps")) {
   const totalKb = all.reduce((s, f) => s + statSync(join(dist, "assets", f)).size, 0) / 1024;
   const over = kb > BUDGET_KB;
   if (over && ENFORCE) failed = true;
-  console.log(`${app}: initial JS ${kb.toFixed(1)} KB gz (${files.length} files)${over ? ` — over ${BUDGET_KB} KB` : ""}; all chunks ${totalKb.toFixed(0)} KB raw`);
+  console.log(
+    `${app}: initial JS ${kb.toFixed(1)} KB gz (${files.length} files)${over ? ` — over ${BUDGET_KB} KB` : ""}; all chunks ${totalKb.toFixed(0)} KB raw`,
+  );
 }
 process.exit(failed ? 1 : 0);

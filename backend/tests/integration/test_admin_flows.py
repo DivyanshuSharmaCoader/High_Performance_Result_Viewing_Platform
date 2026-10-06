@@ -416,3 +416,35 @@ async def test_onboarding_checklist_reflects_data(app, infra) -> None:
         assert done["profile"] and done["staff"] and not done["logo"]
         dismissed = (await owner.put("/api/v1/admin/onboarding", json={"dismissed": True})).json()
         assert dismissed["dismissed"] is True
+
+
+async def test_platform_user_rejects_invalid_totp_secret(infra) -> None:
+    from app.core.errors import ValidationFailed
+    from app.modules.platform.bootstrap import create_platform_user
+
+    with pytest.raises(ValidationFailed):
+        await create_platform_user(
+            infra,
+            "bad-totp@ops.example.com",
+            "Bad Secret",
+            "platform-pass-12345",
+            totp_secret="NOT-BASE32-0189",
+        )
+
+
+async def test_demo_seed_platform_secret_is_usable(app, infra) -> None:
+    """The documented demo console account must actually be able to sign in."""
+    from app.seed import DEMO_PASSWORD, DEMO_PLATFORM_EMAIL, DEMO_PLATFORM_TOTP, seed_platform_user
+    from tests.helpers import totp_now
+
+    await seed_platform_user(infra)
+    async with Client(app, "admin.localhost") as c:
+        r = await c.post(
+            "/api/v1/platform/auth/login",
+            json={
+                "email": DEMO_PLATFORM_EMAIL,
+                "password": DEMO_PASSWORD,
+                "totp_code": totp_now(DEMO_PLATFORM_TOTP),
+            },
+        )
+        assert r.status_code == 200, r.text

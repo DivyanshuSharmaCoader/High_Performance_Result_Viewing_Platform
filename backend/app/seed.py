@@ -23,7 +23,7 @@ from app.modules.tenancy.service import OwnerSpec, ProvisionRequest, provision_t
 
 DEMO_PASSWORD = "scorecode-demo-2026"  # noqa: S105 - documented demo credential, never used in production
 DEMO_PLATFORM_EMAIL = "ops@scorecode.example.com"
-DEMO_PLATFORM_TOTP = "JBSWY3DPEHPK3PXPSCORECODEDEMO2026"  # base32; dev/demo only
+DEMO_PLATFORM_TOTP = "SCORECODEDEMOTOTPSECRETKEYAAAAAA"  # base32 (A–Z, 2–7); dev/demo only
 
 
 @dataclass(frozen=True)

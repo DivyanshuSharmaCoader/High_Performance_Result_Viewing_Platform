@@ -3,7 +3,10 @@ import { cn } from "../lib/cn";
 const palette = ["#2952cc", "#0f766e", "#b54708", "#6941c6", "#c11574", "#0e7090", "#4e5ba6", "#067647"];
 
 function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter((w) => /^\p{L}/u.test(w));
   if (parts.length === 0) return "?";
   const first = parts[0]?.[0] ?? "";
   const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? "") : "";

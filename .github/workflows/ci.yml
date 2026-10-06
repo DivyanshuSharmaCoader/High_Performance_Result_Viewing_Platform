@@ -25,7 +25,7 @@ jobs:
     defaults: { run: { working-directory: backend } }
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
         with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
       - run: uv sync --frozen
       - name: ruff format
@@ -54,7 +54,7 @@ jobs:
     defaults: { run: { working-directory: backend } }
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
         with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
       - run: uv sync --frozen
       - run: uv run pytest tests/unit -q
@@ -64,7 +64,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
         with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
       - name: Start PostgreSQL, Redis, S3 (SeaweedFS), Mailpit
         run: docker compose up -d --build --wait postgres redis s3 mailpit
@@ -86,6 +86,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
+        with: { package_json_file: frontend/package.json }
       - uses: actions/setup-node@v7
         with: { node-version: 24, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
       - run: pnpm install --frozen-lockfile
@@ -109,7 +110,7 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0
         with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
       - name: pip-audit (runtime dependencies)
         working-directory: backend
@@ -120,6 +121,7 @@ jobs:
         working-directory: backend
         run: uvx bandit -q -r app -ll
       - uses: pnpm/action-setup@v6
+        with: { package_json_file: frontend/package.json }
       - uses: actions/setup-node@v7
         with: { node-version: 24, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
       - name: pnpm audit (high+)

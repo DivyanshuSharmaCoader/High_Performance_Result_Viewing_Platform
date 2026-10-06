@@ -7,10 +7,12 @@ import {
   ConfirmDialog,
   DescriptionList,
   Field,
+  formatRelative,
   PageHeader,
+  PasswordInput,
+  PasswordStrength,
   Section,
   SkeletonText,
-  formatRelative,
   toast,
 } from "@scorecode/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +22,6 @@ import { useForm, useWatch } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 
-import { PasswordInput, PasswordStrength } from "../../components/password-input";
 import { applyServerError } from "../../lib/forms";
 import { useSession } from "../../lib/session";
 

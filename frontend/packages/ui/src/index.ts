@@ -22,3 +22,4 @@ export * from "./components/stepper";
 export * from "./components/table";
 export * from "./components/tabs";
 export * from "./components/toast";
+export * from "./components/password-input";
