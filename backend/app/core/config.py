@@ -54,7 +54,8 @@ class Settings(BaseSettings):
 
     # --- Redis (optional, degradable; docs/11 §2.5) ----------------------------------------------
     redis_url: str | None = None
-    redis_timeout_s: float = 0.25
+    redis_timeout_s: float = 0.5  # per operation; the circuit breaker stops repeated waits
+    redis_connect_timeout_s: float = 1.0
     cache_local_ttl_s: int = 30
 
     # --- Object storage (S3 API) ------------------------------------------------------------------
@@ -86,6 +87,10 @@ class Settings(BaseSettings):
     staff_session_idle_hours: int = 12
     staff_session_absolute_days: int = 7
     platform_session_hours: int = 8
+    # Abuse limits (docs/10 §7). Production defaults; local stacks may relax them for automated tests.
+    rate_login_ip_per_minute: int = 20
+    rate_login_ip_burst: int = 10
+    rate_signup_ip_per_hour: int = 5
     api_session_per_minute: int = 300  # authenticated API calls per session (docs/10 §7)
     api_session_burst: int = 100
     login_max_failures: int = 5

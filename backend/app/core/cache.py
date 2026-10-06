@@ -176,13 +176,13 @@ class _Miss:
 _MISS = _Miss()
 
 
-def build_redis(url: str | None, timeout_s: float) -> aioredis.Redis | None:
+def build_redis(url: str | None, timeout_s: float, connect_timeout_s: float = 1.0) -> aioredis.Redis | None:
     if not url:
         return None
     return aioredis.from_url(
         url,
         socket_timeout=timeout_s,
-        socket_connect_timeout=timeout_s,
+        socket_connect_timeout=connect_timeout_s,
         health_check_interval=30,
         decode_responses=True,
     )

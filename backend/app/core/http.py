@@ -78,8 +78,14 @@ def client_ip(request: Request) -> str:
 
 
 async def _uow(request: Request) -> AsyncIterator[UnitOfWork]:
-    """One transaction per request; bound to the request's tenant when there is one."""
+    """One transaction per request; bound to the request's tenant when there is one.
+
+    The principal is resolved *before* this transaction checks out a connection: authentication may
+    need its own short transaction (session lookup on a cache miss), and holding two pooled connections
+    per request deadlocks the pool under concurrency (tests/integration/test_connection_usage.py).
+    """
     infra = get_infra(request)
+    await get_principal_optional(request)
     tenant: TenantContext | None = getattr(request.state, "tenant", None)
     async with infra.db.uow(tenant.tenant_id if tenant else None, **request_meta(request)) as uow:
         request.state.uow = uow
@@ -88,6 +94,7 @@ async def _uow(request: Request) -> AsyncIterator[UnitOfWork]:
 
 async def _platform_uow(request: Request) -> AsyncIterator[UnitOfWork]:
     infra = get_infra(request)
+    await get_principal_optional(request)  # same single-connection rule as _uow
     async with infra.db.platform_uow(**request_meta(request)) as uow:
         yield uow
 

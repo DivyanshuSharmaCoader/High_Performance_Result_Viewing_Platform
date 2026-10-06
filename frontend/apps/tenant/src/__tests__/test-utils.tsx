@@ -68,10 +68,15 @@ export function mockApi(handlers: Record<string, Handler>) {
   });
 }
 
-export function renderRoutes(routes: RouteObject[], initialPath: string): ReturnType<typeof render> {
+export function renderRoutes(
+  routes: RouteObject[],
+  initialPath: string,
+  prime?: (client: QueryClient) => void,
+): ReturnType<typeof render> {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+  prime?.(client);
   const router = createMemoryRouter(routes, { initialEntries: [initialPath] });
   return render(
     <QueryClientProvider client={client}>

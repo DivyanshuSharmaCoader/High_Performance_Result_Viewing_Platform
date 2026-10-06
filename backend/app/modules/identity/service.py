@@ -23,9 +23,9 @@ from app.core.metrics import LOGINS
 from app.core.ratelimit import (
     ACTIVATION,
     LOGIN_PER_ACCOUNT,
-    LOGIN_PER_IP,
     PASSWORD_RESET,
     PLATFORM_LOGIN_PER_IP,
+    login_ip_bucket,
 )
 from app.core.security import hash_token, new_token, normalise_human_code, password_problems
 from app.core.tenant import TenantContext
@@ -85,7 +85,7 @@ class AuthService:
     async def login(
         self, tenant: TenantContext, login_id: str, password: str, *, ip: str, user_agent: str | None
     ) -> LoginResult:
-        await self.infra.limiter.hit(LOGIN_PER_IP, f"{ip}")
+        await self.infra.limiter.hit(login_ip_bucket(self.settings), f"{ip}")
         normalised = normalise_login_id(login_id)
         await self.infra.limiter.hit(LOGIN_PER_ACCOUNT, f"{tenant.tenant_id}:{normalised}")
         now = utcnow()

@@ -73,6 +73,16 @@ return {allowed, tostring(retry)}
 """
 
 
+def login_ip_bucket(settings: Any) -> Bucket:
+    return Bucket.per_minute(
+        LOGIN_PER_IP.name, settings.rate_login_ip_per_minute, burst=settings.rate_login_ip_burst
+    )
+
+
+def signup_ip_bucket(settings: Any) -> Bucket:
+    return Bucket.per_hour(SIGNUP_PER_IP.name, settings.rate_signup_ip_per_hour)
+
+
 class RateLimiter:
     def __init__(self, cache: TieredCache) -> None:
         self.cache = cache

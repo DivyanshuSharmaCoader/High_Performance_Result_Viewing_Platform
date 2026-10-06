@@ -18,7 +18,7 @@ from sqlalchemy import select
 from app.core.clock import utcnow
 from app.core.container import Infra
 from app.core.errors import Conflict, ValidationFailed
-from app.core.ratelimit import SIGNUP_PER_IP
+from app.core.ratelimit import signup_ip_bucket
 from app.core.security import hash_token, new_token, password_problems
 from app.core.tenant import TenantContext
 from app.modules.audit.service import Actor
@@ -88,7 +88,7 @@ class SignupService:
         return True, None
 
     async def start(self, data: SignupInput, *, ip: str) -> None:
-        await self.infra.limiter.hit(SIGNUP_PER_IP, ip)
+        await self.infra.limiter.hit(signup_ip_bucket(self.settings), ip)
         slug = validate_slug(data.slug)
         email = data.email.strip().lower()
         if email.rsplit("@", 1)[-1] in DISPOSABLE_DOMAINS:

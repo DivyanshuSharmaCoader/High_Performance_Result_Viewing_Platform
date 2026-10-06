@@ -30,7 +30,7 @@ class Infra:
     @classmethod
     def build(cls, settings: Settings, *, app_name: str = "scorecode-api") -> Infra:
         cache = TieredCache(
-            build_redis(settings.redis_url, settings.redis_timeout_s),
+            build_redis(settings.redis_url, settings.redis_timeout_s, settings.redis_connect_timeout_s),
             LocalCache(),
             local_ttl_s=settings.cache_local_ttl_s,
         )

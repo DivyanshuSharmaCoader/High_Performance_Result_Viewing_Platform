@@ -43,4 +43,5 @@ Bottleneck observed, evidence (EXPLAIN, profiles), what this does and does not s
 ## Results index
 | Date | Scenario | Variant | Key result | File |
 |---|---|---|---|---|
+| 2026-10-06 | Dev-environment latency investigation | laptop + Docker Desktop | not a capacity benchmark; found & fixed a pool-deadlock bug; stalls traced to the VM | [results/2026-10-06-dev-environment-latency.md](results/2026-10-06-dev-environment-latency.md) |
 | 2026-10-06 | Argon2id cost (P3.2) | laptop, Rosetta 2 | 33.1 ms p50 per verify; 98.5 verifications/s on 4 threads | [results/2026-10-06-argon2id-cost.md](results/2026-10-06-argon2id-cost.md) |

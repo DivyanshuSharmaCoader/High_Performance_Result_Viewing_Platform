@@ -23,6 +23,10 @@ x-backend-env: &backend-env
   SCORECODE_SMTP_PORT: "1025"
   SCORECODE_LOG_JSON: "true"
   SCORECODE_TRUST_PROXY_HEADERS: "true"
+  # Local stack only: relaxed abuse limits so repeated end-to-end runs from one IP aren't throttled.
+  SCORECODE_RATE_LOGIN_IP_PER_MINUTE: "300"
+  SCORECODE_RATE_LOGIN_IP_BURST: "100"
+  SCORECODE_RATE_SIGNUP_IP_PER_HOUR: "200"
 
 services:
   postgres:
@@ -112,6 +116,10 @@ services:
     profiles: [app]
     build: { context: ., dockerfile: frontend/Dockerfile }
     ports: ["127.0.0.1:8080:8080"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null --header 'Host: localhost:8080' http://127.0.0.1:8080/ || exit 1"]
+      interval: 3s
+      retries: 20
     environment:
       BASE_DOMAIN: localhost
       FILES_ORIGIN: http://files.localhost:8080

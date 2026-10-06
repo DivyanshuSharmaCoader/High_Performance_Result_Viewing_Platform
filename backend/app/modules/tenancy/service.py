@@ -70,6 +70,9 @@ RESERVED_SLUGS = frozenset(
 
 POSITIVE_TTL_S = 60
 NEGATIVE_TTL_S = 10
+# In-process copies are short-lived: invalidation (e.g. suspension) clears Redis and the local copy in
+# the process that made the change; other processes converge within this bound.
+LOCAL_TTL_S = 5
 
 
 def _host_key(host: str) -> str:
@@ -88,7 +91,7 @@ class TenantResolver:
 
     async def resolve(self, host: HostInfo) -> ResolvedTenant | None:
         key = _host_key(host.host)
-        cached: dict[str, Any] | None = await self.infra.cache.get(key)
+        cached: dict[str, Any] | None = await self.infra.cache.get(key, local_ttl_s=LOCAL_TTL_S)
         if cached is not None:
             if not cached.get("found"):
                 return None
@@ -101,7 +104,7 @@ class TenantResolver:
                 )
             ).one_or_none()
         if row is None:
-            await self.infra.cache.set(key, {"found": False}, NEGATIVE_TTL_S)
+            await self.infra.cache.set(key, {"found": False}, NEGATIVE_TTL_S, local_ttl_s=LOCAL_TTL_S)
             return None
         data = {
             "found": True,
@@ -111,7 +114,7 @@ class TenantResolver:
             "status": row.status,
             "config_version": row.config_version,
         }
-        await self.infra.cache.set(key, data, POSITIVE_TTL_S)
+        await self.infra.cache.set(key, data, POSITIVE_TTL_S, local_ttl_s=LOCAL_TTL_S)
         return _from_cache(data, host.host)
 
     async def invalidate(self, slug: str) -> None:
