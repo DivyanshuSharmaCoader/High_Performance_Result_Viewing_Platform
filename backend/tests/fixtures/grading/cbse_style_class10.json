@@ -1,0 +1,101 @@
+{
+  "title": "CBSE-style Class 10 (illustrative): 9-band scale, 33% per subject, theory 80 + internal assessment 20",
+  "note": "Modelled on the commonly published CBSE-style band scale. Illustrative only — not an official CBSE document.",
+  "config": {
+    "strategy": "percentage_bands",
+    "bands": [
+      {"grade": "A1", "min_percentage": "91", "grade_point": "10"},
+      {"grade": "A2", "min_percentage": "81", "grade_point": "9"},
+      {"grade": "B1", "min_percentage": "71", "grade_point": "8"},
+      {"grade": "B2", "min_percentage": "61", "grade_point": "7"},
+      {"grade": "C1", "min_percentage": "51", "grade_point": "6"},
+      {"grade": "C2", "min_percentage": "41", "grade_point": "5"},
+      {"grade": "D", "min_percentage": "33", "grade_point": "4"},
+      {"grade": "E", "min_percentage": "0", "grade_point": "0"}
+    ],
+    "fail_grade": "E",
+    "pass_rules": {"require_all_papers": true},
+    "rounding": {"mode": "half_up", "percentage_places": 2, "gpa_places": 2}
+  },
+  "papers": [
+    {"id": "ENG", "pass_total": "33", "components": [{"code": "TH", "max": "80"}, {"code": "IA", "max": "20"}]},
+    {"id": "HIN", "pass_total": "33", "components": [{"code": "TH", "max": "80"}, {"code": "IA", "max": "20"}]},
+    {"id": "MATH", "pass_total": "33", "components": [{"code": "TH", "max": "80"}, {"code": "IA", "max": "20"}]},
+    {"id": "SCI", "pass_total": "33", "components": [{"code": "TH", "max": "80"}, {"code": "IA", "max": "20"}]},
+    {"id": "SST", "pass_total": "33", "components": [{"code": "TH", "max": "80"}, {"code": "IA", "max": "20"}]}
+  ],
+  "students": [
+    {
+      "id": "S1-all-pass",
+      "marks": {
+        "ENG": {"TH": "72", "IA": "18"}, "HIN": {"TH": "75", "IA": "19"}, "MATH": {"TH": "79", "IA": "20"},
+        "SCI": {"TH": "60", "IA": "17"}, "SST": {"TH": "55", "IA": "15"}
+      },
+      "why": "90 A2(9), 94 A1(10), 99 A1(10), 77 B1(8), 70 B2(7); 430/500 = 86.00% → A2; mean GP 44/5 = 8.80",
+      "expected": {
+        "outcome": "pass", "total": "430.00", "max_total": "500", "percentage": "86.00", "grade": "A2", "grade_point": "8.80",
+        "papers": {
+          "ENG": {"outcome": "pass", "total": "90.00", "grade": "A2"},
+          "HIN": {"outcome": "pass", "total": "94.00", "grade": "A1"},
+          "MATH": {"outcome": "pass", "total": "99.00", "grade": "A1"},
+          "SCI": {"outcome": "pass", "total": "77.00", "grade": "B1"},
+          "SST": {"outcome": "pass", "total": "70.00", "grade": "B2"}
+        }
+      }
+    },
+    {
+      "id": "S2-fails-maths",
+      "marks": {
+        "ENG": {"TH": "50", "IA": "15"}, "HIN": {"TH": "40", "IA": "14"}, "MATH": {"TH": "20", "IA": "10"},
+        "SCI": {"TH": "30", "IA": "12"}, "SST": {"TH": "25", "IA": "10"}
+      },
+      "why": "MATH 30 < 33 → E(0); others 65 B2(7), 54 C1(6), 42 C2(5), 35 D(4); 226/500 = 45.20% but failed → E; mean GP 22/5 = 4.40",
+      "expected": {
+        "outcome": "fail", "total": "226.00", "max_total": "500", "percentage": "45.20", "grade": "E", "grade_point": "4.40",
+        "papers": {
+          "ENG": {"outcome": "pass", "total": "65.00", "grade": "B2"},
+          "HIN": {"outcome": "pass", "total": "54.00", "grade": "C1"},
+          "MATH": {"outcome": "fail", "total": "30.00", "grade": "E"},
+          "SCI": {"outcome": "pass", "total": "42.00", "grade": "C2"},
+          "SST": {"outcome": "pass", "total": "35.00", "grade": "D"}
+        }
+      }
+    },
+    {
+      "id": "S3-absent-in-one",
+      "marks": {
+        "ENG": {"TH": "70", "IA": "20"}, "HIN": {"TH": "60", "IA": "18"}, "MATH": {"TH": "65", "IA": "15"},
+        "SCI": {"TH": "68", "IA": "19"}, "SST": {"attendance": "absent"}
+      },
+      "why": "90 A2(9), 78 B1(8), 80 B1(8), 87 A2(9), SST absent AB(0); 335/500 = 67.00%; absent paper fails the exam → E; mean GP 34/5 = 6.80",
+      "expected": {
+        "outcome": "fail", "total": "335.00", "max_total": "500", "percentage": "67.00", "grade": "E", "grade_point": "6.80",
+        "papers": {
+          "MATH": {"outcome": "pass", "total": "80.00", "grade": "B1"},
+          "SST": {"outcome": "absent", "total": null, "grade": "AB"}
+        }
+      }
+    },
+    {
+      "id": "S4-half-marks",
+      "marks": {
+        "ENG": {"TH": "72.5", "IA": "18"}, "HIN": {"TH": "72", "IA": "18.5"}, "MATH": {"TH": "80", "IA": "20"},
+        "SCI": {"TH": "71", "IA": "19.5"}, "SST": {"TH": "70.5", "IA": "20"}
+      },
+      "why": "four papers at 90.5 → A2(9), MATH 100 → A1(10); 462/500 = 92.40% → A1; mean GP 46/5 = 9.20",
+      "expected": {
+        "outcome": "pass", "total": "462.00", "max_total": "500", "percentage": "92.40", "grade": "A1", "grade_point": "9.20",
+        "papers": {"ENG": {"outcome": "pass", "total": "90.50", "percentage": "90.50", "grade": "A2"}}
+      }
+    },
+    {
+      "id": "S5-malpractice",
+      "marks": {
+        "ENG": {"TH": "70", "IA": "20"}, "HIN": {"TH": "60", "IA": "18"}, "MATH": {"TH": "65", "IA": "15"},
+        "SCI": {"attendance": "malpractice"}, "SST": {"TH": "50", "IA": "15"}
+      },
+      "why": "malpractice in any paper withholds the whole result",
+      "expected": {"outcome": "withheld", "total": null, "percentage": null, "grade": null}
+    }
+  ]
+}

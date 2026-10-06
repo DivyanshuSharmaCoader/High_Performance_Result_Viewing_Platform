@@ -209,7 +209,9 @@ class GradingStrategy(Protocol):
 REGISTRY = {s.code: s for s in (PercentageBandsStrategy(), CreditGpaStrategy(), MarksOnlyStrategy())}
 ```
 - Pure functions on `Decimal` with explicit rounding mode (`ROUND_HALF_UP`, configurable per scheme), no floats.
-- Tested by example tables (golden files from real institution rules, e.g. Thapar's published grading policy), and property-based tests (Hypothesis): monotonicity, bounds (0 ≤ percentage ≤ 100), absent handling, determinism.
+- Tested by example tables (golden files with hand-worked expectations in `backend/tests/fixtures/grading/`), and property-based tests (Hypothesis): monotonicity, bounds (0 ≤ percentage ≤ 100), absent handling, determinism and paper-order independence. The credit golden table is a generic CBCS-style scale used by the Thapar demo tenant — not Thapar's official policy (D25).
+- Rules every strategy shares (implemented in `app/modules/grading/engine/strategies.py`): exempt papers are left out of every total; absent papers score nothing, never pass and show the scheme's `absent_grade`; withheld/malpractice on any paper withholds the exam; a missing component mark makes the paper and the exam `incomplete` (never computed from partial marks); grades come from the **rounded** percentage the student sees; division runs in a local `Decimal` context so results never depend on global state.
+- The engine lives in `app/modules/grading/engine/` and an import-linter contract forbids it from importing the database, the web framework or any other module.
 
 ---
 

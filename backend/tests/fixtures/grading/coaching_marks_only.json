@@ -1,0 +1,28 @@
+{
+  "title": "Coaching test, marks only, with competition and dense ranks",
+  "config": {"strategy": "marks_only", "ranking": "competition", "rounding": {"mode": "half_up", "percentage_places": 2}},
+  "papers": [
+    {"id": "PHY", "components": [{"code": "SCORE", "max": "100"}]},
+    {"id": "CHE", "components": [{"code": "SCORE", "max": "100"}]},
+    {"id": "MAT", "components": [{"code": "SCORE", "max": "100"}]}
+  ],
+  "students": [
+    {"id": "R1", "marks": {"PHY": {"SCORE": "80"}, "CHE": {"SCORE": "75"}, "MAT": {"SCORE": "90"}},
+     "why": "245/300 = 81.666… → 81.67", "expected": {"outcome": "pass", "total": "245.00", "percentage": "81.67"}},
+    {"id": "R2", "marks": {"PHY": {"SCORE": "90"}, "CHE": {"SCORE": "70"}, "MAT": {"SCORE": "85"}},
+     "why": "same 245 as R1 → same rank", "expected": {"outcome": "pass", "total": "245.00", "percentage": "81.67"}},
+    {"id": "R3", "marks": {"PHY": {"SCORE": "60"}, "CHE": {"SCORE": "60"}, "MAT": {"SCORE": "60"}},
+     "expected": {"outcome": "pass", "total": "180.00", "percentage": "60.00"}},
+    {"id": "R4", "marks": {"PHY": {"attendance": "absent"}, "CHE": {"SCORE": "70"}, "MAT": {"SCORE": "70"}},
+     "why": "absent paper scores 0 and fails the test; still ranked on 140/300 = 46.67",
+     "expected": {"outcome": "fail", "total": "140.00", "percentage": "46.67"}},
+    {"id": "R5", "marks": {"PHY": {"attendance": "absent"}, "CHE": {"attendance": "absent"}, "MAT": {"attendance": "absent"}},
+     "expected": {"outcome": "absent", "total": null}},
+    {"id": "R6", "marks": {"PHY": {"SCORE": "100"}, "CHE": {"SCORE": "100"}, "MAT": {"SCORE": "99.5"}},
+     "why": "299.5/300 = 99.833… → 99.83", "expected": {"outcome": "pass", "total": "299.50", "percentage": "99.83"}}
+  ],
+  "ranks": {
+    "competition": {"R6": 1, "R1": 2, "R2": 2, "R3": 4, "R4": 5, "R5": null},
+    "dense": {"R6": 1, "R1": 2, "R2": 2, "R3": 3, "R4": 4, "R5": null}
+  }
+}

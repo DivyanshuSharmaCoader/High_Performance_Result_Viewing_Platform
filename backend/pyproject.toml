@@ -116,9 +116,37 @@ source = ["app"]
 
 [tool.importlinter]
 root_package = "app"
+include_external_packages = true
 
 [[tool.importlinter.contracts]]
 name = "core is a shared kernel and imports no business module"
 type = "forbidden"
 source_modules = ["app.core"]
 forbidden_modules = ["app.modules"]
+
+[[tool.importlinter.contracts]]
+name = "the grading engine is pure: no I/O, no framework, no other module (docs/08 §2, §7)"
+type = "forbidden"
+source_modules = ["app.modules.grading.engine"]
+forbidden_modules = [
+  "app.core",
+  "app.web",
+  "app.modules.academics",
+  "app.modules.audit",
+  "app.modules.branding",
+  "app.modules.directory",
+  "app.modules.entitlements",
+  "app.modules.files",
+  "app.modules.identity",
+  "app.modules.ingestion",
+  "app.modules.notifications",
+  "app.modules.platform",
+  "app.modules.tenancy",
+  "sqlalchemy",
+  "fastapi",
+  "starlette",
+  "asyncpg",
+  "redis",
+  "boto3",
+  "httpx",
+]

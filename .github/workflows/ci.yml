@@ -58,6 +58,11 @@ jobs:
         with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
       - run: uv sync --frozen
       - run: uv run pytest tests/unit -q
+      - name: Grading engine branch coverage ≥ 90% (P7.1)
+        run: >-
+          uv run pytest tests/unit/test_grading_engine.py tests/unit/test_grading_properties.py
+          tests/unit/test_grading_golden.py -q --cov=app.modules.grading.engine --cov-branch
+          --cov-report=term --cov-fail-under=90
 
   backend-integration:
     name: Backend · integration, RLS & isolation

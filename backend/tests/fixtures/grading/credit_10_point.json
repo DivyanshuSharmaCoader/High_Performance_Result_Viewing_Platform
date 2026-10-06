@@ -1,0 +1,96 @@
+{
+  "title": "10-point credit scale with SGPA (illustrative, CBCS-style) — used by the Thapar demo tenant",
+  "note": "A generic UGC-CBCS-style letter scale. It is NOT Thapar Institute's official grading policy (not verified; see decision D25). Course codes match the demo seed.",
+  "config": {
+    "strategy": "credit_gpa",
+    "bands": [
+      {"grade": "O", "min_percentage": "90", "grade_point": "10"},
+      {"grade": "A+", "min_percentage": "80", "grade_point": "9"},
+      {"grade": "A", "min_percentage": "70", "grade_point": "8"},
+      {"grade": "B+", "min_percentage": "60", "grade_point": "7"},
+      {"grade": "B", "min_percentage": "50", "grade_point": "6"},
+      {"grade": "C", "min_percentage": "45", "grade_point": "5"},
+      {"grade": "P", "min_percentage": "40", "grade_point": "4"},
+      {"grade": "F", "min_percentage": "0", "grade_point": "0"}
+    ],
+    "fail_grade": "F",
+    "absent_grade": "AB",
+    "count_absent_as_attempted": true,
+    "pass_rules": {"paper_pass_percentage": "40", "require_all_papers": true},
+    "rounding": {"mode": "half_up", "percentage_places": 2, "gpa_places": 2}
+  },
+  "papers": [
+    {"id": "UCS301", "credits": "4", "components": [{"code": "MST", "max": "25"}, {"code": "EST", "max": "45", "min_pass": "18"}, {"code": "SESS", "max": "30"}]},
+    {"id": "UCS310", "credits": "4", "components": [{"code": "MST", "max": "25"}, {"code": "EST", "max": "45", "min_pass": "18"}, {"code": "SESS", "max": "30"}]},
+    {"id": "UCS405", "credits": "3.5", "components": [{"code": "MST", "max": "25"}, {"code": "EST", "max": "45", "min_pass": "18"}, {"code": "SESS", "max": "30"}]},
+    {"id": "UMA035", "credits": "3.5", "components": [{"code": "MST", "max": "25"}, {"code": "EST", "max": "45", "min_pass": "18"}, {"code": "SESS", "max": "30"}]},
+    {"id": "UHU005", "credits": "3", "components": [{"code": "MST", "max": "25"}, {"code": "EST", "max": "45", "min_pass": "18"}, {"code": "SESS", "max": "30"}]}
+  ],
+  "students": [
+    {
+      "id": "T1-all-pass",
+      "marks": {
+        "UCS301": {"MST": "22", "EST": "40", "SESS": "28"},
+        "UCS310": {"MST": "20", "EST": "36", "SESS": "25"},
+        "UCS405": {"MST": "18", "EST": "30", "SESS": "22"},
+        "UMA035": {"MST": "15", "EST": "27", "SESS": "20"},
+        "UHU005": {"MST": "12", "EST": "25", "SESS": "18"}
+      },
+      "why": "90 O(10)×4 + 81 A+(9)×4 + 70 A(8)×3.5 + 62 B+(7)×3.5 + 55 B(6)×3 = 146.5; 146.5/18 = 8.1388… → 8.14; 358/500 = 71.60%",
+      "expected": {
+        "outcome": "pass", "total": "358.00", "max_total": "500", "percentage": "71.60",
+        "sgpa": "8.14", "credits_attempted": "18", "credits_earned": "18",
+        "papers": {
+          "UCS301": {"outcome": "pass", "grade": "O", "grade_point": "10"},
+          "UCS310": {"outcome": "pass", "grade": "A+", "grade_point": "9"},
+          "UCS405": {"outcome": "pass", "grade": "A", "grade_point": "8"},
+          "UMA035": {"outcome": "pass", "grade": "B+", "grade_point": "7"},
+          "UHU005": {"outcome": "pass", "grade": "B", "grade_point": "6"}
+        }
+      }
+    },
+    {
+      "id": "T2-component-fail-and-absent",
+      "marks": {
+        "UCS301": {"MST": "10", "EST": "20", "SESS": "15"},
+        "UCS310": {"MST": "8", "EST": "18", "SESS": "14"},
+        "UCS405": {"MST": "25", "EST": "17", "SESS": "30"},
+        "UMA035": {"MST": "20", "EST": "40", "SESS": "29"},
+        "UHU005": {"attendance": "absent"}
+      },
+      "why": "45 C(5)×4 + 40 P(4)×4 + UCS405 EST 17 < 18 → F(0)×3.5 + 89 A+(9)×3.5 + absent AB(0)×3 = 67.5; 67.5/18 = 3.75; earned 4+4+3.5 = 11.5; 246/500 = 49.20%",
+      "expected": {
+        "outcome": "fail", "total": "246.00", "max_total": "500", "percentage": "49.20",
+        "sgpa": "3.75", "credits_attempted": "18", "credits_earned": "11.5",
+        "papers": {
+          "UCS301": {"outcome": "pass", "grade": "C", "grade_point": "5"},
+          "UCS310": {"outcome": "pass", "grade": "P", "grade_point": "4"},
+          "UCS405": {"outcome": "fail", "total": "72.00", "grade": "F", "grade_point": "0", "failed_components": ["EST"]},
+          "UMA035": {"outcome": "pass", "grade": "A+", "grade_point": "9"},
+          "UHU005": {"outcome": "absent", "grade": "AB", "grade_point": "0"}
+        }
+      }
+    },
+    {
+      "id": "T3-boundaries-and-exemption",
+      "marks": {
+        "UCS301": {"MST": "24.5", "EST": "40", "SESS": "25"},
+        "UCS310": {"MST": "25", "EST": "45", "SESS": "30"},
+        "UCS405": {"MST": "10", "EST": "18", "SESS": "12"},
+        "UMA035": {"MST": "10", "EST": "18", "SESS": "11.5"},
+        "UHU005": {"attendance": "exempt"}
+      },
+      "why": "89.5 A+(9)×4 + 100 O(10)×4 + 40 P(4)×3.5 + 39.5 < 40% → F(0)×3.5 = 90; UHU005 exempt so 15 credits; 90/15 = 6.00; earned 11.5; 269/400 = 67.25%",
+      "expected": {
+        "outcome": "fail", "total": "269.00", "max_total": "400", "percentage": "67.25",
+        "sgpa": "6.00", "credits_attempted": "15", "credits_earned": "11.5",
+        "papers": {
+          "UCS301": {"outcome": "pass", "percentage": "89.50", "grade": "A+"},
+          "UCS405": {"outcome": "pass", "grade": "P"},
+          "UMA035": {"outcome": "fail", "percentage": "39.50", "grade": "F"},
+          "UHU005": {"outcome": "exempt", "grade": null}
+        }
+      }
+    }
+  ]
+}
