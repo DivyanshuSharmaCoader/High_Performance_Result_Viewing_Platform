@@ -19,6 +19,7 @@ import {
   LogOut,
   Menu as MenuIcon,
   Monitor,
+  Network,
   Moon,
   ScrollText,
   Settings,
@@ -55,6 +56,10 @@ export const NAV: NavGroup[] = [
     ],
   },
   { label: "People", items: [{ to: "/admin/staff", label: "Staff", icon: Users, permission: "staff.view" }] },
+  {
+    label: "Academics",
+    items: [{ to: "/admin/academics", label: "Structure", icon: Network, permission: "academics.view" }],
+  },
   {
     label: "Institution",
     items: [

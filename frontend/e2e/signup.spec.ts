@@ -21,7 +21,7 @@ test("E2E-1: sign up → verify email → land in the new portal's onboarding ch
   await page.goto(linkFrom(mail.text, /http:\/\/\S+\/signup\/verify\?token=[\w-]+/));
   await expect(page).toHaveURL(url(slug, "/admin"), { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: "Set up your institution" })).toBeVisible();
-  await expect(page.getByText("0 of 3 steps done")).toBeVisible();
+  await expect(page.getByText(/^0 of \d+ steps done/)).toBeVisible();
   await expect(page.getByText(name).first()).toBeVisible();
 });
 

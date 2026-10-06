@@ -105,3 +105,14 @@ describe("format helpers", () => {
     expect(pluralize(1200, "student")).toBe("1,200 students");
   });
 });
+
+describe("Field optional marker", () => {
+  it("keeps a word boundary in the accessible name", () => {
+    render(
+      <Field label="Department" optional>
+        <Input />
+      </Field>,
+    );
+    expect(screen.getByLabelText("Department (optional)")).toBeInTheDocument();
+  });
+});

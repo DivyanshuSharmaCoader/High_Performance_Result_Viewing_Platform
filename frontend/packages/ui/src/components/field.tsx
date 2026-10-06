@@ -49,7 +49,12 @@ export function Field({
               *
             </span>
           )}
-          {optional && <span className="ml-1.5 font-normal text-fg-subtle">Optional</span>}
+          {optional && (
+            <>
+              {" "}
+              <span className="ml-1 font-normal text-fg-subtle">(optional)</span>
+            </>
+          )}
         </label>
         {aside}
       </div>

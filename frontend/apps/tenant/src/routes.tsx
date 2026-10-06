@@ -20,6 +20,16 @@ const Staff = page(() => import("./features/admin/staff"));
 const Plan = page(() => import("./features/admin/plan"));
 const Audit = page(() => import("./features/admin/audit"));
 const Account = page(() => import("./features/account/account"));
+const AcademicsLayout = page(() => import("./features/academics/layout"));
+const Sessions = page(() => import("./features/academics/sessions"));
+const Departments = lazy(() =>
+  import("./features/academics/catalog").then((m) => ({ default: m.DepartmentsPage })),
+);
+const Programs = lazy(() =>
+  import("./features/academics/catalog").then((m) => ({ default: m.ProgramsPage })),
+);
+const Cohorts = lazy(() => import("./features/academics/catalog").then((m) => ({ default: m.CohortsPage })));
+const Courses = lazy(() => import("./features/academics/catalog").then((m) => ({ default: m.CoursesPage })));
 const SettingsLayout = lazy(() =>
   import("./features/admin/settings").then((m) => ({ default: m.SettingsLayout })),
 );
@@ -99,6 +109,22 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="audit.view" />,
                     children: [{ path: "audit-log", element: <Audit /> }],
+                  },
+                  {
+                    element: <RequirePermission permission="academics.view" />,
+                    children: [
+                      {
+                        path: "academics",
+                        element: <AcademicsLayout />,
+                        children: [
+                          { index: true, element: <Sessions /> },
+                          { path: "departments", element: <Departments /> },
+                          { path: "programs", element: <Programs /> },
+                          { path: "cohorts", element: <Cohorts /> },
+                          { path: "courses", element: <Courses /> },
+                        ],
+                      },
+                    ],
                   },
                   {
                     element: <RequirePermission permission="settings.manage" />,

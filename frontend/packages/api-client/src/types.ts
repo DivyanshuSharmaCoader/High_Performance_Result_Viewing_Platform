@@ -117,3 +117,13 @@ export interface DeepHealth {
 }
 
 export type PlatformAuditEntry = Schemas["PlatformAuditEntry"];
+
+// ---- Academic structure ----------------------------------------------------------------------------
+export type AcademicSession = Schemas["AcademicSessionOut"];
+export type Term = Schemas["TermOut"];
+export type Department = Schemas["DepartmentOut"];
+export type Program = Schemas["ProgramOut"];
+export type Cohort = Schemas["CohortOut"];
+export type Course = Schemas["CourseOut"];
+export type CourseList = Schemas["CourseList"];
+export type StructureCounts = Schemas["StructureCounts"];
