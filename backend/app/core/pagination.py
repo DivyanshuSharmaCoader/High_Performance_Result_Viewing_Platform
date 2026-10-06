@@ -8,19 +8,17 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 from pydantic import BaseModel
 
 from app.core.errors import ValidationFailed
 
-T = TypeVar("T")
-
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 
 
-class Page(BaseModel, Generic[T]):
+class Page[T](BaseModel):
     items: list[T]
     next_cursor: str | None = None
     total: int | None = None

@@ -497,7 +497,7 @@ class PlatformService:
                 await s.execute(
                     text(
                         "SELECT queue, status, count(*) AS n, "
-                        "extract(epoch FROM now() - min(run_at)) FILTER (WHERE status = 'queued') AS oldest "
+                        "extract(epoch FROM now() - min(run_at) FILTER (WHERE status = 'queued')) AS oldest "
                         "FROM jobs WHERE status IN ('queued','running','dead') GROUP BY queue, status ORDER BY queue, status"
                     )
                 )
@@ -562,7 +562,7 @@ class PlatformService:
             return bool(await self.infra.cache.redis.ping())
 
         async def smtp_ping() -> bool:
-            reader, writer = await asyncio.open_connection(
+            _reader, writer = await asyncio.open_connection(
                 self.infra.settings.smtp_host, self.infra.settings.smtp_port
             )
             writer.close()

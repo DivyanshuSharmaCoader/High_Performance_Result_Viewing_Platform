@@ -63,7 +63,9 @@ async def make_tenant(
 class Client:
     """httpx client bound to one host (= one origin), with CSRF handling like the SPA."""
 
-    def __init__(self, app: Any, host: str, *, ip: str = "203.0.113.10") -> None:
+    def __init__(self, app: Any, host: str, *, ip: str | None = None) -> None:
+        # A distinct client IP per client keeps per-IP rate-limit buckets (shared in Redis) independent.
+        ip = ip or f"10.{uuid.uuid4().int % 250}.{uuid.uuid4().int % 250}.{uuid.uuid4().int % 250 + 1}"
         self.host = host
         self.http = httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app, client=(ip, 12345)),
@@ -125,3 +127,53 @@ class Client:
 
 def totp_now(secret: str) -> str:
     return pyotp.TOTP(secret).now()
+
+
+MAILPIT = "http://localhost:58025"
+
+
+async def drain_jobs(infra: Infra, queues: list[str] | None = None) -> int:
+    from app.core.jobs import Worker
+
+    return await Worker(infra, queues or infra.settings.queues).drain()
+
+
+async def mailpit_latest(to: str) -> dict[str, Any]:
+    """Return the newest message sent to ``to`` (subject, text) from Mailpit's API."""
+    import os
+
+    base = os.environ.get("SCORECODE_TEST_MAILPIT_API", MAILPIT)
+    async with httpx.AsyncClient(base_url=base, timeout=5) as client:
+        found = (await client.get("/api/v1/search", params={"query": f'to:"{to}"', "limit": 1})).json()
+        messages = found.get("messages") or []
+        assert messages, f"no email to {to}"
+        msg = (await client.get(f"/api/v1/message/{messages[0]['ID']}")).json()
+    return {"subject": msg["Subject"], "text": msg["Text"], "html": msg.get("HTML", "")}
+
+
+def link_token(text: str, param: str = "token") -> str:
+    import re
+
+    match = re.search(rf"[?&]{param}=([A-Za-z0-9_\-]+)", text)
+    assert match, f"no {param} link in email"
+    return match.group(1)
+
+
+async def make_platform_admin(infra: Infra, role: str = "platform_admin") -> tuple[str, str, str]:
+    from app.modules.platform.bootstrap import create_platform_user
+
+    email = f"ops-{uuid.uuid4().hex[:8]}@ops.example.com"
+    password = "platform-pass-12345"
+    created = await create_platform_user(infra, email, "Ops Person", password, role)
+    return email, password, created.totp_secret
+
+
+async def platform_client(app: Any, infra: Infra, role: str = "platform_admin") -> Client:
+    email, password, secret = await make_platform_admin(infra, role)
+    c = Client(app, "admin.localhost", ip=f"192.0.2.{uuid.uuid4().int % 250}")
+    r = await c.post(
+        "/api/v1/platform/auth/login",
+        json={"email": email, "password": password, "totp_code": totp_now(secret)},
+    )
+    assert r.status_code == 200, r.text
+    return c

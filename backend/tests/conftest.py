@@ -106,6 +106,8 @@ def _services_available() -> bool:
 @pytest.fixture(scope="session")
 def migrated_db() -> Iterator[str]:
     if not _services_available():
+        if os.environ.get("SCORECODE_TEST_REQUIRE_SERVICES"):
+            pytest.fail("PostgreSQL from compose.yml is not reachable but services are required")
         pytest.skip("PostgreSQL from compose.yml is not running (make up)")
     asyncio.run(_recreate_database())
     from alembic import command

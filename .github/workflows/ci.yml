@@ -68,6 +68,8 @@ jobs:
         working-directory: backend
       - name: pytest (all suites) with coverage
         working-directory: backend
+        env:
+          SCORECODE_TEST_REQUIRE_SERVICES: "1"  # never silently skip integration tests in CI
         run: uv run pytest -q --cov=app --cov-report=term-missing:skip-covered --cov-report=xml
       - name: Container logs on failure
         if: failure()
@@ -116,7 +118,7 @@ jobs:
             echo "production settings with dev defaults must fail"; exit 1
           fi
       - name: Trivy (fixable critical vulnerabilities fail the build)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: scorecode/backend:ci
           severity: CRITICAL
