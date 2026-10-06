@@ -86,6 +86,8 @@ class Settings(BaseSettings):
     staff_session_idle_hours: int = 12
     staff_session_absolute_days: int = 7
     platform_session_hours: int = 8
+    api_session_per_minute: int = 300  # authenticated API calls per session (docs/10 §7)
+    api_session_burst: int = 100
     login_max_failures: int = 5
     login_lockout_minutes: int = 15
     reauth_window_minutes: int = 10

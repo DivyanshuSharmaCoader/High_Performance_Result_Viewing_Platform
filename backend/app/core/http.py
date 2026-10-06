@@ -18,6 +18,7 @@ from fastapi import Depends, Request
 from app.core.container import Infra
 from app.core.db import UnitOfWork
 from app.core.errors import NotAuthenticated, NotFound, PermissionDenied
+from app.core.ratelimit import API_PER_SESSION, Bucket
 from app.core.tenant import HostInfo, Realm, TenantContext
 
 
@@ -136,6 +137,14 @@ def require(*permissions: str) -> Any:
         missing = [p for p in permissions if not principal.has(p)]
         if missing:
             raise PermissionDenied()
+        # Fairness per session (docs/10 §7): generous for humans, stops runaway scripts.
+        infra = get_infra(request)
+        bucket = Bucket.per_minute(
+            API_PER_SESSION.name,
+            infra.settings.api_session_per_minute,
+            burst=infra.settings.api_session_burst,
+        )
+        await infra.limiter.hit(bucket, principal.session_hash.hex())
         return principal
 
     _mark(dependency, "tenant:" + ",".join(permissions))

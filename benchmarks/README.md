@@ -43,4 +43,4 @@ Bottleneck observed, evidence (EXPLAIN, profiles), what this does and does not s
 ## Results index
 | Date | Scenario | Variant | Key result | File |
 |---|---|---|---|---|
-| — | — | — | *No measurements yet* | — |
+| 2026-10-06 | Argon2id cost (P3.2) | laptop, Rosetta 2 | 33.1 ms p50 per verify; 98.5 verifications/s on 4 threads | [results/2026-10-06-argon2id-cost.md](results/2026-10-06-argon2id-cost.md) |

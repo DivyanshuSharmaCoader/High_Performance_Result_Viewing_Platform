@@ -1,0 +1,32 @@
+# Install once: `uvx pre-commit install` (runs on every commit; CI runs the same checks).
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=800"]
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format (backend)
+        entry: bash -c 'cd backend && uv run ruff format app tests migrations'
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
+      - id: ruff-check
+        name: ruff check (backend)
+        entry: bash -c 'cd backend && uv run ruff check --fix app tests migrations'
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
+      - id: mypy
+        name: mypy (backend)
+        entry: bash -c 'cd backend && uv run mypy app'
+        language: system
+        files: ^backend/app/.*\.py$
+        pass_filenames: false

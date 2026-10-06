@@ -1,0 +1,86 @@
+{
+ "institution_owner": [
+  "academics.manage",
+  "academics.view",
+  "analytics.view",
+  "audit.view",
+  "branding.manage",
+  "exams.manage",
+  "exams.view",
+  "exams.view_assigned",
+  "grading.manage",
+  "grading.view",
+  "imports.manage",
+  "jobs.view",
+  "marks.enter_all",
+  "notifications.self",
+  "owner.transfer",
+  "papers.review",
+  "publications.manage",
+  "results.approve",
+  "results.process",
+  "results.view",
+  "settings.manage",
+  "staff.manage",
+  "staff.view",
+  "students.manage",
+  "students.view",
+  "subscription.view"
+ ],
+ "institution_admin": [
+  "academics.manage",
+  "academics.view",
+  "analytics.view",
+  "audit.view",
+  "branding.manage",
+  "exams.manage",
+  "exams.view",
+  "exams.view_assigned",
+  "grading.manage",
+  "grading.view",
+  "imports.manage",
+  "jobs.view",
+  "marks.enter_all",
+  "notifications.self",
+  "papers.review",
+  "publications.manage",
+  "results.approve",
+  "results.process",
+  "results.view",
+  "settings.manage",
+  "staff.manage",
+  "staff.view",
+  "students.manage",
+  "students.view",
+  "subscription.view"
+ ],
+ "faculty": [
+  "exams.view_assigned",
+  "imports.marks_assigned",
+  "jobs.view",
+  "marks.enter_assigned",
+  "notifications.self",
+  "papers.submit_assigned",
+  "stats.view_assigned"
+ ],
+ "student": [
+  "me.results",
+  "notifications.self"
+ ],
+ "platform_admin": [
+  "platform.audit.view",
+  "platform.health.view",
+  "platform.plans.manage",
+  "platform.tenants.manage",
+  "platform.tenants.view"
+ ],
+ "support": [
+  "platform.audit.view",
+  "platform.health.view",
+  "platform.tenants.view"
+ ],
+ "readonly": [
+  "platform.health.view",
+  "platform.tenants.view"
+ ]
+}

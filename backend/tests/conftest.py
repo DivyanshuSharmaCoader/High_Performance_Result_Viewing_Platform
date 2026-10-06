@@ -50,6 +50,7 @@ def make_settings(**overrides: object) -> Settings:
         "argon2_memory_kib": 1024,
         "argon2_max_concurrency": 8,
         "metrics_enabled": True,
+        "api_session_burst": 250,  # suites that sweep every route make many calls per session
     }
     values.update(overrides)
     return Settings(**values)  # type: ignore[arg-type]

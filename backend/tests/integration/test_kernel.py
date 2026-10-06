@@ -381,3 +381,17 @@ def test_every_route_declares_an_access_policy(app) -> None:
         if not _policies(route.dependant, ACCESS_POLICY_ATTR):
             missing.append(f"{sorted(route.methods)} {route.path}")
     assert missing == [], f"routes without require()/require_platform()/public(): {missing}"
+
+
+# ---- P1.2 health endpoints ----------------------------------------------------------------------
+
+
+async def test_liveness_readiness_and_metrics(app) -> None:
+    from tests.helpers import Client
+
+    async with Client(app, "10.0.0.5:8000") as c:  # health checks work on any host (load balancer probes)
+        assert (await c.get("/livez")).json() == {"status": "ok"}
+        ready = await c.get("/readyz")
+        assert ready.status_code == 200 and ready.json()["database"] == "up"
+        metrics = await c.get("/metrics")
+        assert metrics.status_code == 200 and "scorecode_http_requests_total" in metrics.text

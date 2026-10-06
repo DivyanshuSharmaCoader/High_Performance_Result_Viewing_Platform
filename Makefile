@@ -51,7 +51,7 @@ fmt: ## Format code
 lint: ## Lint + type-check everything
 	cd $(BACKEND) && uv run ruff format --check app tests migrations && uv run ruff check app tests migrations
 	cd $(BACKEND) && uv run mypy app && uv run lint-imports
-	cd $(FRONTEND) && pnpm lint && pnpm typecheck
+	@if [ -f $(FRONTEND)/package.json ]; then cd $(FRONTEND) && pnpm lint && pnpm typecheck; fi
 
 test-unit: ## Backend unit tests (no services needed)
 	cd $(BACKEND) && uv run pytest tests/unit -q
@@ -61,7 +61,7 @@ test-int: ## Backend integration + security suites (needs `make up`)
 
 test: ## All backend + frontend tests
 	cd $(BACKEND) && uv run pytest -q
-	cd $(FRONTEND) && pnpm test
+	@if [ -f $(FRONTEND)/package.json ]; then cd $(FRONTEND) && pnpm test; fi
 
 test-frontend: ## Frontend unit/component tests
 	cd $(FRONTEND) && pnpm test

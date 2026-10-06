@@ -177,3 +177,46 @@ async def platform_client(app: Any, infra: Infra, role: str = "platform_admin") 
     )
     assert r.status_code == 200, r.text
     return c
+
+
+async def make_user(
+    infra: Infra,
+    tenant: TenantFixture,
+    role: str,
+    *,
+    login_id: str | None = None,
+    password: str = DEFAULT_PASSWORD,
+) -> tuple[uuid.UUID, str]:
+    """Create an active user with ``role`` directly (fixture shortcut; flows are tested elsewhere)."""
+    from app.modules.identity.models import User, UserRole
+
+    kind = "student" if role == "student" else "staff"
+    login = login_id or (
+        f"{role}-{uuid.uuid4().hex[:6]}@{tenant.slug}.example.com"
+        if kind == "staff"
+        else f"STU{uuid.uuid4().hex[:8].upper()}"
+    )
+    async with infra.db.uow(tenant.id) as uow:
+        user = User(
+            tenant_id=tenant.id,
+            kind=kind,
+            login_id=login,
+            email=login if kind == "staff" else None,
+            full_name=f"{role.title()} Person",
+            password_hash=await infra.passwords.hash(password),
+            status="active",
+        )
+        uow.session.add(user)
+        await uow.flush()
+        uow.session.add(UserRole(tenant_id=tenant.id, user_id=user.id, role=role))
+    return user.id, login
+
+
+async def client_as(app: Any, infra: Infra, tenant: TenantFixture, role: str) -> Client:
+    c = Client(app, tenant.host)
+    if role == "institution_owner":
+        await c.login(tenant.owner_email)
+    elif role != "anonymous":
+        _, login = await make_user(infra, tenant, role)
+        await c.login(login)
+    return c
