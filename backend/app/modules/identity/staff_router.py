@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from app.core.http import InfraDep, Principal, TenantDep, UoW, require
 from app.modules.identity.permissions import P
 from app.modules.identity.service import AuthService
-from app.modules.identity.staff import StaffService
+from app.modules.identity.staff import ProfileData, StaffService
 
 router = APIRouter(prefix="/api/v1/admin/staff", tags=["staff"])
 
@@ -23,6 +23,19 @@ class StaffOut(BaseModel):
     status: str
     last_login_at: datetime | None
     created_at: datetime
+    employee_code: str | None = None
+    designation: str | None = None
+    department_id: uuid.UUID | None = None
+    phone: str | None = None
+
+
+class ProfileIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    full_name: str = Field(min_length=2, max_length=200)
+    employee_code: str | None = Field(default=None, max_length=40)
+    designation: str | None = Field(default=None, max_length=100)
+    department_id: uuid.UUID | None = None
+    phone: str | None = Field(default=None, max_length=32)
 
 
 class InviteIn(BaseModel):
@@ -116,6 +129,29 @@ async def set_status(
 ) -> OkOut:
     await StaffService(infra).set_disabled(uow, principal, user_id, body.disabled)
     return OkOut()
+
+
+@router.put("/{user_id}/profile")
+async def update_profile(
+    user_id: uuid.UUID,
+    body: ProfileIn,
+    uow: UoW,
+    infra: InfraDep,
+    principal: Principal = require(P.STAFF_MANAGE),
+) -> StaffOut:
+    member = await StaffService(infra).update_profile(
+        uow,
+        principal,
+        user_id,
+        ProfileData(
+            full_name=body.full_name,
+            employee_code=body.employee_code,
+            designation=body.designation,
+            department_id=body.department_id,
+            phone=body.phone,
+        ),
+    )
+    return StaffOut(**member.__dict__)
 
 
 @router.post("/{user_id}/transfer-ownership")

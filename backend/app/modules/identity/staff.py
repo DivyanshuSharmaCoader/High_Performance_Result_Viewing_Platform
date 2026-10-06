@@ -17,7 +17,9 @@ from app.core.db import UnitOfWork
 from app.core.errors import Conflict, InvalidState, NotFound, PermissionDenied, ValidationFailed
 from app.core.http import Principal
 from app.core.tenant import TenantContext
-from app.modules.audit.service import Actor, record
+from app.modules.academics.models import Department
+from app.modules.audit.service import Actor, diff, record
+from app.modules.directory.models import StaffProfile
 from app.modules.entitlements.catalogue import F
 from app.modules.entitlements.service import EntitlementService
 from app.modules.identity.models import User, UserRole
@@ -41,6 +43,24 @@ class StaffMember:
     status: str
     last_login_at: datetime | None
     created_at: datetime
+    employee_code: str | None = None
+    designation: str | None = None
+    department_id: uuid.UUID | None = None
+    phone: str | None = None
+
+
+@dataclass
+class ProfileData:
+    full_name: str
+    employee_code: str | None
+    designation: str | None
+    department_id: uuid.UUID | None
+    phone: str | None
+
+
+def _blank_to_none(value: str | None) -> str | None:
+    cleaned = " ".join((value or "").split())
+    return cleaned or None
 
 
 class StaffService:
@@ -68,8 +88,9 @@ class StaffService:
         self, uow: UnitOfWork, *, q: str | None = None, role: str | None = None
     ) -> list[StaffMember]:
         stmt = (
-            select(User, UserRole.role)
+            select(User, UserRole.role, StaffProfile)
             .join(UserRole, (UserRole.user_id == User.id) & (UserRole.tenant_id == User.tenant_id))
+            .outerjoin(StaffProfile, StaffProfile.user_id == User.id)
             .where(User.kind == "staff")
             .order_by(User.full_name, User.id)
         )
@@ -79,10 +100,61 @@ class StaffService:
         if role:
             stmt = stmt.where(UserRole.role == role)
         rows = (await uow.session.execute(stmt)).all()
-        return [
-            StaffMember(u.id, u.full_name, u.email, r, u.status, u.last_login_at, u.created_at)
-            for u, r in rows
-        ]
+        return [_member(u, r, p) for u, r, p in rows]
+
+    async def get(self, uow: UnitOfWork, user_id: uuid.UUID) -> StaffMember:
+        user = await self._get_staff(uow, user_id)
+        role = await self._role_of(uow, user.id) or "faculty"
+        profile = (
+            await uow.session.scalars(select(StaffProfile).where(StaffProfile.user_id == user.id))
+        ).one_or_none()
+        return _member(user, role, profile)
+
+    async def update_profile(
+        self, uow: UnitOfWork, principal: Principal, user_id: uuid.UUID, data: ProfileData
+    ) -> StaffMember:
+        user = await self._get_staff(uow, user_id, lock=True)
+        full_name = " ".join(data.full_name.split())
+        if len(full_name) < 2:
+            raise ValidationFailed("Enter the person's full name.", field="full_name")
+        if data.department_id is not None:
+            dept = (
+                await uow.session.scalars(select(Department).where(Department.id == data.department_id))
+            ).one_or_none()
+            if dept is None:
+                raise ValidationFailed("That department doesn't exist.", field="department_id")
+            if dept.archived_at is not None:
+                raise ValidationFailed("That department is archived.", field="department_id")
+        profile = (
+            await uow.session.scalars(
+                select(StaffProfile).where(StaffProfile.user_id == user.id).with_for_update()
+            )
+        ).one_or_none()
+        if profile is None:
+            profile = StaffProfile(tenant_id=user.tenant_id, user_id=user.id)
+            uow.session.add(profile)
+        fields = ("employee_code", "designation", "department_id", "phone")
+        before = {"full_name": user.full_name, **{f: getattr(profile, f, None) for f in fields}}
+        user.full_name = full_name
+        profile.employee_code = _blank_to_none(data.employee_code)
+        profile.designation = _blank_to_none(data.designation)
+        profile.department_id = data.department_id
+        profile.phone = _blank_to_none(data.phone)
+        await uow.flush()
+        after = {"full_name": user.full_name, **{f: getattr(profile, f) for f in fields}}
+        d_before, d_after = diff(before, after)
+        if d_after:
+            await record(
+                uow,
+                Actor.from_principal(principal),
+                "user.profile_updated",
+                entity_type="user",
+                entity_id=user.id,
+                summary=f"Updated {user.full_name}'s profile",
+                before=d_before,
+                after=d_after,
+            )
+        return await self.get(uow, user.id)
 
     async def invite(
         self,
@@ -241,3 +313,19 @@ class StaffService:
             before={"owner": str(principal.user_id)},
             after={"owner": str(target.id)},
         )
+
+
+def _member(user: User, role: str, profile: StaffProfile | None) -> StaffMember:
+    return StaffMember(
+        user.id,
+        user.full_name,
+        user.email,
+        role,
+        user.status,
+        user.last_login_at,
+        user.created_at,
+        employee_code=profile.employee_code if profile else None,
+        designation=profile.designation if profile else None,
+        department_id=profile.department_id if profile else None,
+        phone=profile.phone if profile else None,
+    )

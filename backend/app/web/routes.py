@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from app.modules.academics.router import router as academics_router
 from app.modules.audit.router import router as audit_router
 from app.modules.branding.router import router as branding_router
+from app.modules.directory.router import router as students_router
 from app.modules.identity.router import platform_router as platform_auth_router
 from app.modules.identity.router import router as identity_router
 from app.modules.identity.staff_router import router as staff_router
@@ -28,5 +29,6 @@ def include_routers(app: FastAPI) -> None:
         jobs_router,
         platform_router,
         academics_router,
+        students_router,
     ):
         app.include_router(router)

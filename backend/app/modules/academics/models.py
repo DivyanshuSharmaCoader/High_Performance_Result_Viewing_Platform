@@ -7,7 +7,7 @@ import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, CheckConstraint, Date, Index, Integer, Numeric, String, text
+from sqlalchemy import Boolean, CheckConstraint, Date, Index, Integer, Numeric, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.models import Base, TenantScoped, Timestamps, UUIDPrimaryKey, tenant_fk, tenant_unique_id
@@ -88,6 +88,9 @@ class Cohort(UUIDPrimaryKey, TenantScoped, Timestamps, Base):
     __tablename__ = "cohorts"
     __table_args__ = (
         tenant_unique_id("cohorts"),
+        # Target of cohort_memberships' FK, which copies session/program so the database can enforce
+        # "one cohort per program per session" for each student (docs/07 §2.4).
+        UniqueConstraint("tenant_id", "id", "session_id", "program_id", name="uq_cohorts__membership_key"),
         tenant_fk("program_id", "programs"),
         tenant_fk("session_id", "academic_sessions"),
         Index("uq_cohorts__tenant_session_code", "tenant_id", "session_id", "code", unique=True),

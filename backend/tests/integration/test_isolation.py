@@ -27,7 +27,7 @@ from app.core.jobs import enqueue
 from app.core.security import hash_token, new_token
 from app.modules.identity.models import AuthToken
 from tests.conftest import PG_HOST, PG_PORT
-from tests.helpers import Client, TenantFixture, make_tenant, make_user
+from tests.helpers import Client, TenantFixture, make_structure, make_student, make_tenant, make_user
 from tests.routes import RouteInfo, api_routes
 
 pytestmark = pytest.mark.integration
@@ -105,8 +105,14 @@ def _academic_provider(key: str) -> Provider:
     return provide
 
 
+async def _student(infra: Any, t: TenantFixture) -> uuid.UUID:
+    s = await make_structure(infra, t, current=False)
+    return await make_student(infra, t, cohort_id=s.cohort_id)
+
+
 PROVIDERS: dict[str, Provider] = {
     "user_id": _staff_user,
+    "student_id": _student,
     "job_id": _job,
     "token": _invite_token,
     **{
@@ -120,6 +126,7 @@ _ARCHIVE = {"archived": True}
 SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("PUT", "/api/v1/admin/staff/{user_id}/role"): {"role": "institution_admin"},
     ("PUT", "/api/v1/admin/staff/{user_id}/status"): {"disabled": True},
+    ("PUT", "/api/v1/admin/staff/{user_id}/profile"): {"full_name": "X Y"},
     ("PUT", "/api/v1/admin/academic-sessions/{session_id}"): {
         "code": "X",
         "name": "X",
@@ -140,6 +147,10 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("PUT", "/api/v1/admin/cohorts/{cohort_id}/archived"): _ARCHIVE,
     ("PUT", "/api/v1/admin/courses/{course_id}"): {"code": "X", "name": "X"},
     ("PUT", "/api/v1/admin/courses/{course_id}/archived"): _ARCHIVE,
+    ("PUT", "/api/v1/admin/students/{student_id}"): {"enrollment_no": "X1", "full_name": "X", "version": 1},
+    ("PUT", "/api/v1/admin/students/{student_id}/status"): {"status": "archived"},
+    ("POST", "/api/v1/admin/students/{student_id}/cohorts"): {"cohort_id": str(uuid.uuid4())},
+    ("POST", "/api/v1/admin/cohorts/{cohort_id}/students"): {"student_ids": [str(uuid.uuid4())]},
 }
 
 
@@ -163,7 +174,20 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                 text("SELECT string_agg(id::text || status, ',' ORDER BY id) FROM jobs")
             )
         ).scalar_one()
-    return audit, users, roles, jobs
+        students = (
+            await uow.session.execute(
+                text("SELECT string_agg(id::text || status || version::text, ',' ORDER BY id) FROM students")
+            )
+        ).scalar_one()
+        members = (
+            await uow.session.execute(
+                text(
+                    "SELECT string_agg(student_id::text || cohort_id::text, ',' ORDER BY student_id, cohort_id) "
+                    "FROM cohort_memberships"
+                )
+            )
+        ).scalar_one()
+    return audit, users, roles, jobs, students, members
 
 
 async def _call(c: Client, route: RouteInfo, url: str) -> Any:

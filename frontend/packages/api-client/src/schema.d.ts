@@ -230,6 +230,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/cohorts/{cohort_id}/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Cohort Members */
+        post: operations["add_cohort_members_api_v1_admin_cohorts__cohort_id__students_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/courses": {
         parameters: {
             query?: never;
@@ -440,6 +457,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/staff/{user_id}/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Profile */
+        put: operations["update_profile_api_v1_admin_staff__user_id__profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/staff/{user_id}/resend-invite": {
         parameters: {
             query?: never;
@@ -502,6 +536,110 @@ export interface paths {
         put?: never;
         /** Transfer Ownership */
         post: operations["transfer_ownership_api_v1_admin_staff__user_id__transfer_ownership_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Students */
+        get: operations["list_students_api_v1_admin_students_get"];
+        put?: never;
+        /** Create Student */
+        post: operations["create_student_api_v1_admin_students_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/students/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Student Counts */
+        get: operations["student_counts_api_v1_admin_students_counts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/students/{student_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Student */
+        get: operations["get_student_api_v1_admin_students__student_id__get"];
+        /** Update Student */
+        put: operations["update_student_api_v1_admin_students__student_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/students/{student_id}/cohorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign Cohort */
+        post: operations["assign_cohort_api_v1_admin_students__student_id__cohorts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/students/{student_id}/cohorts/{cohort_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Cohort */
+        delete: operations["remove_cohort_api_v1_admin_students__student_id__cohorts__cohort_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/students/{student_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Student Status */
+        put: operations["set_student_status_api_v1_admin_students__student_id__status_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1318,6 +1456,14 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** CohortAssignIn */
+        CohortAssignIn: {
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+        };
         /** CohortCreateIn */
         CohortCreateIn: {
             /** Code */
@@ -1334,6 +1480,20 @@ export interface components {
              * Format: uuid
              */
             session_id: string;
+        };
+        /** CohortMembersIn */
+        CohortMembersIn: {
+            /** Student Ids */
+            student_ids: string[];
+        };
+        /** CohortMembersOut */
+        CohortMembersOut: {
+            /** Added */
+            added: number;
+            /** Moved */
+            moved: number;
+            /** Unchanged */
+            unchanged: number;
         };
         /** CohortOut */
         CohortOut: {
@@ -1560,6 +1720,34 @@ export interface components {
             roles: string[];
             tenant: components["schemas"]["TenantSummary"];
         };
+        /** MembershipOut */
+        MembershipOut: {
+            /** Cohort Code */
+            cohort_code: string;
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+            /** Cohort Name */
+            cohort_name: string;
+            /** Program Code */
+            program_code: string;
+            /**
+             * Program Id
+             * Format: uuid
+             */
+            program_id: string;
+            /** Session Code */
+            session_code: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Session Is Current */
+            session_is_current: boolean;
+        };
         /** OkOut */
         OkOut: {
             /**
@@ -1618,6 +1806,15 @@ export interface components {
         Page_PlatformAuditEntry_: {
             /** Items */
             items: components["schemas"]["PlatformAuditEntry"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Total */
+            total?: number | null;
+        };
+        /** Page[StudentOut] */
+        Page_StudentOut_: {
+            /** Items */
+            items: components["schemas"]["StudentOut"][];
             /** Next Cursor */
             next_cursor?: string | null;
             /** Total */
@@ -1710,6 +1907,19 @@ export interface components {
             permissions: string[];
             /** Roles */
             roles: string[];
+        };
+        /** ProfileIn */
+        ProfileIn: {
+            /** Department Id */
+            department_id?: string | null;
+            /** Designation */
+            designation?: string | null;
+            /** Employee Code */
+            employee_code?: string | null;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone?: string | null;
         };
         /** ProgramIn */
         ProgramIn: {
@@ -1903,8 +2113,14 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Department Id */
+            department_id?: string | null;
+            /** Designation */
+            designation?: string | null;
             /** Email */
             email: string | null;
+            /** Employee Code */
+            employee_code?: string | null;
             /** Full Name */
             full_name: string;
             /**
@@ -1914,6 +2130,8 @@ export interface components {
             id: string;
             /** Last Login At */
             last_login_at: string | null;
+            /** Phone */
+            phone?: string | null;
             /** Role */
             role: string;
             /** Status */
@@ -1936,6 +2154,108 @@ export interface components {
             programs: number;
             /** Sessions */
             sessions: number;
+        };
+        /** StudentCountsOut */
+        StudentCountsOut: {
+            /** Active */
+            active: number;
+            /** Archived */
+            archived: number;
+            /** Graduated */
+            graduated: number;
+            /** Withdrawn */
+            withdrawn: number;
+        };
+        /** StudentCreateIn */
+        StudentCreateIn: {
+            /** Admission Year */
+            admission_year?: number | null;
+            /** Cohort Ids */
+            cohort_ids?: string[];
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Enrollment No */
+            enrollment_no: string;
+            /** Full Name */
+            full_name: string;
+            /** Guardian Name */
+            guardian_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+        };
+        /** StudentOut */
+        StudentOut: {
+            /**
+             * Account
+             * @enum {string}
+             */
+            account: "none" | "pending" | "active" | "disabled";
+            /** Admission Year */
+            admission_year: number | null;
+            /** Archived At */
+            archived_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Date Of Birth */
+            date_of_birth: string | null;
+            /** Email */
+            email: string | null;
+            /** Enrollment No */
+            enrollment_no: string;
+            /** Full Name */
+            full_name: string;
+            /** Guardian Name */
+            guardian_name: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Memberships */
+            memberships: components["schemas"]["MembershipOut"][];
+            /** Phone */
+            phone: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "graduated" | "withdrawn" | "archived";
+            /** Version */
+            version: number;
+        };
+        /** StudentStatusIn */
+        StudentStatusIn: {
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "graduated" | "withdrawn" | "archived";
+        };
+        /** StudentUpdateIn */
+        StudentUpdateIn: {
+            /** Admission Year */
+            admission_year?: number | null;
+            /** Date Of Birth */
+            date_of_birth?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Enrollment No */
+            enrollment_no: string;
+            /** Full Name */
+            full_name: string;
+            /** Guardian Name */
+            guardian_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Version */
+            version: number;
         };
         /** SubscriptionOut */
         SubscriptionOut: {
@@ -2647,6 +2967,41 @@ export interface operations {
             };
         };
     };
+    add_cohort_members_api_v1_admin_cohorts__cohort_id__students_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortMembersIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortMembersOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_courses_api_v1_admin_courses_get: {
         parameters: {
             query?: {
@@ -3224,6 +3579,41 @@ export interface operations {
             };
         };
     };
+    update_profile_api_v1_admin_staff__user_id__profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     resend_invite_api_v1_admin_staff__user_id__resend_invite_post: {
         parameters: {
             query?: never;
@@ -3343,6 +3733,265 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_students_api_v1_admin_students_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                status?: ("active" | "graduated" | "withdrawn" | "archived") | null;
+                cohort_id?: string | null;
+                session_id?: string | null;
+                program_id?: string | null;
+                account?: ("none" | "pending" | "active" | "disabled") | null;
+                cursor?: string | null;
+                limit?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_StudentOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_student_api_v1_admin_students_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    student_counts_api_v1_admin_students_counts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentCountsOut"];
+                };
+            };
+        };
+    };
+    get_student_api_v1_admin_students__student_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_student_api_v1_admin_students__student_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_cohort_api_v1_admin_students__student_id__cohorts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortAssignIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_cohort_api_v1_admin_students__student_id__cohorts__cohort_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+                cohort_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_student_status_api_v1_admin_students__student_id__status_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentStatusIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentOut"];
                 };
             };
             /** @description Validation Error */
