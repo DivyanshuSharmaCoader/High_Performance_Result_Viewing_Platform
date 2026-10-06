@@ -54,6 +54,20 @@
         "title": "ActivateIn",
         "type": "object"
       },
+      "ArchiveIn": {
+        "additionalProperties": false,
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "archived"
+        ],
+        "title": "ArchiveIn",
+        "type": "object"
+      },
       "AuditEntry": {
         "properties": {
           "action": {
@@ -503,6 +517,352 @@
           "new_password"
         ],
         "title": "ChangePasswordIn",
+        "type": "object"
+      },
+      "CohortCreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "program_id": {
+            "format": "uuid",
+            "title": "Program Id",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "program_id",
+          "session_id"
+        ],
+        "title": "CohortCreateIn",
+        "type": "object"
+      },
+      "CohortOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "program_id": {
+            "format": "uuid",
+            "title": "Program Id",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "program_id",
+          "session_id",
+          "archived_at"
+        ],
+        "title": "CohortOut",
+        "type": "object"
+      },
+      "CohortUpdateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "CohortUpdateIn",
+        "type": "object"
+      },
+      "CopyIn": {
+        "additionalProperties": false,
+        "properties": {
+          "source_session_id": {
+            "format": "uuid",
+            "title": "Source Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_session_id"
+        ],
+        "title": "CopyIn",
+        "type": "object"
+      },
+      "CopyOut": {
+        "properties": {
+          "cohorts": {
+            "title": "Cohorts",
+            "type": "integer"
+          },
+          "terms": {
+            "title": "Terms",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "terms",
+          "cohorts"
+        ],
+        "title": "CopyOut",
+        "type": "object"
+      },
+      "CourseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "credits": {
+            "anyOf": [
+              {
+                "maximum": 40.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,3}|(?=[\\d.]{1,5}0*$)\\d{0,3}\\.\\d{0,1}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "CourseIn",
+        "type": "object"
+      },
+      "CourseList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CourseOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "CourseList",
+        "type": "object"
+      },
+      "CourseOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "credits": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "department_id",
+          "credits",
+          "archived_at"
+        ],
+        "title": "CourseOut",
+        "type": "object"
+      },
+      "DepartmentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "DepartmentIn",
+        "type": "object"
+      },
+      "DepartmentOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "archived_at"
+        ],
+        "title": "DepartmentOut",
         "type": "object"
       },
       "DismissIn": {
@@ -1369,6 +1729,140 @@
         "title": "PlatformMeOut",
         "type": "object"
       },
+      "ProgramIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "duration_terms": {
+            "anyOf": [
+              {
+                "maximum": 20.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Terms"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "ProgramIn",
+        "type": "object"
+      },
+      "ProgramOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "department_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department Id"
+          },
+          "duration_terms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Terms"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "department_id",
+          "level",
+          "duration_terms",
+          "archived_at"
+        ],
+        "title": "ProgramOut",
+        "type": "object"
+      },
       "ReasonIn": {
         "additionalProperties": false,
         "properties": {
@@ -1442,6 +1936,81 @@
         "title": "RoleIn",
         "type": "object"
       },
+      "SessionCreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "format": "date",
+            "title": "Ends On",
+            "type": "string"
+          },
+          "make_current": {
+            "default": false,
+            "title": "Make Current",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "SessionCreateIn",
+        "type": "object"
+      },
+      "SessionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "format": "date",
+            "title": "Ends On",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "SessionIn",
+        "type": "object"
+      },
       "SessionItem": {
         "properties": {
           "created_at": {
@@ -1489,27 +2058,6 @@
           "user_agent"
         ],
         "title": "SessionItem",
-        "type": "object"
-      },
-      "SessionOut": {
-        "properties": {
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Roles",
-            "type": "array"
-          },
-          "user_kind": {
-            "title": "User Kind",
-            "type": "string"
-          }
-        },
-        "required": [
-          "user_kind",
-          "roles"
-        ],
-        "title": "SessionOut",
         "type": "object"
       },
       "SettingsIn": {
@@ -1876,6 +2424,39 @@
         "title": "StatusIn",
         "type": "object"
       },
+      "StructureCounts": {
+        "properties": {
+          "cohorts": {
+            "title": "Cohorts",
+            "type": "integer"
+          },
+          "courses": {
+            "title": "Courses",
+            "type": "integer"
+          },
+          "departments": {
+            "title": "Departments",
+            "type": "integer"
+          },
+          "programs": {
+            "title": "Programs",
+            "type": "integer"
+          },
+          "sessions": {
+            "title": "Sessions",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sessions",
+          "departments",
+          "programs",
+          "cohorts",
+          "courses"
+        ],
+        "title": "StructureCounts",
+        "type": "object"
+      },
       "SubscriptionOut": {
         "properties": {
           "features": {
@@ -2064,6 +2645,127 @@
         "title": "TenantSummary",
         "type": "object"
       },
+      "TermIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "sequence": {
+            "anyOf": [
+              {
+                "maximum": 50.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence"
+          },
+          "starts_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts On"
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "TermIn",
+        "type": "object"
+      },
+      "TermOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "sequence": {
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "starts_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts On"
+          }
+        },
+        "required": [
+          "id",
+          "session_id",
+          "code",
+          "name",
+          "sequence",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "TermOut",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -2142,6 +2844,81 @@
         ],
         "title": "VerifyOut",
         "type": "object"
+      },
+      "app__modules__academics__router__SessionOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "format": "date",
+            "title": "Ends On",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "starts_on",
+          "ends_on",
+          "is_current",
+          "archived_at"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
+      "app__modules__identity__router__SessionOut": {
+        "properties": {
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "user_kind": {
+            "title": "User Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_kind",
+          "roles"
+        ],
+        "title": "SessionOut",
+        "type": "object"
       }
     }
   },
@@ -2152,6 +2929,413 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/admin/academic-sessions": {
+      "get": {
+        "operationId": "list_sessions_api_v1_admin_academic_sessions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                  },
+                  "title": "Response List Sessions Api V1 Admin Academic Sessions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Sessions",
+        "tags": [
+          "academics"
+        ]
+      },
+      "post": {
+        "operationId": "create_session_api_v1_admin_academic_sessions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Session",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/academic-sessions/{session_id}": {
+      "put": {
+        "operationId": "update_session_api_v1_admin_academic_sessions__session_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Session",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/academic-sessions/{session_id}/archived": {
+      "put": {
+        "operationId": "archive_session_api_v1_admin_academic_sessions__session_id__archived_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Session",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/academic-sessions/{session_id}/copy-structure": {
+      "post": {
+        "operationId": "copy_structure_api_v1_admin_academic_sessions__session_id__copy_structure_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Copy Structure",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/academic-sessions/{session_id}/make-current": {
+      "post": {
+        "operationId": "make_current_api_v1_admin_academic_sessions__session_id__make_current_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Make Current",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/academic-sessions/{session_id}/terms": {
+      "get": {
+        "operationId": "list_terms_api_v1_admin_academic_sessions__session_id__terms_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TermOut"
+                  },
+                  "title": "Response List Terms Api V1 Admin Academic Sessions  Session Id  Terms Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Terms",
+        "tags": [
+          "academics"
+        ]
+      },
+      "post": {
+        "operationId": "create_term_api_v1_admin_academic_sessions__session_id__terms_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TermIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Term",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/academic-structure/summary": {
+      "get": {
+        "operationId": "summary_api_v1_admin_academic_structure_summary_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StructureCounts"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Summary",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
     "/api/v1/admin/audit-logs": {
       "get": {
         "operationId": "list_audit_logs_api_v1_admin_audit_logs_get",
@@ -2437,6 +3621,669 @@
         ]
       }
     },
+    "/api/v1/admin/cohorts": {
+      "get": {
+        "operationId": "list_cohorts_api_v1_admin_cohorts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "session_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Session Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "program_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Program Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CohortOut"
+                  },
+                  "title": "Response List Cohorts Api V1 Admin Cohorts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Cohorts",
+        "tags": [
+          "academics"
+        ]
+      },
+      "post": {
+        "operationId": "create_cohort_api_v1_admin_cohorts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CohortCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Cohort",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/cohorts/{cohort_id}": {
+      "put": {
+        "operationId": "update_cohort_api_v1_admin_cohorts__cohort_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cohort_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cohort Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CohortUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Cohort",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/cohorts/{cohort_id}/archived": {
+      "put": {
+        "operationId": "archive_cohort_api_v1_admin_cohorts__cohort_id__archived_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cohort_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cohort Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CohortOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Cohort",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/courses": {
+      "get": {
+        "operationId": "list_courses_api_v1_admin_courses_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "department_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Department Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Courses",
+        "tags": [
+          "academics"
+        ]
+      },
+      "post": {
+        "operationId": "create_course_api_v1_admin_courses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Course",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/courses/{course_id}": {
+      "put": {
+        "operationId": "update_course_api_v1_admin_courses__course_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CourseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Course",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/courses/{course_id}/archived": {
+      "put": {
+        "operationId": "archive_course_api_v1_admin_courses__course_id__archived_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "course_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Course Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Course",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/departments": {
+      "get": {
+        "operationId": "list_departments_api_v1_admin_departments_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DepartmentOut"
+                  },
+                  "title": "Response List Departments Api V1 Admin Departments Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Departments",
+        "tags": [
+          "academics"
+        ]
+      },
+      "post": {
+        "operationId": "create_department_api_v1_admin_departments_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepartmentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Department",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/departments/{department_id}": {
+      "put": {
+        "operationId": "update_department_api_v1_admin_departments__department_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "department_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Department Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DepartmentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Department",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/departments/{department_id}/archived": {
+      "put": {
+        "operationId": "archive_department_api_v1_admin_departments__department_id__archived_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "department_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Department Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DepartmentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Department",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
     "/api/v1/admin/onboarding": {
       "get": {
         "operationId": "get_onboarding_api_v1_admin_onboarding_get",
@@ -2494,6 +4341,198 @@
         "summary": "Dismiss Onboarding",
         "tags": [
           "settings"
+        ]
+      }
+    },
+    "/api/v1/admin/programs": {
+      "get": {
+        "operationId": "list_programs_api_v1_admin_programs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProgramOut"
+                  },
+                  "title": "Response List Programs Api V1 Admin Programs Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Programs",
+        "tags": [
+          "academics"
+        ]
+      },
+      "post": {
+        "operationId": "create_program_api_v1_admin_programs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Program",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/programs/{program_id}": {
+      "put": {
+        "operationId": "update_program_api_v1_admin_programs__program_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Program Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProgramIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Program",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/programs/{program_id}/archived": {
+      "put": {
+        "operationId": "archive_program_api_v1_admin_programs__program_id__archived_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "program_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Program Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArchiveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Program",
+        "tags": [
+          "academics"
         ]
       }
     },
@@ -2878,6 +4917,59 @@
         ]
       }
     },
+    "/api/v1/admin/terms/{term_id}": {
+      "put": {
+        "operationId": "update_term_api_v1_admin_terms__term_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "term_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Term Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TermIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TermOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Term",
+        "tags": [
+          "academics"
+        ]
+      }
+    },
     "/api/v1/auth/activate": {
       "post": {
         "operationId": "activate_api_v1_auth_activate_post",
@@ -2896,7 +4988,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SessionOut"
+                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
                 }
               }
             },
@@ -2959,7 +5051,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SessionOut"
+                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
                 }
               }
             },
@@ -3000,7 +5092,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SessionOut"
+                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
                 }
               }
             },
@@ -3083,7 +5175,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SessionOut"
+                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
                 }
               }
             },

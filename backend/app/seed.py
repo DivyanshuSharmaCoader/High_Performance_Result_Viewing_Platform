@@ -104,11 +104,14 @@ async def seed_tenants(infra: Infra, *, students_per_tenant: int = 120) -> list[
                 Actor.system("seed"),
             )
             created.append(demo.slug)
+    from app.demo.academics import seed_academics
+
     for demo in DEMO_TENANTS:
         async with infra.db.uow() as uow:
             row = (
                 await uow.session.execute(text("SELECT id FROM resolve_tenant(:s, NULL)"), {"s": demo.slug})
             ).one()
+        await seed_academics(infra, row.id, demo.slug)
         for seeder in _extra_seeders:
             await seeder(infra, row.id, demo, students_per_tenant)
     return created

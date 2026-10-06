@@ -401,7 +401,7 @@ async def test_onboarding_checklist_reflects_data(app, infra) -> None:
         await owner.login(t.owner_email)
         data = (await owner.get("/api/v1/admin/onboarding")).json()
         keys = [s["key"] for s in data["steps"]]
-        assert keys[:3] == ["profile", "logo", "staff"]
+        assert keys[:4] == ["profile", "logo", "staff", "structure"]
         assert data["completed"] == 0 and not data["dismissed"]
         s = (await owner.get("/api/v1/admin/settings")).json()
         payload = {k: s[k] for k in s if k not in ("special_codes", "version")}

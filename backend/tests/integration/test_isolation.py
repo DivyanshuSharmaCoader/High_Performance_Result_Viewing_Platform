@@ -61,16 +61,85 @@ async def _invite_token(infra: Any, t: TenantFixture) -> str:
     return token
 
 
+async def _academic(infra: Any, t: TenantFixture) -> dict[str, uuid.UUID]:
+    """One instance of every academic-structure resource in tenant t."""
+    from datetime import date
+
+    from app.modules.academics.models import AcademicSession, Cohort, Course, Department, Program, Term
+
+    async with infra.db.uow(t.id) as uow:
+        sess = AcademicSession(
+            tenant_id=t.id,
+            code=f"S{uuid.uuid4().hex[:6]}",
+            name="S",
+            starts_on=date(2025, 7, 1),
+            ends_on=date(2026, 6, 30),
+        )
+        dept = Department(tenant_id=t.id, code=f"D{uuid.uuid4().hex[:6]}", name="D")
+        uow.session.add_all([sess, dept])
+        await uow.flush()
+        term = Term(tenant_id=t.id, session_id=sess.id, code="T1", name="T1", sequence=1)
+        prog = Program(tenant_id=t.id, code=f"P{uuid.uuid4().hex[:6]}", name="P", department_id=dept.id)
+        course = Course(tenant_id=t.id, code=f"C{uuid.uuid4().hex[:6]}", name="C")
+        uow.session.add_all([term, prog, course])
+        await uow.flush()
+        cohort = Cohort(
+            tenant_id=t.id, code=f"K{uuid.uuid4().hex[:6]}", name="K", program_id=prog.id, session_id=sess.id
+        )
+        uow.session.add(cohort)
+        await uow.flush()
+        return {
+            "session_id": sess.id,
+            "term_id": term.id,
+            "department_id": dept.id,
+            "program_id": prog.id,
+            "cohort_id": cohort.id,
+            "course_id": course.id,
+        }
+
+
+def _academic_provider(key: str) -> Provider:
+    async def provide(infra: Any, t: TenantFixture) -> uuid.UUID:
+        return (await _academic(infra, t))[key]
+
+    return provide
+
+
 PROVIDERS: dict[str, Provider] = {
     "user_id": _staff_user,
     "job_id": _job,
     "token": _invite_token,
+    **{
+        k: _academic_provider(k)
+        for k in ("session_id", "term_id", "department_id", "program_id", "cohort_id", "course_id")
+    },
 }
 
 # Bodies that pass validation so the request reaches the resource lookup.
+_ARCHIVE = {"archived": True}
 SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("PUT", "/api/v1/admin/staff/{user_id}/role"): {"role": "institution_admin"},
     ("PUT", "/api/v1/admin/staff/{user_id}/status"): {"disabled": True},
+    ("PUT", "/api/v1/admin/academic-sessions/{session_id}"): {
+        "code": "X",
+        "name": "X",
+        "starts_on": "2025-07-01",
+        "ends_on": "2026-06-30",
+    },
+    ("PUT", "/api/v1/admin/academic-sessions/{session_id}/archived"): _ARCHIVE,
+    ("POST", "/api/v1/admin/academic-sessions/{session_id}/copy-structure"): {
+        "source_session_id": str(uuid.uuid4())
+    },
+    ("POST", "/api/v1/admin/academic-sessions/{session_id}/terms"): {"code": "T9", "name": "T9"},
+    ("PUT", "/api/v1/admin/terms/{term_id}"): {"code": "T9", "name": "T9", "sequence": 1},
+    ("PUT", "/api/v1/admin/departments/{department_id}"): {"code": "X", "name": "X"},
+    ("PUT", "/api/v1/admin/departments/{department_id}/archived"): _ARCHIVE,
+    ("PUT", "/api/v1/admin/programs/{program_id}"): {"code": "X", "name": "X"},
+    ("PUT", "/api/v1/admin/programs/{program_id}/archived"): _ARCHIVE,
+    ("PUT", "/api/v1/admin/cohorts/{cohort_id}"): {"code": "X", "name": "X"},
+    ("PUT", "/api/v1/admin/cohorts/{cohort_id}/archived"): _ARCHIVE,
+    ("PUT", "/api/v1/admin/courses/{course_id}"): {"code": "X", "name": "X"},
+    ("PUT", "/api/v1/admin/courses/{course_id}/archived"): _ARCHIVE,
 }
 
 

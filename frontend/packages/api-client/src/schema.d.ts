@@ -4,6 +4,127 @@
  */
 
 export interface paths {
+    "/api/v1/admin/academic-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sessions */
+        get: operations["list_sessions_api_v1_admin_academic_sessions_get"];
+        put?: never;
+        /** Create Session */
+        post: operations["create_session_api_v1_admin_academic_sessions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/academic-sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Session */
+        put: operations["update_session_api_v1_admin_academic_sessions__session_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/academic-sessions/{session_id}/archived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Archive Session */
+        put: operations["archive_session_api_v1_admin_academic_sessions__session_id__archived_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/academic-sessions/{session_id}/copy-structure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy Structure */
+        post: operations["copy_structure_api_v1_admin_academic_sessions__session_id__copy_structure_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/academic-sessions/{session_id}/make-current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make Current */
+        post: operations["make_current_api_v1_admin_academic_sessions__session_id__make_current_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/academic-sessions/{session_id}/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Terms */
+        get: operations["list_terms_api_v1_admin_academic_sessions__session_id__terms_get"];
+        put?: never;
+        /** Create Term */
+        post: operations["create_term_api_v1_admin_academic_sessions__session_id__terms_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/academic-structure/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_v1_admin_academic_structure_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/audit-logs": {
         parameters: {
             query?: never;
@@ -57,6 +178,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/cohorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Cohorts */
+        get: operations["list_cohorts_api_v1_admin_cohorts_get"];
+        put?: never;
+        /** Create Cohort */
+        post: operations["create_cohort_api_v1_admin_cohorts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cohorts/{cohort_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Cohort */
+        put: operations["update_cohort_api_v1_admin_cohorts__cohort_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/cohorts/{cohort_id}/archived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Archive Cohort */
+        put: operations["archive_cohort_api_v1_admin_cohorts__cohort_id__archived_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/courses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Courses */
+        get: operations["list_courses_api_v1_admin_courses_get"];
+        put?: never;
+        /** Create Course */
+        post: operations["create_course_api_v1_admin_courses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/courses/{course_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Course */
+        put: operations["update_course_api_v1_admin_courses__course_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/courses/{course_id}/archived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Archive Course */
+        put: operations["archive_course_api_v1_admin_courses__course_id__archived_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Departments */
+        get: operations["list_departments_api_v1_admin_departments_get"];
+        put?: never;
+        /** Create Department */
+        post: operations["create_department_api_v1_admin_departments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/departments/{department_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Department */
+        put: operations["update_department_api_v1_admin_departments__department_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/departments/{department_id}/archived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Archive Department */
+        put: operations["archive_department_api_v1_admin_departments__department_id__archived_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/onboarding": {
         parameters: {
             query?: never;
@@ -68,6 +345,58 @@ export interface paths {
         get: operations["get_onboarding_api_v1_admin_onboarding_get"];
         /** Dismiss Onboarding */
         put: operations["dismiss_onboarding_api_v1_admin_onboarding_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/programs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Programs */
+        get: operations["list_programs_api_v1_admin_programs_get"];
+        put?: never;
+        /** Create Program */
+        post: operations["create_program_api_v1_admin_programs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/programs/{program_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Program */
+        put: operations["update_program_api_v1_admin_programs__program_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/programs/{program_id}/archived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Archive Program */
+        put: operations["archive_program_api_v1_admin_programs__program_id__archived_put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -189,6 +518,23 @@ export interface paths {
         /** Subscription */
         get: operations["subscription_api_v1_admin_subscription_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/terms/{term_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Term */
+        put: operations["update_term_api_v1_admin_terms__term_id__put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -784,6 +1130,11 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** ArchiveIn */
+        ArchiveIn: {
+            /** Archived */
+            archived: boolean;
+        };
         /** AuditEntry */
         AuditEntry: {
             /** Action */
@@ -901,6 +1252,130 @@ export interface components {
             current_password: string;
             /** New Password */
             new_password: string;
+        };
+        /** CohortCreateIn */
+        CohortCreateIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /**
+             * Program Id
+             * Format: uuid
+             */
+            program_id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** CohortOut */
+        CohortOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Program Id
+             * Format: uuid
+             */
+            program_id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** CohortUpdateIn */
+        CohortUpdateIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** CopyIn */
+        CopyIn: {
+            /**
+             * Source Session Id
+             * Format: uuid
+             */
+            source_session_id: string;
+        };
+        /** CopyOut */
+        CopyOut: {
+            /** Cohorts */
+            cohorts: number;
+            /** Terms */
+            terms: number;
+        };
+        /** CourseIn */
+        CourseIn: {
+            /** Code */
+            code: string;
+            /** Credits */
+            credits?: number | string | null;
+            /** Department Id */
+            department_id?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** CourseList */
+        CourseList: {
+            /** Items */
+            items: components["schemas"]["CourseOut"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /** CourseOut */
+        CourseOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /** Credits */
+            credits: string | null;
+            /** Department Id */
+            department_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** DepartmentIn */
+        DepartmentIn: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** DepartmentOut */
+        DepartmentOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
         };
         /** DismissIn */
         DismissIn: {
@@ -1171,6 +1646,39 @@ export interface components {
             /** Roles */
             roles: string[];
         };
+        /** ProgramIn */
+        ProgramIn: {
+            /** Code */
+            code: string;
+            /** Department Id */
+            department_id?: string | null;
+            /** Duration Terms */
+            duration_terms?: number | null;
+            /** Level */
+            level?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** ProgramOut */
+        ProgramOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /** Department Id */
+            department_id: string | null;
+            /** Duration Terms */
+            duration_terms: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Level */
+            level: string | null;
+            /** Name */
+            name: string;
+        };
         /** ReasonIn */
         ReasonIn: {
             /** Reason */
@@ -1196,6 +1704,45 @@ export interface components {
              */
             role: "institution_admin" | "faculty";
         };
+        /** SessionCreateIn */
+        SessionCreateIn: {
+            /** Code */
+            code: string;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
+            /**
+             * Make Current
+             * @default false
+             */
+            make_current: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+        };
+        /** SessionIn */
+        SessionIn: {
+            /** Code */
+            code: string;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+        };
         /** SessionItem */
         SessionItem: {
             /**
@@ -1214,13 +1761,6 @@ export interface components {
             last_seen_at: string;
             /** User Agent */
             user_agent: string | null;
-        };
-        /** SessionOut */
-        SessionOut: {
-            /** Roles */
-            roles: string[];
-            /** User Kind */
-            user_kind: string;
         };
         /** SettingsIn */
         SettingsIn: {
@@ -1351,6 +1891,19 @@ export interface components {
             /** Disabled */
             disabled: boolean;
         };
+        /** StructureCounts */
+        StructureCounts: {
+            /** Cohorts */
+            cohorts: number;
+            /** Courses */
+            courses: number;
+            /** Departments */
+            departments: number;
+            /** Programs */
+            programs: number;
+            /** Sessions */
+            sessions: number;
+        };
         /** SubscriptionOut */
         SubscriptionOut: {
             /** Features */
@@ -1423,6 +1976,42 @@ export interface components {
             /** Slug */
             slug: string;
         };
+        /** TermIn */
+        TermIn: {
+            /** Code */
+            code: string;
+            /** Ends On */
+            ends_on?: string | null;
+            /** Name */
+            name: string;
+            /** Sequence */
+            sequence?: number | null;
+            /** Starts On */
+            starts_on?: string | null;
+        };
+        /** TermOut */
+        TermOut: {
+            /** Code */
+            code: string;
+            /** Ends On */
+            ends_on: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Sequence */
+            sequence: number;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Starts On */
+            starts_on: string | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -1450,6 +2039,39 @@ export interface components {
             /** Tenant Url */
             tenant_url: string;
         };
+        /** SessionOut */
+        app__modules__academics__router__SessionOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Current */
+            is_current: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+        };
+        /** SessionOut */
+        app__modules__identity__router__SessionOut: {
+            /** Roles */
+            roles: string[];
+            /** User Kind */
+            user_kind: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -1459,6 +2081,292 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_sessions_api_v1_admin_academic_sessions_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_session_api_v1_admin_academic_sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_session_api_v1_admin_academic_sessions__session_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_session_api_v1_admin_academic_sessions__session_id__archived_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copy_structure_api_v1_admin_academic_sessions__session_id__copy_structure_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    make_current_api_v1_admin_academic_sessions__session_id__make_current_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_terms_api_v1_admin_academic_sessions__session_id__terms_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TermOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_term_api_v1_admin_academic_sessions__session_id__terms_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TermIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TermOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_admin_academic_structure_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StructureCounts"];
+                };
+            };
+        };
+    };
     list_audit_logs_api_v1_admin_audit_logs_get: {
         parameters: {
             query?: {
@@ -1603,6 +2511,414 @@ export interface operations {
             };
         };
     };
+    list_cohorts_api_v1_admin_cohorts_get: {
+        parameters: {
+            query?: {
+                session_id?: string | null;
+                program_id?: string | null;
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_cohort_api_v1_admin_cohorts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_cohort_api_v1_admin_cohorts__cohort_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_cohort_api_v1_admin_cohorts__cohort_id__archived_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cohort_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CohortOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_courses_api_v1_admin_courses_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                department_id?: string | null;
+                include_archived?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_course_api_v1_admin_courses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CourseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_course_api_v1_admin_courses__course_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CourseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_course_api_v1_admin_courses__course_id__archived_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                course_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CourseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_departments_api_v1_admin_departments_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_department_api_v1_admin_departments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_department_api_v1_admin_departments__department_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                department_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_department_api_v1_admin_departments__department_id__archived_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                department_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_onboarding_api_v1_admin_onboarding_get: {
         parameters: {
             query?: never;
@@ -1643,6 +2959,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OnboardingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_programs_api_v1_admin_programs_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_program_api_v1_admin_programs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_program_api_v1_admin_programs__program_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_program_api_v1_admin_programs__program_id__archived_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchiveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramOut"];
                 };
             };
             /** @description Validation Error */
@@ -1926,6 +3376,41 @@ export interface operations {
             };
         };
     };
+    update_term_api_v1_admin_terms__term_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                term_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TermIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TermOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     activate_api_v1_auth_activate_post: {
         parameters: {
             query?: never;
@@ -1945,7 +3430,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SessionOut"];
+                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -1998,7 +3483,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SessionOut"];
+                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -2031,7 +3516,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SessionOut"];
+                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -2095,7 +3580,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SessionOut"];
+                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
                 };
             };
             /** @description Validation Error */

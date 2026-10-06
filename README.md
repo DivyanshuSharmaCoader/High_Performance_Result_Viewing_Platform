@@ -4,8 +4,9 @@
 
 Institutions import marks, catch errors before students do, publish with one click, and give every student a branded, verifiable marksheet on a portal built to stay up on result day. Every institution (schools, colleges, coaching institutes) is a tenant on one shared platform with strict data isolation. *Thapar Institute of Engineering & Technology is one demo tenant, not the product.*
 
-> **Status: Phase 0 — architecture and planning complete; implementation starts at Phase 1.**
-> Track progress in [docs/CHECKLIST.md](docs/CHECKLIST.md).
+> **Status: implementation in progress.** Platform kernel, tenancy, identity, entitlements, onboarding, the
+> tenant admin app, the platform console and self-serve sign-up are built and verified in CI. Exams, marks,
+> results and publication are next. Exact progress: [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ---
 
@@ -67,16 +68,60 @@ flowchart LR
 
 **Performance policy:** no number is claimed unless measured. Targets and the benchmark method are in [docs/11](docs/11-performance-architecture.md); results will appear in [benchmarks/results/](benchmarks/README.md).
 
-## Planned tech stack
-React + TypeScript + Vite · FastAPI (Python 3.12) · PostgreSQL 16 · Redis 7 · S3-compatible storage · WeasyPrint · Caddy · Cloudflare · Docker · GitHub Actions — justified component by component in [docs/17](docs/17-tech-stack.md).
+## Run it locally
 
-## Repository layout (target, created in Phase 1)
+Prerequisites: Docker (Desktop or Engine with Compose v2.20+), and for host development Python 3.12 with
+[uv](https://docs.astral.sh/uv/) and Node 22+ with pnpm 10.
+
+### Option A — everything in containers (closest to production)
+```bash
+docker compose --profile app up -d --build --wait     # postgres, redis, s3, mailpit, migrate, api, worker, proxy
+docker compose --profile app exec api scorecode seed  # demo tenants + a demo platform account (dev only)
+```
+Then open (browsers resolve `*.localhost` to your machine):
+
+| Address | What |
+|---|---|
+| http://localhost:8080 | Marketing site and self-serve sign-up |
+| http://thapar.localhost:8080 | Thapar (Enterprise plan) — owner `registrar@thapar.example.com` |
+| http://demoschool.localhost:8080 | Demo Public School (Free plan) — owner `principal@demoschool.example.com` |
+| http://democoaching.localhost:8080 | Demo Coaching Academy (Growth plan) — owner `director@democoaching.example.com` |
+| http://admin.localhost:8080 | Platform console — `ops@scorecode.example.com`, TOTP secret printed by `seed` |
+| http://localhost:58025 | Mailpit — every email the system sends (invites, resets, sign-up) |
+
+The demo password and TOTP secret are printed by `scorecode seed` (development only; the command refuses to run in production).
+
+### Option B — host processes with hot reload
+```bash
+make up                      # infrastructure containers only
+cp .env.example backend/.env # then adjust if needed (see docs/ENVIRONMENT.md)
+make migrate && make seed
+make api                     # FastAPI on :8000 (reload)
+make worker                  # background jobs (emails etc.)
+cd frontend && pnpm install && pnpm dev   # tenant :5173, console :5174, site :5175
+docker compose --profile dev up -d devproxy   # one origin per host on :8080, like production
+```
+
+### Checks
+```bash
+make lint            # ruff, mypy --strict, import-linter, eslint, prettier, tsc
+make test            # backend unit + integration (needs `make up`) and frontend tests
+cd frontend && pnpm e2e   # Playwright against the running stack (Option A)
+```
+CI runs the same checks plus security scans, a Docker build with Trivy, and the full-stack E2E suite.
+
+## Tech stack
+React 19 + TypeScript + Vite · FastAPI (Python 3.12) · PostgreSQL 16 · Redis 7 · S3-compatible storage
+(SeaweedFS in development) · Caddy · Docker · GitHub Actions — justified in [docs/17](docs/17-tech-stack.md);
+deviations are recorded as ADRs in [docs/adr/](docs/adr/README.md).
+
+## Repository layout
 ```
 backend/     FastAPI modular monolith (api + worker modes), Alembic migrations, tests
-frontend/    pnpm workspace: apps/tenant, apps/platform, apps/site, packages/ui, packages/api-client
-infra/       docker compose, Caddyfile, deployment config
-benchmarks/  k6 scripts and measured results
-docs/        all design documentation (this index)
+frontend/    pnpm workspace: apps/tenant, apps/platform, apps/site, packages/ui, packages/api-client, e2e/
+infra/       Postgres init (roles), Caddy (dev proxy + production-style edge), SeaweedFS config
+benchmarks/  measured results only (see benchmarks/README.md)
+docs/        design documentation, ADRs, checklist
 ```
 
 ## Keeping a local folder in sync

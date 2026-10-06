@@ -1,0 +1,43 @@
+# Configuration reference
+
+All backend settings are environment variables with the prefix `SCORECODE_`, parsed by
+`backend/app/core/config.py` (pydantic-settings). In `staging`/`production` the app **refuses to start**
+with development secrets, insecure cookies, a non-HTTPS public scheme or development database passwords.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `SCORECODE_ENV` | `development` | `development`, `test`, `staging`, `production` |
+| `SCORECODE_BASE_DOMAIN` | `localhost` | Tenants live at `<slug>.<base>`; console at `admin.<base>`; verification at `verify.<base>` (decision D23 is open, so nothing is hard-coded) |
+| `SCORECODE_PLATFORM_SUBDOMAIN` / `SCORECODE_VERIFY_SUBDOMAIN` | `admin` / `verify` | Reserved subdomains |
+| `SCORECODE_PUBLIC_SCHEME` / `SCORECODE_PUBLIC_PORT` | `http` / `8080` | Used to build absolute links in emails |
+| `SCORECODE_DATABASE_URL_APP` | dev URL | Runtime role `scorecode_app` (NOBYPASSRLS) |
+| `SCORECODE_DATABASE_URL_PLATFORM` | dev URL | Platform-console role `scorecode_platform` (BYPASSRLS) |
+| `SCORECODE_DATABASE_URL_MIGRATOR` | dev URL | Schema owner, used only by `scorecode migrate` |
+| `SCORECODE_DB_POOL_SIZE` / `_MAX_OVERFLOW` / `_POOL_TIMEOUT_S` | `10` / `5` / `5` | Per process |
+| `SCORECODE_REDIS_URL` | unset | Optional cache and shared rate limits; the app works without it |
+| `SCORECODE_REDIS_TIMEOUT_S` / `_CONNECT_TIMEOUT_S` | `0.5` / `1.0` | A circuit breaker stops repeated waits when Redis is unhealthy |
+| `SCORECODE_S3_ENDPOINT_URL` | `http://localhost:59000` | S3 API endpoint used by the app |
+| `SCORECODE_S3_PUBLIC_ENDPOINT_URL` | unset | Endpoint browsers use for signed download URLs |
+| `SCORECODE_S3_BUCKET` / `_ACCESS_KEY` / `_SECRET_KEY` / `_REGION` | dev values | Object storage (private bucket) |
+| `SCORECODE_SMTP_HOST` / `_PORT` / `_USERNAME` / `_PASSWORD` / `_STARTTLS` | Mailpit | Outgoing email (SES/Postmark SMTP in production) |
+| `SCORECODE_MAIL_FROM` | `ScoreCode <no-reply@scorecode.localhost>` | Sender address |
+| `SCORECODE_SECRET_KEY` | dev value | ≥ 32 chars; derives the field-encryption key (TOTP secrets) |
+| `SCORECODE_COOKIE_SECURE` | `false` | `true` outside development → `__Host-` prefixed, Secure cookies |
+| `SCORECODE_TRUST_PROXY_HEADERS` | `false` | Use `X-Forwarded-For` for client IP — only behind our own proxy |
+| `SCORECODE_ARGON2_TIME_COST` / `_MEMORY_KIB` / `_PARALLELISM` / `_MAX_CONCURRENCY` | `2` / `19456` / `1` / `4` | Password hashing cost and per-process concurrency (measured: benchmarks/results) |
+| `SCORECODE_STUDENT_SESSION_DAYS` | `30` | Sliding student session |
+| `SCORECODE_STAFF_SESSION_IDLE_HOURS` / `_ABSOLUTE_DAYS` | `12` / `7` | Staff session limits |
+| `SCORECODE_PLATFORM_SESSION_HOURS` | `8` | Console session |
+| `SCORECODE_LOGIN_MAX_FAILURES` / `_LOCKOUT_MINUTES` | `5` / `15` | Progressive account lockout |
+| `SCORECODE_REAUTH_WINDOW_MINUTES` | `10` | Password re-confirmation window for sensitive actions |
+| `SCORECODE_RATE_LOGIN_IP_PER_MINUTE` / `_BURST` | `20` / `10` | Login attempts per IP |
+| `SCORECODE_RATE_SIGNUP_IP_PER_HOUR` | `5` | Self-serve sign-ups per IP |
+| `SCORECODE_API_SESSION_PER_MINUTE` / `_BURST` | `300` / `100` | Authenticated API calls per session |
+| `SCORECODE_MAX_UPLOAD_BYTES` / `_MAX_LOGO_BYTES` | 10 MB / 1 MB | Upload size limits |
+| `SCORECODE_WORKER_QUEUES` / `_CONCURRENCY` / `_POLL_INTERVAL_S` / `SCORECODE_JOB_LEASE_S` | see code | Background worker |
+| `SCORECODE_SENTRY_DSN` | unset | Error reporting (PII scrubbed) |
+| `SCORECODE_LOG_LEVEL` / `SCORECODE_LOG_JSON` | `INFO` / `true` | Structured logs; secrets and personal data are redacted |
+| `SCORECODE_EXPOSE_DOCS` | `true` | `/api/docs` and `/api/openapi.json` |
+
+Frontend apps have no runtime configuration: the tenant, its branding and features come from
+`GET /api/v1/tenant/config` on the same origin. The Caddy edge reads `BASE_DOMAIN` and `FILES_ORIGIN`.
