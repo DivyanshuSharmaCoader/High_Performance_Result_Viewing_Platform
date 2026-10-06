@@ -16,6 +16,7 @@ import {
 import {
   Award,
   ChevronsUpDown,
+  ClipboardList,
   FileSpreadsheet,
   GraduationCap,
   LayoutDashboard,
@@ -65,6 +66,10 @@ export const NAV: NavGroup[] = [
       { to: "/admin/staff", label: "Staff", icon: Users, permission: "staff.view" },
       { to: "/admin/imports", label: "Imports", icon: FileSpreadsheet, permission: "imports.manage" },
     ],
+  },
+  {
+    label: "Examinations",
+    items: [{ to: "/admin/exams", label: "Exams", icon: ClipboardList, permission: "exams.view" }],
   },
   {
     label: "Academics",

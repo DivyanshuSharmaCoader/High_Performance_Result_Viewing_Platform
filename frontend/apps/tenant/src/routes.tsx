@@ -27,6 +27,8 @@ const StudentDetail = page(() => import("./features/students/detail"));
 const Activation = page(() => import("./features/students/activation"));
 const Imports = page(() => import("./features/imports/hub"));
 const Grading = page(() => import("./features/grading/list"));
+const Exams = page(() => import("./features/exams/list"));
+const ExamWorkspace = page(() => import("./features/exams/workspace"));
 const GradingEditor = page(() => import("./features/grading/editor"));
 const ImportJob = page(() => import("./features/imports/job"));
 const AcademicsLayout = page(() => import("./features/academics/layout"));
@@ -144,6 +146,13 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="students.manage" />,
                     children: [{ path: "students/activation", element: <Activation /> }],
+                  },
+                  {
+                    element: <RequirePermission permission="exams.view" />,
+                    children: [
+                      { path: "exams", element: <Exams /> },
+                      { path: "exams/:examId", element: <ExamWorkspace /> },
+                    ],
                   },
                   {
                     element: <RequirePermission permission="grading.view" />,

@@ -153,3 +153,13 @@ export type GradingTemplate = Schemas["TemplateOut"];
 export type GradingStrategy = GradingScheme["strategy"];
 export type GradePreview = Schemas["ExamResultOut"];
 export type PaperPreview = Schemas["PaperResultOut"];
+
+// ---- Examinations -----------------------------------------------------------------------------------
+export type Exam = Schemas["ExamOut"];
+export type ExamListItem = Schemas["ExamListItem"];
+export type ExamStatus = Exam["status"];
+export type ExamKind = Exam["kind"];
+export type ExamPaper = Schemas["ExamPaperOut"];
+export type ExamComponent = Schemas["ExamComponentOut"];
+export type ExamCohort = Schemas["ExamCohortOut"];
+export type ExamAction = Schemas["ExamActionOut"];
