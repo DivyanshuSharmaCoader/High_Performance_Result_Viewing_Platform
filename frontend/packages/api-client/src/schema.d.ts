@@ -125,6 +125,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/activation-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Issue Activation Codes
+         * @description Codes appear only in this response (only hashes are stored); keep the page open to print slips.
+         */
+        post: operations["issue_activation_codes_api_v1_admin_activation_codes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/audit-logs": {
         parameters: {
             query?: never;
@@ -1487,6 +1507,27 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** ActivationCodesIn */
+        ActivationCodesIn: {
+            /** Cohort Id */
+            cohort_id?: string | null;
+            /**
+             * Replace Existing
+             * @default false
+             */
+            replace_existing: boolean;
+            /** Student Ids */
+            student_ids?: string[];
+        };
+        /** ActivationCodesOut */
+        ActivationCodesOut: {
+            /** Cohort Code */
+            cohort_code: string | null;
+            /** Issued */
+            issued: components["schemas"]["IssuedCodeOut"][];
+            /** Skipped */
+            skipped: components["schemas"]["SkippedOut"][];
+        };
         /** ArchiveIn */
         ArchiveIn: {
             /** Archived */
@@ -1964,6 +2005,27 @@ export interface components {
              * @enum {string}
              */
             severity: "error" | "warning" | "info";
+        };
+        /** IssuedCodeOut */
+        IssuedCodeOut: {
+            /** Code */
+            code: string;
+            /** Cohort Code */
+            cohort_code: string | null;
+            /** Enrollment No */
+            enrollment_no: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Full Name */
+            full_name: string;
+            /**
+             * Student Id
+             * Format: uuid
+             */
+            student_id: string;
         };
         /** JobOut */
         JobOut: {
@@ -2462,6 +2524,23 @@ export interface components {
         SignupStartedOut: {
             /** Email */
             email: string;
+        };
+        /** SkippedOut */
+        SkippedOut: {
+            /** Enrollment No */
+            enrollment_no: string;
+            /** Full Name */
+            full_name: string;
+            /**
+             * Reason
+             * @enum {string}
+             */
+            reason: "already_active" | "has_code" | "not_active_student";
+            /**
+             * Student Id
+             * Format: uuid
+             */
+            student_id: string;
         };
         /** StaffOut */
         StaffOut: {
@@ -3040,6 +3119,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StructureCounts"];
+                };
+            };
+        };
+    };
+    issue_activation_codes_api_v1_admin_activation_codes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivationCodesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivationCodesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

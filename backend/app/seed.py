@@ -105,6 +105,7 @@ async def seed_tenants(infra: Infra, *, students_per_tenant: int = 120) -> list[
             )
             created.append(demo.slug)
     from app.demo.academics import seed_academics
+    from app.demo.students import seed_students
 
     for demo in DEMO_TENANTS:
         async with infra.db.uow() as uow:
@@ -112,6 +113,7 @@ async def seed_tenants(infra: Infra, *, students_per_tenant: int = 120) -> list[
                 await uow.session.execute(text("SELECT id FROM resolve_tenant(:s, NULL)"), {"s": demo.slug})
             ).one()
         await seed_academics(infra, row.id, demo.slug)
+        await seed_students(infra, row.id, demo.slug, students_per_tenant, password_hash)
         for seeder in _extra_seeders:
             await seeder(infra, row.id, demo, students_per_tenant)
     return created
@@ -154,10 +156,13 @@ async def run_seed(*, students_per_tenant: int = 120) -> None:
         await infra.close()
     base = settings.base_domain
     print("Demo tenants:", ", ".join(created) or "already present")
+    from app.demo.students import demo_student_login
+
     for demo in DEMO_TENANTS:
         print(
             f"  {settings.tenant_origin(demo.slug)}  owner {demo.owner_email} / {DEMO_PASSWORD}  ({demo.plan})"
         )
+        print(f"      student {demo_student_login(demo.slug)} / {DEMO_PASSWORD}")
     print(f"Platform console: {settings.public_origin(f'{settings.platform_subdomain}.{base}')}")
     print(
         f"  {DEMO_PLATFORM_EMAIL} / {DEMO_PASSWORD}  TOTP secret {DEMO_PLATFORM_TOTP}"

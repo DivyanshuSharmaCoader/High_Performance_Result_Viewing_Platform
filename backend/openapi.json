@@ -183,6 +183,75 @@
         "title": "ActivateIn",
         "type": "object"
       },
+      "ActivationCodesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cohort_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cohort Id"
+          },
+          "replace_existing": {
+            "default": false,
+            "title": "Replace Existing",
+            "type": "boolean"
+          },
+          "student_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 2000,
+            "title": "Student Ids",
+            "type": "array"
+          }
+        },
+        "title": "ActivationCodesIn",
+        "type": "object"
+      },
+      "ActivationCodesOut": {
+        "properties": {
+          "cohort_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cohort Code"
+          },
+          "issued": {
+            "items": {
+              "$ref": "#/components/schemas/IssuedCodeOut"
+            },
+            "title": "Issued",
+            "type": "array"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/SkippedOut"
+            },
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cohort_code",
+          "issued",
+          "skipped"
+        ],
+        "title": "ActivationCodesOut",
+        "type": "object"
+      },
       "ArchiveIn": {
         "additionalProperties": false,
         "properties": {
@@ -1607,6 +1676,53 @@
           "msg"
         ],
         "title": "IssueOut",
+        "type": "object"
+      },
+      "IssuedCodeOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "cohort_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cohort Code"
+          },
+          "enrollment_no": {
+            "title": "Enrollment No",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "student_id": {
+            "format": "uuid",
+            "title": "Student Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "enrollment_no",
+          "full_name",
+          "cohort_code",
+          "code",
+          "expires_at"
+        ],
+        "title": "IssuedCodeOut",
         "type": "object"
       },
       "JobOut": {
@@ -3217,6 +3333,40 @@
         "title": "SignupStartedOut",
         "type": "object"
       },
+      "SkippedOut": {
+        "properties": {
+          "enrollment_no": {
+            "title": "Enrollment No",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "already_active",
+              "has_code",
+              "not_active_student"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "student_id": {
+            "format": "uuid",
+            "title": "Student Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "student_id",
+          "enrollment_no",
+          "full_name",
+          "reason"
+        ],
+        "title": "SkippedOut",
+        "type": "object"
+      },
       "StaffOut": {
         "properties": {
           "created_at": {
@@ -4552,6 +4702,48 @@
         "summary": "Summary",
         "tags": [
           "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/activation-codes": {
+      "post": {
+        "description": "Codes appear only in this response (only hashes are stored); keep the page open to print slips.",
+        "operationId": "issue_activation_codes_api_v1_admin_activation_codes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationCodesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivationCodesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Issue Activation Codes",
+        "tags": [
+          "students"
         ]
       }
     },

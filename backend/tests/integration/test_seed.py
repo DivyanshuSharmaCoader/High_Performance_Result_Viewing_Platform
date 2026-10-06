@@ -22,7 +22,11 @@ async def _counts(infra) -> dict[str, tuple[int, ...]]:
                         " (SELECT count(*) FROM programs x WHERE x.tenant_id = t.id),"
                         " (SELECT count(*) FROM cohorts x WHERE x.tenant_id = t.id),"
                         " (SELECT count(*) FROM courses x WHERE x.tenant_id = t.id),"
-                        " (SELECT count(*) FROM users x WHERE x.tenant_id = t.id)"
+                        " (SELECT count(*) FROM users x WHERE x.tenant_id = t.id),"
+                        " (SELECT count(*) FROM students x WHERE x.tenant_id = t.id),"
+                        " (SELECT count(DISTINCT student_id) FROM cohort_memberships x WHERE x.tenant_id = t.id),"
+                        " (SELECT value FROM tenant_usage_counters x"
+                        "   WHERE x.tenant_id = t.id AND x.metric = 'active_students')"
                         " FROM tenants t WHERE t.slug = :s"
                     ),
                     {"s": demo.slug},
@@ -36,8 +40,10 @@ async def test_seed_is_idempotent_and_branded(infra) -> None:
     await seed_tenants(infra)
     await seed_platform_user(infra)
     first = await _counts(infra)
-    assert first["thapar"] == (2, 4, 3, 8, 9, 1)
+    # sessions, terms, programs, cohorts, courses, users (owner + demo student), students, placed, usage
+    assert first["thapar"] == (2, 4, 3, 8, 9, 2, 120, 120, 120)
     assert first["demoschool"][3] == 4 and first["democoaching"][3] == 3
+    assert first["demoschool"][6] == 120 and first["democoaching"][6] == 120  # 3 cohorts × 40
     assert await seed_tenants(infra) == []  # nothing new on a second run
     assert await seed_platform_user(infra) is False
     assert await _counts(infra) == first
@@ -53,3 +59,18 @@ async def test_seed_is_idempotent_and_branded(infra) -> None:
             ).all()
         )
     assert len(set(colours.values())) == 3  # three distinct brands
+
+
+async def test_seeded_demo_student_can_sign_in(app, infra) -> None:
+    from app.demo.students import demo_student_login
+    from app.seed import DEMO_PASSWORD
+    from tests.helpers import Client
+
+    await seed_tenants(infra)
+    async with Client(app, "thapar.localhost") as c:
+        r = await c.post(
+            "/api/v1/auth/login", json={"login_id": demo_student_login("thapar"), "password": DEMO_PASSWORD}
+        )
+        assert r.status_code == 200, r.text
+        me = (await c.get("/api/v1/me")).json()
+        assert me["kind"] == "student" and me["login_id"] == "102401001"

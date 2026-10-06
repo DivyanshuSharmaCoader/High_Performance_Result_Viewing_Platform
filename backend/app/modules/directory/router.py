@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.http import InfraDep, Principal, UoW, require
 from app.core.pagination import Page
+from app.modules.directory.activation import ActivationService
 from app.modules.directory.service import StudentData, StudentFilters, StudentService, StudentView
 from app.modules.identity.permissions import P
 
@@ -230,4 +231,51 @@ async def add_cohort_members(
 ) -> CohortMembersOut:
     return CohortMembersOut(
         **await StudentService(infra).add_to_cohort(uow, principal, cohort_id, body.student_ids)
+    )
+
+
+class ActivationCodesIn(In):
+    cohort_id: uuid.UUID | None = None
+    student_ids: list[uuid.UUID] = Field(default_factory=list, max_length=2000)
+    replace_existing: bool = False
+
+
+class IssuedCodeOut(BaseModel):
+    student_id: uuid.UUID
+    enrollment_no: str
+    full_name: str
+    cohort_code: str | None
+    code: str
+    expires_at: datetime
+
+
+class SkippedOut(BaseModel):
+    student_id: uuid.UUID
+    enrollment_no: str
+    full_name: str
+    reason: Literal["already_active", "has_code", "not_active_student"]
+
+
+class ActivationCodesOut(BaseModel):
+    cohort_code: str | None
+    issued: list[IssuedCodeOut]
+    skipped: list[SkippedOut]
+
+
+@router.post("/activation-codes")
+async def issue_activation_codes(
+    body: ActivationCodesIn, uow: UoW, infra: InfraDep, principal: Principal = require(P.STUDENTS_MANAGE)
+) -> ActivationCodesOut:
+    """Codes appear only in this response (only hashes are stored); keep the page open to print slips."""
+    issued, skipped, cohort_code = await ActivationService(infra).issue(
+        uow,
+        principal,
+        cohort_id=body.cohort_id,
+        student_ids=body.student_ids,
+        replace_existing=body.replace_existing,
+    )
+    return ActivationCodesOut(
+        cohort_code=cohort_code,
+        issued=[IssuedCodeOut(**i.__dict__) for i in issued],
+        skipped=[SkippedOut(**s.__dict__) for s in skipped],
     )
