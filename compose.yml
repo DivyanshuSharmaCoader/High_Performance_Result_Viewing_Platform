@@ -1,0 +1,114 @@
+# ScoreCode local stack (docs/14 N1).
+#
+#   make up        → infrastructure only (postgres, redis, s3, mailpit) for running api/worker/vite on the host
+#   make stack     → everything in containers, served by Caddy on http://*.localhost:8080
+#
+# Hosts: http://thapar.localhost:8080 · http://admin.localhost:8080 · http://verify.localhost:8080 · http://localhost:8080
+name: scorecode
+
+x-backend-env: &backend-env
+  SCORECODE_ENV: development
+  SCORECODE_BASE_DOMAIN: localhost
+  SCORECODE_PUBLIC_PORT: "8080"
+  SCORECODE_DATABASE_URL_APP: postgresql+asyncpg://scorecode_app:app-dev-pw@postgres:5432/scorecode
+  SCORECODE_DATABASE_URL_PLATFORM: postgresql+asyncpg://scorecode_platform:platform-dev-pw@postgres:5432/scorecode
+  SCORECODE_DATABASE_URL_MIGRATOR: postgresql+asyncpg://scorecode_migrator:migrator-dev-pw@postgres:5432/scorecode
+  SCORECODE_REDIS_URL: redis://redis:6379/0
+  SCORECODE_S3_ENDPOINT_URL: http://s3:8333
+  SCORECODE_S3_PUBLIC_ENDPOINT_URL: http://files.localhost:8080
+  SCORECODE_S3_BUCKET: scorecode-dev
+  SCORECODE_S3_ACCESS_KEY: scorecode
+  SCORECODE_S3_SECRET_KEY: scorecode-dev-secret
+  SCORECODE_SMTP_HOST: mailpit
+  SCORECODE_SMTP_PORT: "1025"
+  SCORECODE_LOG_JSON: "true"
+
+services:
+  postgres:
+    build: { context: ./infra/postgres }
+    image: scorecode/postgres:16
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "max_connections=200"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres-dev-pw
+      SCORECODE_MIGRATOR_PASSWORD: migrator-dev-pw
+      SCORECODE_APP_PASSWORD: app-dev-pw
+      SCORECODE_PLATFORM_PASSWORD: platform-dev-pw
+    ports: ["127.0.0.1:55432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d scorecode"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports: ["127.0.0.1:56379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 30
+
+  s3:
+    # S3-compatible object storage for development (SeaweedFS; production uses S3/R2 — same API).
+    build: { context: ./infra/seaweedfs }
+    image: scorecode/seaweedfs:dev
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json",
+              "-master.volumeSizeLimitMB=128", "-volume.max=50", "-ip.bind=0.0.0.0"]
+    ports: ["127.0.0.1:59000:8333"]
+    volumes:
+      - s3data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8333/status || exit 1"]
+      interval: 3s
+      retries: 40
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["127.0.0.1:58025:8025", "127.0.0.1:51025:1025"]
+
+  # ---- application (profile "app") -------------------------------------------------------------
+  migrate:
+    profiles: [app]
+    build: { context: ./backend, target: runtime }
+    environment: *backend-env
+    command: ["scorecode", "migrate"]
+    depends_on: { postgres: { condition: service_healthy } }
+
+  api:
+    profiles: [app]
+    build: { context: ./backend, target: runtime }
+    environment: *backend-env
+    command: ["scorecode", "api", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+      s3: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/readyz', timeout=2).status==200 else 1)"]
+      interval: 5s
+      retries: 20
+
+  worker:
+    profiles: [app]
+    build: { context: ./backend, target: runtime }
+    environment: *backend-env
+    command: ["scorecode", "worker"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  proxy:
+    profiles: [app]
+    build: { context: ./frontend, dockerfile: Dockerfile }
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      SCORECODE_BASE_DOMAIN: localhost
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  s3data:

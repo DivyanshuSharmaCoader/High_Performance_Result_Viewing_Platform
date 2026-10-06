@@ -88,35 +88,35 @@ Kubernetes, Kafka, microservices, service mesh, GraphQL, multi-region, sharding,
 
 ## 3. Decision register — confirm before writing production code
 
-Status: **Proposed** = my recommendation, awaiting your confirmation. Once confirmed, mark **Accepted** and (optionally) expand into an ADR under `docs/adr/`.
+Status: **Accepted** decisions are implemented; ADRs for the architectural ones live in [`docs/adr/`](adr/). Decisions D23–D25 need the project owner's action and are implemented with safe, configurable defaults until then.
 
 | ID | Decision | Recommendation | Status |
 |---|---|---|---|
-| D1 | Architecture style | Modular monolith, one image with `api`/`worker` modes | Proposed |
-| D2 | Tenancy model | Shared DB/schema, `tenant_id` + composite FKs + RLS (FORCE, fail-closed) | Proposed |
-| D3 | User identity scope | Users belong to exactly one tenant | Proposed |
-| D4 | Tenant routing | Host-based everywhere; `*.localhost` in dev; custom domains (Pro, V1) via Caddy on-demand TLS | Proposed |
-| D5 | Auth | Opaque server-side sessions, `__Host-` cookies, Argon2id, TOTP for platform & owners | Proposed |
-| D6 | Student onboarding | Activation codes / invite links; no DOB passwords | Proposed |
-| D7 | Primary keys | UUIDv7 generated in app | Proposed |
-| D8 | Job queue | PostgreSQL-backed (Procrastinate or in-house SKIP LOCKED) | Proposed — spike both in Phase 1 |
-| D9 | Redis | Optional/degradable; required in small production | Proposed |
-| D10 | Read model | Immutable `published_results` snapshots + versioned publications | Proposed |
-| D11 | PDF engine | WeasyPrint, pre-rendered on approval | Proposed — validate speed in Phase 11 |
-| D12 | Real-time | Polling; SSE later; no WebSockets | Proposed |
-| D13 | Frontend | Vite + React + TS SPA; separate platform console app; server-rendered verify page | Proposed |
-| D14 | Grading in MVP | Percentage bands + marks-only + **credit/SGPA** (for Thapar) | Proposed |
-| D15 | Scheduled publication in MVP | Yes (demo story) | Proposed |
-| D16 | Approval mode in MVP | Single-step; maker–checker in V1 | Proposed |
-| D17 | Billing in MVP | Manual (platform admin sets plan); Razorpay in V1 | Proposed |
-| D18 | Beachhead segment | Coaching institutes + mid-size private schools; colleges as showcase | Proposed — validate with discovery calls |
-| D19 | Hosting region | India (e.g. AWS ap-south-1 or equivalent Indian region) | Proposed |
-| D20 | Demo hosting | Single VM + docker compose + Cloudflare | Proposed |
-| D21 | Repo layout | Monorepo: `backend/`, `frontend/` (pnpm workspace), `infra/`, `docs/`, `benchmarks/` | Proposed |
-| D22 | Package managers | `uv` (Python), `pnpm` (JS) | Proposed |
-| D23 | Domain names | Register `scorecode.in` (or available alternative) + a demo domain; check trademark conflicts for "ScoreCode" | **Needs your action** |
-| D24 | Licence | Proprietary (all rights reserved) while the repo is public for the college project? Or keep repo private and share with faculty. | **Needs your decision** |
-| D25 | Thapar branding/data | Use only public information and synthetic student data; get permission before using Thapar's logo/name publicly beyond the academic demo | **Needs your action** |
+| D1 | Architecture style | Modular monolith, one image with `api`/`worker` modes | **Accepted** |
+| D2 | Tenancy model | Shared DB/schema, `tenant_id` + composite FKs + RLS (FORCE, fail-closed) | **Accepted** |
+| D3 | User identity scope | Users belong to exactly one tenant | **Accepted** |
+| D4 | Tenant routing | Host-based everywhere; `*.localhost` in dev; custom domains (Pro, V1) via Caddy on-demand TLS | **Accepted** |
+| D5 | Auth | Opaque server-side sessions, `__Host-` cookies, Argon2id, TOTP for platform & owners | **Accepted** |
+| D6 | Student onboarding | Activation codes / invite links; no DOB passwords | **Accepted** |
+| D7 | Primary keys | UUIDv7 generated in app | **Accepted** |
+| D8 | Job queue | PostgreSQL-backed, **in-house `SKIP LOCKED` queue** behind `SECURITY DEFINER` claim functions | **Accepted** — [ADR 0008](adr/0008-job-queue.md) |
+| D9 | Redis | Optional/degradable; required in small production | **Accepted** |
+| D10 | Read model | Immutable `published_results` snapshots + versioned publications | **Accepted** |
+| D11 | PDF engine | WeasyPrint, pre-rendered on approval | **Accepted** — speed measured in Phase 11 |
+| D12 | Real-time | Polling; SSE later; no WebSockets | **Accepted** |
+| D13 | Frontend | Vite + React + TS SPA; separate platform console app; server-rendered verify page | **Accepted** |
+| D14 | Grading in MVP | Percentage bands + marks-only + **credit/SGPA** (for Thapar) | **Accepted** |
+| D15 | Scheduled publication in MVP | Yes (demo story) | **Accepted** |
+| D16 | Approval mode in MVP | Single-step; maker–checker in V1 | **Accepted** |
+| D17 | Billing in MVP | Manual (platform admin sets plan); Razorpay in V1 | **Accepted** |
+| D18 | Beachhead segment | Coaching institutes + mid-size private schools; colleges as showcase | Accepted as working hypothesis — validate with discovery calls (business, not code) |
+| D19 | Hosting region | India (e.g. AWS ap-south-1 or equivalent Indian region) | **Accepted** |
+| D20 | Demo hosting | Single VM + docker compose + Cloudflare | **Accepted** |
+| D21 | Repo layout | Monorepo: `backend/`, `frontend/` (pnpm workspace), `infra/`, `docs/`, `benchmarks/` | **Accepted** |
+| D22 | Package managers | `uv` (Python), `pnpm` (JS) | **Accepted** |
+| D23 | Domain names | Register `scorecode.in` (or available alternative) + a demo domain; check trademark conflicts for "ScoreCode" | **Open — owner action.** Code uses a configurable `SCORECODE_BASE_DOMAIN` (`localhost` in dev) so no domain is hard-coded. |
+| D24 | Licence | Proprietary (all rights reserved) while the repo is public for the college project? Or keep repo private and share with faculty. | **Open — owner decision.** Repository ships with an "All rights reserved" notice until decided. |
+| D25 | Thapar branding/data | Use only public information and synthetic student data; get permission before using Thapar's logo/name publicly beyond the academic demo | **Open — owner action.** Seed uses the institute's name only, a generated monogram (no official logo) and 100% synthetic students. |
 
 ### Questions for you (short answers are enough)
 1. Is the repository going to be **public** (portfolio) or **private**? (affects D24 and secret hygiene)

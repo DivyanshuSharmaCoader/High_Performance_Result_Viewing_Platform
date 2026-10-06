@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "scorecode-dev",
+      "credentials": [{ "accessKey": "scorecode", "secretKey": "scorecode-dev-secret" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}
