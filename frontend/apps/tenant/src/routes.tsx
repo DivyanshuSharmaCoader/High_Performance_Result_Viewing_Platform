@@ -3,6 +3,7 @@ import { Navigate, Outlet, createBrowserRouter } from "react-router";
 
 import { ReauthProvider } from "./components/reauth";
 import { StaffShell } from "./components/staff-shell";
+import { StudentShell } from "./components/student-shell";
 import { BootSplash, NotFound, RouteError } from "./components/system-pages";
 import { RequireAuth, RequirePermission, homePathFor, useSession } from "./lib/session";
 import { TenantProvider } from "./lib/tenant";
@@ -20,6 +21,12 @@ const Staff = page(() => import("./features/admin/staff"));
 const Plan = page(() => import("./features/admin/plan"));
 const Audit = page(() => import("./features/admin/audit"));
 const Account = page(() => import("./features/account/account"));
+const StudentHome = page(() => import("./features/student/home"));
+const Students = page(() => import("./features/students/list"));
+const StudentDetail = page(() => import("./features/students/detail"));
+const Activation = page(() => import("./features/students/activation"));
+const Imports = page(() => import("./features/imports/hub"));
+const ImportJob = page(() => import("./features/imports/job"));
 const AcademicsLayout = page(() => import("./features/academics/layout"));
 const Sessions = page(() => import("./features/academics/sessions"));
 const Departments = lazy(() =>
@@ -58,6 +65,16 @@ function Root() {
   );
 }
 
+function StudentFrame() {
+  return (
+    <StudentShell>
+      <Suspense fallback={<div className="h-96" aria-busy="true" />}>
+        <Outlet />
+      </Suspense>
+    </StudentShell>
+  );
+}
+
 function Home() {
   return <Navigate to={homePathFor(useSession())} replace />;
 }
@@ -88,6 +105,19 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Home /> },
           {
+            element: <RequirePermission permission="me.results" />,
+            children: [
+              {
+                path: "/me",
+                element: <StudentFrame />,
+                children: [
+                  { index: true, element: <StudentHome /> },
+                  { path: "account", element: <Account /> },
+                ],
+              },
+            ],
+          },
+          {
             element: <Shell />,
             children: [
               { path: "/account", element: <Account /> },
@@ -101,6 +131,24 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="staff.view" />,
                     children: [{ path: "staff", element: <Staff /> }],
+                  },
+                  {
+                    element: <RequirePermission permission="students.view" />,
+                    children: [
+                      { path: "students", element: <Students /> },
+                      { path: "students/:studentId", element: <StudentDetail /> },
+                    ],
+                  },
+                  {
+                    element: <RequirePermission permission="students.manage" />,
+                    children: [{ path: "students/activation", element: <Activation /> }],
+                  },
+                  {
+                    element: <RequirePermission permission="imports.manage" />,
+                    children: [
+                      { path: "imports", element: <Imports /> },
+                      { path: "imports/:importId", element: <ImportJob /> },
+                    ],
                   },
                   {
                     element: <RequirePermission permission="subscription.view" />,

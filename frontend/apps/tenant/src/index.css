@@ -1,2 +1,20 @@
 @import "@scorecode/ui/styles.css";
 @source "./";
+
+/* Printable sheets (activation slips): only `.print-only` is printed, and it never shows on screen. */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+@media print {
+  body > :not(.print-only) {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  @page {
+    margin: 12mm;
+  }
+}

@@ -15,6 +15,8 @@ import {
 } from "@scorecode/ui";
 import {
   ChevronsUpDown,
+  FileSpreadsheet,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Menu as MenuIcon,
@@ -55,7 +57,14 @@ export const NAV: NavGroup[] = [
       { to: "/admin", label: "Dashboard", icon: LayoutDashboard, permission: "students.view", end: true },
     ],
   },
-  { label: "People", items: [{ to: "/admin/staff", label: "Staff", icon: Users, permission: "staff.view" }] },
+  {
+    label: "People",
+    items: [
+      { to: "/admin/students", label: "Students", icon: GraduationCap, permission: "students.view" },
+      { to: "/admin/staff", label: "Staff", icon: Users, permission: "staff.view" },
+      { to: "/admin/imports", label: "Imports", icon: FileSpreadsheet, permission: "imports.manage" },
+    ],
+  },
   {
     label: "Academics",
     items: [{ to: "/admin/academics", label: "Structure", icon: Network, permission: "academics.view" }],

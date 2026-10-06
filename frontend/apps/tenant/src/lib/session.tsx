@@ -29,6 +29,7 @@ export function useCan(permission: string): boolean {
 
 export function homePathFor(me: Pick<Me, "permissions">): string {
   if (me.permissions.includes("students.view")) return "/admin";
+  if (me.permissions.includes("me.results")) return "/me";
   return "/account";
 }
 

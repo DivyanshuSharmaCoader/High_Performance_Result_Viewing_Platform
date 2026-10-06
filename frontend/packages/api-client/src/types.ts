@@ -127,3 +127,21 @@ export type Cohort = Schemas["CohortOut"];
 export type Course = Schemas["CourseOut"];
 export type CourseList = Schemas["CourseList"];
 export type StructureCounts = Schemas["StructureCounts"];
+
+// ---- Directory & imports ---------------------------------------------------------------------------
+export type Student = Schemas["StudentOut"];
+export type StudentPage = Schemas["Page_StudentOut_"];
+export type StudentCounts = Schemas["StudentCountsOut"];
+export type StudentStatus = Student["status"];
+export type AccountState = Student["account"];
+export type Membership = Schemas["MembershipOut"];
+export type CohortMembersResult = Schemas["CohortMembersOut"];
+export type ActivationCodes = Schemas["ActivationCodesOut"];
+export type IssuedCode = Schemas["IssuedCodeOut"];
+export type ImportJob = Schemas["ImportOut"];
+export type ImportListItem = Schemas["ImportListItem"];
+export type ImportStatus = ImportJob["status"];
+export type ImportField = Schemas["FieldOut"];
+export type ImportIssue = Schemas["IssueOut"];
+export type ImportRow = Schemas["RowOut"];
+export type ImportRowsPage = Schemas["RowsPage"];

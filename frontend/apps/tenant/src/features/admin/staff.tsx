@@ -20,6 +20,7 @@ import {
   RadioCards,
   SearchInput,
   Segmented,
+  Select,
   TBody,
   THead,
   Table,
@@ -37,6 +38,7 @@ import {
   Crown,
   MailPlus,
   MoreHorizontal,
+  Pencil,
   RotateCw,
   ShieldCheck,
   UserCheck,
@@ -48,10 +50,12 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
+import { FormDialog } from "../../components/form-dialog";
 import { PlanLimitCallout } from "../../components/limit-callout";
 import { useReauth } from "../../components/reauth";
 import { applyServerError, toastError } from "../../lib/forms";
 import { useCan, useSession } from "../../lib/session";
+import { useDepartments } from "../academics/api";
 
 const ROLE: Record<string, { label: string; tone: "brand" | "info" | "neutral" }> = {
   institution_owner: { label: "Owner", tone: "brand" },
@@ -182,6 +186,105 @@ function InviteDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (op
   );
 }
 
+const profileSchema = z.object({
+  full_name: z.string().trim().min(2, "Enter their full name").max(200),
+  employee_code: z.string().trim().max(40),
+  designation: z.string().trim().max(100),
+  department_id: z.string(),
+  phone: z.string().trim().max(32),
+});
+type ProfileValues = z.infer<typeof profileSchema>;
+
+function ProfileDialog({ member, onClose }: { member: Staff; onClose: () => void }) {
+  const qc = useQueryClient();
+  const departments = useDepartments();
+  const [error, setError] = useState<unknown>(null);
+  const form = useForm<ProfileValues>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      full_name: member.full_name,
+      employee_code: member.employee_code ?? "",
+      designation: member.designation ?? "",
+      department_id: member.department_id ?? "",
+      phone: member.phone ?? "",
+    },
+  });
+  const save = useMutation({
+    mutationFn: (v: ProfileValues) =>
+      api.put<Staff>(`/api/v1/admin/staff/${member.id}/profile`, {
+        full_name: v.full_name,
+        employee_code: v.employee_code || null,
+        designation: v.designation || null,
+        department_id: v.department_id || null,
+        phone: v.phone || null,
+      }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["staff"] });
+      toast.success("Profile updated");
+      onClose();
+    },
+    onError: (e) =>
+      setError(
+        applyServerError(e, form.setError, [
+          "full_name",
+          "employee_code",
+          "designation",
+          "department_id",
+          "phone",
+        ])
+          ? e
+          : null,
+      ),
+  });
+  const errors = form.formState.errors;
+  return (
+    <FormDialog
+      open
+      onOpenChange={(o) => !o && onClose()}
+      title={`Edit ${member.full_name}`}
+      submitLabel="Save profile"
+      submitting={save.isPending}
+      error={error}
+      formId="profile-form"
+    >
+      <form
+        id="profile-form"
+        noValidate
+        className="flex flex-col gap-5"
+        onSubmit={form.handleSubmit((v) => {
+          setError(null);
+          save.mutate(v);
+        })}
+      >
+        <Field label="Full name" error={errors.full_name?.message}>
+          <Input autoFocus {...form.register("full_name")} />
+        </Field>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Designation" optional error={errors.designation?.message}>
+            <Input placeholder="Assistant Professor" {...form.register("designation")} />
+          </Field>
+          <Field label="Employee code" optional error={errors.employee_code?.message}>
+            <Input {...form.register("employee_code")} />
+          </Field>
+          <Field label="Department" optional error={errors.department_id?.message}>
+            <Select {...form.register("department_id")}>
+              <option value="">No department</option>
+              {(departments.data ?? []).map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} ({d.code})
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Phone" optional error={errors.phone?.message}>
+            <Input type="tel" {...form.register("phone")} />
+          </Field>
+        </div>
+      </form>
+    </FormDialog>
+  );
+}
+
 type PendingAction =
   | { kind: "disable"; member: Staff }
   | { kind: "enable"; member: Staff }
@@ -199,6 +302,9 @@ export default function StaffPage() {
   const [role, setRole] = useState<"all" | "institution_admin" | "faculty">("all");
   const [inviteOpen, setInviteOpen] = useState(false);
   const [pending, setPending] = useState<PendingAction>(null);
+  const [editing, setEditing] = useState<Staff | null>(null);
+  const departments = useDepartments();
+  const deptCode = (id: string | null | undefined) => departments.data?.find((d) => d.id === id)?.code;
   const deferredQ = useDeferredValue(q);
 
   const staff = useQuery({
@@ -267,7 +373,8 @@ export default function StaffPage() {
 
   const actionsFor = (m: Staff) => {
     const isMe = m.id === me.id;
-    if (!canManage || isMe || m.role === "institution_owner") return null;
+    if (!canManage) return null;
+    const limited = isMe || m.role === "institution_owner";
     return (
       <Menu>
         <MenuTrigger asChild>
@@ -276,12 +383,16 @@ export default function StaffPage() {
           </Button>
         </MenuTrigger>
         <MenuContent>
-          {m.status === "invited" && (
+          <MenuItem icon={<Pencil />} onSelect={() => setEditing(m)}>
+            Edit profile
+          </MenuItem>
+          {!limited && <MenuSeparator />}
+          {!limited && m.status === "invited" && (
             <MenuItem icon={<RotateCw />} onSelect={() => resend.mutate(m)}>
               Resend invitation
             </MenuItem>
           )}
-          {m.role === "faculty" ? (
+          {limited ? null : m.role === "faculty" ? (
             <MenuItem
               icon={<ShieldCheck />}
               onSelect={() => setPending({ kind: "role", member: m, role: "institution_admin" })}
@@ -296,13 +407,13 @@ export default function StaffPage() {
               Change to faculty
             </MenuItem>
           )}
-          {isOwner && m.role === "institution_admin" && m.status === "active" && (
+          {!limited && isOwner && m.role === "institution_admin" && m.status === "active" && (
             <MenuItem icon={<Crown />} onSelect={() => setPending({ kind: "owner", member: m })}>
               Transfer ownership
             </MenuItem>
           )}
-          <MenuSeparator />
-          {m.status === "disabled" ? (
+          {!limited && <MenuSeparator />}
+          {limited ? null : m.status === "disabled" ? (
             <MenuItem icon={<UserCheck />} onSelect={() => setPending({ kind: "enable", member: m })}>
               Re-enable account
             </MenuItem>
@@ -436,7 +547,9 @@ export default function StaffPage() {
                             {m.full_name}
                             {isMe && <span className="ml-1.5 font-normal text-fg-subtle">(you)</span>}
                           </p>
-                          <p className="truncate text-[13px] text-fg-subtle">{m.email}</p>
+                          <p className="truncate text-[13px] text-fg-subtle">
+                            {[m.designation, deptCode(m.department_id), m.email].filter(Boolean).join(" · ")}
+                          </p>
                         </div>
                       </div>
                     </Td>
@@ -461,6 +574,7 @@ export default function StaffPage() {
       </TableContainer>
 
       <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      {editing && <ProfileDialog member={editing} onClose={() => setEditing(null)} />}
 
       {pending && (
         <ConfirmDialog

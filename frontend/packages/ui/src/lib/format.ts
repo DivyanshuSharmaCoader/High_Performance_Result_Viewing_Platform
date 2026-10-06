@@ -44,3 +44,8 @@ export function formatBytes(bytes: number): string {
 export function pluralize(n: number, one: string, many = `${one}s`): string {
   return `${n.toLocaleString("en-IN")} ${n === 1 ? one : many}`;
 }
+
+/** Just the word: `noun(1, "row")` → "row", `noun(3, "row")` → "rows" (use with formatNumber). */
+export function noun(n: number, one: string, many = `${one}s`): string {
+  return n === 1 ? one : many;
+}
