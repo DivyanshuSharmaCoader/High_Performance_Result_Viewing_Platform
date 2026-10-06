@@ -1114,6 +1114,71 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcademicSessionCreateIn */
+        AcademicSessionCreateIn: {
+            /** Code */
+            code: string;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
+            /**
+             * Make Current
+             * @default false
+             */
+            make_current: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+        };
+        /** AcademicSessionIn */
+        AcademicSessionIn: {
+            /** Code */
+            code: string;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+        };
+        /** AcademicSessionOut */
+        AcademicSessionOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Ends On
+             * Format: date
+             */
+            ends_on: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Current */
+            is_current: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Starts On
+             * Format: date
+             */
+            starts_on: string;
+        };
         /** AcceptInviteIn */
         AcceptInviteIn: {
             /** Password */
@@ -1704,45 +1769,6 @@ export interface components {
              */
             role: "institution_admin" | "faculty";
         };
-        /** SessionCreateIn */
-        SessionCreateIn: {
-            /** Code */
-            code: string;
-            /**
-             * Ends On
-             * Format: date
-             */
-            ends_on: string;
-            /**
-             * Make Current
-             * @default false
-             */
-            make_current: boolean;
-            /** Name */
-            name: string;
-            /**
-             * Starts On
-             * Format: date
-             */
-            starts_on: string;
-        };
-        /** SessionIn */
-        SessionIn: {
-            /** Code */
-            code: string;
-            /**
-             * Ends On
-             * Format: date
-             */
-            ends_on: string;
-            /** Name */
-            name: string;
-            /**
-             * Starts On
-             * Format: date
-             */
-            starts_on: string;
-        };
         /** SessionItem */
         SessionItem: {
             /**
@@ -1761,6 +1787,13 @@ export interface components {
             last_seen_at: string;
             /** User Agent */
             user_agent: string | null;
+        };
+        /** SessionOut */
+        SessionOut: {
+            /** Roles */
+            roles: string[];
+            /** User Kind */
+            user_kind: string;
         };
         /** SettingsIn */
         SettingsIn: {
@@ -2039,39 +2072,6 @@ export interface components {
             /** Tenant Url */
             tenant_url: string;
         };
-        /** SessionOut */
-        app__modules__academics__router__SessionOut: {
-            /** Archived At */
-            archived_at: string | null;
-            /** Code */
-            code: string;
-            /**
-             * Ends On
-             * Format: date
-             */
-            ends_on: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Is Current */
-            is_current: boolean;
-            /** Name */
-            name: string;
-            /**
-             * Starts On
-             * Format: date
-             */
-            starts_on: string;
-        };
-        /** SessionOut */
-        app__modules__identity__router__SessionOut: {
-            /** Roles */
-            roles: string[];
-            /** User Kind */
-            user_kind: string;
-        };
     };
     responses: never;
     parameters: never;
@@ -2098,7 +2098,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"][];
+                    "application/json": components["schemas"]["AcademicSessionOut"][];
                 };
             };
             /** @description Validation Error */
@@ -2121,7 +2121,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SessionCreateIn"];
+                "application/json": components["schemas"]["AcademicSessionCreateIn"];
             };
         };
         responses: {
@@ -2131,7 +2131,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                    "application/json": components["schemas"]["AcademicSessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -2156,7 +2156,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SessionIn"];
+                "application/json": components["schemas"]["AcademicSessionIn"];
             };
         };
         responses: {
@@ -2166,7 +2166,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                    "application/json": components["schemas"]["AcademicSessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -2201,7 +2201,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                    "application/json": components["schemas"]["AcademicSessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -2267,7 +2267,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__SessionOut"];
+                    "application/json": components["schemas"]["AcademicSessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -3430,7 +3430,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
+                    "application/json": components["schemas"]["SessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -3483,7 +3483,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
+                    "application/json": components["schemas"]["SessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -3516,7 +3516,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
+                    "application/json": components["schemas"]["SessionOut"];
                 };
             };
             /** @description Validation Error */
@@ -3580,7 +3580,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__identity__router__SessionOut"];
+                    "application/json": components["schemas"]["SessionOut"];
                 };
             };
             /** @description Validation Error */

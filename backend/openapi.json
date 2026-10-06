@@ -1,6 +1,135 @@
 {
   "components": {
     "schemas": {
+      "AcademicSessionCreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "format": "date",
+            "title": "Ends On",
+            "type": "string"
+          },
+          "make_current": {
+            "default": false,
+            "title": "Make Current",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "AcademicSessionCreateIn",
+        "type": "object"
+      },
+      "AcademicSessionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "format": "date",
+            "title": "Ends On",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "starts_on",
+          "ends_on"
+        ],
+        "title": "AcademicSessionIn",
+        "type": "object"
+      },
+      "AcademicSessionOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "ends_on": {
+            "format": "date",
+            "title": "Ends On",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "is_current": {
+            "title": "Is Current",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "starts_on": {
+            "format": "date",
+            "title": "Starts On",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "starts_on",
+          "ends_on",
+          "is_current",
+          "archived_at"
+        ],
+        "title": "AcademicSessionOut",
+        "type": "object"
+      },
       "AcceptInviteIn": {
         "additionalProperties": false,
         "properties": {
@@ -1936,81 +2065,6 @@
         "title": "RoleIn",
         "type": "object"
       },
-      "SessionCreateIn": {
-        "additionalProperties": false,
-        "properties": {
-          "code": {
-            "maxLength": 32,
-            "minLength": 1,
-            "title": "Code",
-            "type": "string"
-          },
-          "ends_on": {
-            "format": "date",
-            "title": "Ends On",
-            "type": "string"
-          },
-          "make_current": {
-            "default": false,
-            "title": "Make Current",
-            "type": "boolean"
-          },
-          "name": {
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          },
-          "starts_on": {
-            "format": "date",
-            "title": "Starts On",
-            "type": "string"
-          }
-        },
-        "required": [
-          "code",
-          "name",
-          "starts_on",
-          "ends_on"
-        ],
-        "title": "SessionCreateIn",
-        "type": "object"
-      },
-      "SessionIn": {
-        "additionalProperties": false,
-        "properties": {
-          "code": {
-            "maxLength": 32,
-            "minLength": 1,
-            "title": "Code",
-            "type": "string"
-          },
-          "ends_on": {
-            "format": "date",
-            "title": "Ends On",
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          },
-          "starts_on": {
-            "format": "date",
-            "title": "Starts On",
-            "type": "string"
-          }
-        },
-        "required": [
-          "code",
-          "name",
-          "starts_on",
-          "ends_on"
-        ],
-        "title": "SessionIn",
-        "type": "object"
-      },
       "SessionItem": {
         "properties": {
           "created_at": {
@@ -2058,6 +2112,27 @@
           "user_agent"
         ],
         "title": "SessionItem",
+        "type": "object"
+      },
+      "SessionOut": {
+        "properties": {
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "user_kind": {
+            "title": "User Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_kind",
+          "roles"
+        ],
+        "title": "SessionOut",
         "type": "object"
       },
       "SettingsIn": {
@@ -2844,81 +2919,6 @@
         ],
         "title": "VerifyOut",
         "type": "object"
-      },
-      "app__modules__academics__router__SessionOut": {
-        "properties": {
-          "archived_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Archived At"
-          },
-          "code": {
-            "title": "Code",
-            "type": "string"
-          },
-          "ends_on": {
-            "format": "date",
-            "title": "Ends On",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "is_current": {
-            "title": "Is Current",
-            "type": "boolean"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "starts_on": {
-            "format": "date",
-            "title": "Starts On",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "code",
-          "name",
-          "starts_on",
-          "ends_on",
-          "is_current",
-          "archived_at"
-        ],
-        "title": "SessionOut",
-        "type": "object"
-      },
-      "app__modules__identity__router__SessionOut": {
-        "properties": {
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Roles",
-            "type": "array"
-          },
-          "user_kind": {
-            "title": "User Kind",
-            "type": "string"
-          }
-        },
-        "required": [
-          "user_kind",
-          "roles"
-        ],
-        "title": "SessionOut",
-        "type": "object"
       }
     }
   },
@@ -2950,7 +2950,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                    "$ref": "#/components/schemas/AcademicSessionOut"
                   },
                   "title": "Response List Sessions Api V1 Admin Academic Sessions Get",
                   "type": "array"
@@ -2981,7 +2981,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SessionCreateIn"
+                "$ref": "#/components/schemas/AcademicSessionCreateIn"
               }
             }
           },
@@ -2992,7 +2992,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                  "$ref": "#/components/schemas/AcademicSessionOut"
                 }
               }
             },
@@ -3034,7 +3034,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SessionIn"
+                "$ref": "#/components/schemas/AcademicSessionIn"
               }
             }
           },
@@ -3045,7 +3045,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                  "$ref": "#/components/schemas/AcademicSessionOut"
                 }
               }
             },
@@ -3098,7 +3098,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                  "$ref": "#/components/schemas/AcademicSessionOut"
                 }
               }
             },
@@ -3194,7 +3194,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__academics__router__SessionOut"
+                  "$ref": "#/components/schemas/AcademicSessionOut"
                 }
               }
             },
@@ -4988,7 +4988,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
+                  "$ref": "#/components/schemas/SessionOut"
                 }
               }
             },
@@ -5051,7 +5051,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
+                  "$ref": "#/components/schemas/SessionOut"
                 }
               }
             },
@@ -5092,7 +5092,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
+                  "$ref": "#/components/schemas/SessionOut"
                 }
               }
             },
@@ -5175,7 +5175,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__modules__identity__router__SessionOut"
+                  "$ref": "#/components/schemas/SessionOut"
                 }
               }
             },

@@ -30,18 +30,18 @@ class Out(BaseModel):
 # ---- schemas ------------------------------------------------------------------------------------
 
 
-class SessionIn(In):
+class AcademicSessionIn(In):
     code: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=100)
     starts_on: date
     ends_on: date
 
 
-class SessionCreateIn(SessionIn):
+class AcademicSessionCreateIn(AcademicSessionIn):
     make_current: bool = False
 
 
-class SessionOut(Out):
+class AcademicSessionOut(Out):
     id: uuid.UUID
     code: str
     name: str
@@ -175,15 +175,15 @@ async def summary(uow: UoW, infra: InfraDep, _: Principal = require(View)) -> St
 @router.get("/academic-sessions")
 async def list_sessions(
     uow: UoW, infra: InfraDep, include_archived: bool = False, _: Principal = require(View)
-) -> list[SessionOut]:
+) -> list[AcademicSessionOut]:
     rows = await AcademicsService(infra).list_sessions(uow, include_archived=include_archived)
-    return [SessionOut.model_validate(r) for r in rows]
+    return [AcademicSessionOut.model_validate(r) for r in rows]
 
 
 @router.post("/academic-sessions", status_code=201)
 async def create_session(
-    body: SessionCreateIn, uow: UoW, infra: InfraDep, principal: Principal = require(Manage)
-) -> SessionOut:
+    body: AcademicSessionCreateIn, uow: UoW, infra: InfraDep, principal: Principal = require(Manage)
+) -> AcademicSessionOut:
     obj = await AcademicsService(infra).create_session(
         uow,
         principal,
@@ -193,13 +193,17 @@ async def create_session(
         ends_on=body.ends_on,
         make_current=body.make_current,
     )
-    return SessionOut.model_validate(obj)
+    return AcademicSessionOut.model_validate(obj)
 
 
 @router.put("/academic-sessions/{session_id}")
 async def update_session(
-    session_id: uuid.UUID, body: SessionIn, uow: UoW, infra: InfraDep, principal: Principal = require(Manage)
-) -> SessionOut:
+    session_id: uuid.UUID,
+    body: AcademicSessionIn,
+    uow: UoW,
+    infra: InfraDep,
+    principal: Principal = require(Manage),
+) -> AcademicSessionOut:
     obj = await AcademicsService(infra).update_session(
         uow,
         principal,
@@ -209,24 +213,26 @@ async def update_session(
         starts_on=body.starts_on,
         ends_on=body.ends_on,
     )
-    return SessionOut.model_validate(obj)
+    return AcademicSessionOut.model_validate(obj)
 
 
 @router.post("/academic-sessions/{session_id}/make-current")
 async def make_current(
     session_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = require(Manage)
-) -> SessionOut:
-    return SessionOut.model_validate(await AcademicsService(infra).make_current(uow, principal, session_id))
+) -> AcademicSessionOut:
+    return AcademicSessionOut.model_validate(
+        await AcademicsService(infra).make_current(uow, principal, session_id)
+    )
 
 
 @router.put("/academic-sessions/{session_id}/archived")
 async def archive_session(
     session_id: uuid.UUID, body: ArchiveIn, uow: UoW, infra: InfraDep, principal: Principal = require(Manage)
-) -> SessionOut:
+) -> AcademicSessionOut:
     obj = await AcademicsService(infra).set_archived(
         uow, principal, AcademicSession, session_id, body.archived
     )
-    return SessionOut.model_validate(obj)
+    return AcademicSessionOut.model_validate(obj)
 
 
 @router.post("/academic-sessions/{session_id}/copy-structure")
