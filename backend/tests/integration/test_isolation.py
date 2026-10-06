@@ -137,8 +137,24 @@ async def _import(infra: Any, t: TenantFixture) -> uuid.UUID:
         return job.id
 
 
+async def _scheme(infra: Any, t: TenantFixture) -> uuid.UUID:
+    from app.modules.grading.service import GradingService
+    from app.modules.grading.templates import BY_KEY
+
+    async with infra.db.uow(t.id) as uow:
+        scheme = await GradingService(infra).create(
+            uow,
+            None,
+            name=f"S{uuid.uuid4().hex[:6]}",
+            description=None,
+            config=BY_KEY["simple_letters"].config,
+        )
+        return scheme.id
+
+
 PROVIDERS: dict[str, Provider] = {
     "user_id": _staff_user,
+    "scheme_id": _scheme,
     "student_id": _student,
     "import_id": _import,
     "job_id": _job,
@@ -181,6 +197,12 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("POST", "/api/v1/admin/cohorts/{cohort_id}/students"): {"student_ids": [str(uuid.uuid4())]},
     ("PUT", "/api/v1/admin/imports/{import_id}/mapping"): {"mapping": {"enrollment_no": 0, "full_name": 1}},
     ("POST", "/api/v1/admin/imports/{import_id}/commit"): {"skip_errors": False},
+    ("PUT", "/api/v1/admin/grading-schemes/{scheme_id}"): {"name": "X"},
+    ("PUT", "/api/v1/admin/grading-schemes/{scheme_id}/archived"): _ARCHIVE,
+    ("POST", "/api/v1/admin/grading-schemes/{scheme_id}/versions"): {
+        "config": {"strategy": "marks_only"},
+        "based_on": 1,
+    },
 }
 
 
@@ -222,7 +244,17 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                 text("SELECT string_agg(id::text || status, ',' ORDER BY id) FROM import_jobs")
             )
         ).scalar_one()
-    return audit, users, roles, jobs, students, members, imports
+        schemes = (
+            await uow.session.execute(
+                text(
+                    "SELECT string_agg(s.id::text || s.name || coalesce(s.archived_at::text, ''), ',' ORDER BY s.id)"
+                    " || (SELECT count(*)::text FROM grading_scheme_versions)"
+                    " || coalesce((SELECT default_grading_scheme_id::text FROM tenant_settings), '')"
+                    " FROM grading_schemes s"
+                )
+            )
+        ).scalar_one()
+    return audit, users, roles, jobs, students, members, imports, schemes
 
 
 async def _call(c: Client, route: RouteInfo, url: str) -> Any:

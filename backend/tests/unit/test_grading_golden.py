@@ -88,3 +88,32 @@ def test_golden_table(path: Path) -> None:
 
 def test_corpus_is_present() -> None:
     assert {p.stem for p in TABLES} >= {"cbse_style_class10", "credit_10_point", "coaching_marks_only"}
+
+
+@pytest.mark.parametrize(
+    ("table", "template"),
+    [
+        ("cbse_style_class10", "board_9_point"),
+        ("credit_10_point", "credit_10_point"),
+        ("coaching_marks_only", "marks_with_ranks"),
+    ],
+)
+def test_starter_templates_reproduce_the_golden_tables(table: str, template: str) -> None:
+    from app.modules.grading.templates import BY_KEY
+
+    path = next(p for p in TABLES if p.stem == table)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    cfg = parse_config(BY_KEY[template].config)
+    papers = [_paper(p) for p in data["papers"]]
+    problems: list[str] = []
+    for student in data["students"]:
+        r = grade_exam(papers, {pid: _marks(m) for pid, m in student["marks"].items()}, cfg)
+        problems += _check(student["id"], r, student["expected"])
+    assert not problems, "\n".join(problems)
+
+
+def test_every_template_is_a_valid_config() -> None:
+    from app.modules.grading.templates import TEMPLATES
+
+    for t in TEMPLATES:
+        assert parse_config(t.config).strategy == t.config["strategy"]

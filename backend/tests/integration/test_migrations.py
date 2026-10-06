@@ -66,3 +66,19 @@ def test_upgrade_downgrade_upgrade_roundtrip(migrated_db: str) -> None:
         if previous is not None:
             os.environ["SCORECODE_MIGRATION_URL"] = previous
         asyncio.run(_admin(f'DROP DATABASE IF EXISTS "{db}" WITH (FORCE)'))
+
+
+def test_models_and_migrations_agree(migrated_db: str) -> None:
+    """`alembic check`: autogenerate finds nothing to change, so every model change has a migration
+    (hand-managed objects are excluded in migrations/env.py)."""
+    previous = os.environ.get("SCORECODE_MIGRATION_URL")
+    try:
+        cfg = _cfg(
+            f"postgresql+asyncpg://scorecode_migrator:migrator-dev-pw@{PG_HOST}:{PG_PORT}/{migrated_db}"
+        )
+        command.check(cfg)
+    finally:
+        if previous is not None:
+            os.environ["SCORECODE_MIGRATION_URL"] = previous
+        else:
+            os.environ.pop("SCORECODE_MIGRATION_URL", None)

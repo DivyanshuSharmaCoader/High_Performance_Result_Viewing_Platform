@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.core.models import Base, TenantScoped, Timestamps, UUIDPrimaryKey, Versioned
+from app.core.models import Base, TenantScoped, Timestamps, UUIDPrimaryKey, Versioned, tenant_fk
 
 TENANT_TYPES = ("school", "college", "university", "coaching", "other")
 TENANT_STATUSES = ("active", "suspended", "closing", "closed")
@@ -66,6 +66,7 @@ class TenantSettings(TenantScoped, Versioned, Timestamps, Base):
             "verification_disclosure IN ('masked','masked_plus_challenge')", name="verification_disclosure"
         ),
         CheckConstraint("student_stats IN ('none','class_average','full')", name="student_stats"),
+        tenant_fk("default_grading_scheme_id", "grading_schemes"),
     )
 
     tenant_id: Mapped[uuid.UUID] = mapped_column(
@@ -86,3 +87,4 @@ class TenantSettings(TenantScoped, Versioned, Timestamps, Base):
         server_default=text("""'{"AB":"absent","EX":"exempt","MP":"malpractice","WH":"withheld"}'::jsonb""")
     )
     onboarding_dismissed_at: Mapped[datetime | None]
+    default_grading_scheme_id: Mapped[uuid.UUID | None]  # pre-selected for new exams

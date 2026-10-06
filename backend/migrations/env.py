@@ -22,9 +22,15 @@ def _url() -> str:
     return os.environ.get("SCORECODE_MIGRATION_URL") or get_settings().database_url_migrator
 
 
+# Indexes written by hand in migrations (expression indexes with operator classes), invisible to models.
+HAND_MANAGED_INDEXES = {"ix_students__name_trgm"}
+
+
 def include_object(obj, name, type_, reflected, compare_to):  # type: ignore[no-untyped-def]
     # Monthly audit partitions are managed by migrations/maintenance, not by autogenerate.
-    return not (type_ == "table" and name and name.startswith("audit_logs_p"))
+    if type_ == "table" and name and name.startswith("audit_logs_p"):
+        return False
+    return not (type_ == "index" and name in HAND_MANAGED_INDEXES)
 
 
 def run_migrations_offline() -> None:

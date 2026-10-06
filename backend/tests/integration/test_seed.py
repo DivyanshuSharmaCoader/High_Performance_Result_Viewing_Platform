@@ -26,7 +26,10 @@ async def _counts(infra) -> dict[str, tuple[int, ...]]:
                         " (SELECT count(*) FROM students x WHERE x.tenant_id = t.id),"
                         " (SELECT count(DISTINCT student_id) FROM cohort_memberships x WHERE x.tenant_id = t.id),"
                         " (SELECT value FROM tenant_usage_counters x"
-                        "   WHERE x.tenant_id = t.id AND x.metric = 'active_students')"
+                        "   WHERE x.tenant_id = t.id AND x.metric = 'active_students'),"
+                        " (SELECT count(*) FROM grading_schemes x WHERE x.tenant_id = t.id),"
+                        " (SELECT count(*) FROM tenant_settings x"
+                        "   WHERE x.tenant_id = t.id AND x.default_grading_scheme_id IS NOT NULL)"
                         " FROM tenants t WHERE t.slug = :s"
                     ),
                     {"s": demo.slug},
@@ -40,8 +43,10 @@ async def test_seed_is_idempotent_and_branded(infra) -> None:
     await seed_tenants(infra)
     await seed_platform_user(infra)
     first = await _counts(infra)
-    # sessions, terms, programs, cohorts, courses, users (owner + demo student), students, placed, usage
-    assert first["thapar"] == (2, 4, 3, 8, 9, 2, 120, 120, 120)
+    # sessions, terms, programs, cohorts, courses, users (owner + demo student), students, placed, usage,
+    # grading schemes, default scheme set
+    assert first["thapar"] == (2, 4, 3, 8, 9, 2, 120, 120, 120, 1, 1)
+    assert first["demoschool"][9:] == (1, 1) and first["democoaching"][9:] == (1, 1)
     assert first["demoschool"][3] == 4 and first["democoaching"][3] == 3
     assert first["demoschool"][6] == 120 and first["democoaching"][6] == 120  # 3 cohorts × 40
     assert await seed_tenants(infra) == []  # nothing new on a second run

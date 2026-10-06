@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.http import InfraDep, Principal, UoW, require
 from app.core.pagination import Page
+from app.modules.directory import onboarding as _onboarding  # noqa: F401  (registers the checklist step)
 from app.modules.directory.activation import ActivationService
 from app.modules.directory.service import StudentData, StudentFilters, StudentService, StudentView
 from app.modules.identity.permissions import P

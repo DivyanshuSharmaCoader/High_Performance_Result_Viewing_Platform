@@ -105,6 +105,7 @@ async def seed_tenants(infra: Infra, *, students_per_tenant: int = 120) -> list[
             )
             created.append(demo.slug)
     from app.demo.academics import seed_academics
+    from app.demo.grading import seed_grading
     from app.demo.students import seed_students
 
     for demo in DEMO_TENANTS:
@@ -114,6 +115,7 @@ async def seed_tenants(infra: Infra, *, students_per_tenant: int = 120) -> list[
             ).one()
         await seed_academics(infra, row.id, demo.slug)
         await seed_students(infra, row.id, demo.slug, students_per_tenant, password_hash)
+        await seed_grading(infra, row.id, demo.slug)
         for seeder in _extra_seeders:
             await seeder(infra, row.id, demo, students_per_tenant)
     return created

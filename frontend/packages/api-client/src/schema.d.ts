@@ -371,6 +371,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/grading-schemes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Schemes */
+        get: operations["list_schemes_api_v1_admin_grading_schemes_get"];
+        put?: never;
+        /** Create Scheme */
+        post: operations["create_scheme_api_v1_admin_grading_schemes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/grading-schemes/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview
+         * @description Grade sample marks with an unsaved config — the editor's live calculator. Touches no data.
+         */
+        post: operations["preview_api_v1_admin_grading_schemes_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/grading-schemes/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_api_v1_admin_grading_schemes_templates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/grading-schemes/{scheme_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Scheme */
+        get: operations["get_scheme_api_v1_admin_grading_schemes__scheme_id__get"];
+        /** Update Scheme */
+        put: operations["update_scheme_api_v1_admin_grading_schemes__scheme_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/grading-schemes/{scheme_id}/archived": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Archived */
+        put: operations["set_archived_api_v1_admin_grading_schemes__scheme_id__archived_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/grading-schemes/{scheme_id}/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Make Default */
+        post: operations["make_default_api_v1_admin_grading_schemes__scheme_id__default_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/grading-schemes/{scheme_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Save Version */
+        post: operations["save_version_api_v1_admin_grading_schemes__scheme_id__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/imports": {
         parameters: {
             query?: never;
@@ -1533,6 +1657,16 @@ export interface components {
             /** Archived */
             archived: boolean;
         };
+        /** ArchivedIn */
+        ArchivedIn: {
+            /** Archived */
+            archived: boolean;
+        };
+        /**
+         * Attendance
+         * @enum {string}
+         */
+        Attendance: "present" | "absent" | "exempt" | "malpractice" | "withheld";
         /** AuditEntry */
         AuditEntry: {
             /** Action */
@@ -1829,6 +1963,29 @@ export interface components {
         DismissIn: {
             /** Dismissed */
             dismissed: boolean;
+        };
+        /** ExamResultOut */
+        ExamResultOut: {
+            /** Credits Attempted */
+            credits_attempted: string | null;
+            /** Credits Earned */
+            credits_earned: string | null;
+            /** Grade */
+            grade: string | null;
+            /** Grade Point */
+            grade_point: string | null;
+            /** Max Total */
+            max_total: string | null;
+            /** Outcome */
+            outcome: string;
+            /** Papers */
+            papers: components["schemas"]["PaperResultOut"][];
+            /** Percentage */
+            percentage: string | null;
+            /** Sgpa */
+            sgpa: string | null;
+            /** Total */
+            total: string | null;
         };
         /** FieldOut */
         FieldOut: {
@@ -2214,6 +2371,29 @@ export interface components {
             /** Total */
             total?: number | null;
         };
+        /** PaperResultOut */
+        PaperResultOut: {
+            /** Credits */
+            credits: string | null;
+            /** Failed Components */
+            failed_components: string[];
+            /** Grade */
+            grade: string | null;
+            /** Grade Point */
+            grade_point: string | null;
+            /** Max Total */
+            max_total: string;
+            /** Missing Components */
+            missing_components: string[];
+            /** Outcome */
+            outcome: string;
+            /** Paper Id */
+            paper_id: string;
+            /** Percentage */
+            percentage: string | null;
+            /** Total */
+            total: string | null;
+        };
         /** PlanChangeIn */
         PlanChangeIn: {
             /** Billing Ref */
@@ -2301,6 +2481,48 @@ export interface components {
             permissions: string[];
             /** Roles */
             roles: string[];
+        };
+        /** PreviewComponentIn */
+        PreviewComponentIn: {
+            /** Code */
+            code: string;
+            /** Max */
+            max: number | string;
+            /** Min Pass */
+            min_pass?: number | string | null;
+        };
+        /** PreviewIn */
+        PreviewIn: {
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+            /** Marks */
+            marks: {
+                [key: string]: components["schemas"]["PreviewMarkIn"];
+            };
+            /** Papers */
+            papers: components["schemas"]["PreviewPaperIn"][];
+        };
+        /** PreviewMarkIn */
+        PreviewMarkIn: {
+            /** @default present */
+            attendance: components["schemas"]["Attendance"];
+            /** Components */
+            components?: {
+                [key: string]: number | string | null;
+            };
+        };
+        /** PreviewPaperIn */
+        PreviewPaperIn: {
+            /** Components */
+            components: components["schemas"]["PreviewComponentIn"][];
+            /** Credits */
+            credits?: number | string | null;
+            /** Id */
+            id: string;
+            /** Pass Total */
+            pass_total?: number | string | null;
         };
         /** ProfileIn */
         ProfileIn: {
@@ -2397,6 +2619,116 @@ export interface components {
             items: components["schemas"]["RowOut"][];
             /** Next After */
             next_after: number | null;
+        };
+        /** SchemeCreateIn */
+        SchemeCreateIn: {
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** SchemeDetailOut */
+        SchemeDetailOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Default */
+            is_default: boolean;
+            /** Name */
+            name: string;
+            /** Saved */
+            saved?: boolean | null;
+            /**
+             * Strategy
+             * @enum {string}
+             */
+            strategy: "percentage_bands" | "credit_gpa" | "marks_only";
+            /** Strategy Label */
+            strategy_label: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Version */
+            version: number;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
+            /** Versions */
+            versions: components["schemas"]["VersionOut"][];
+        };
+        /** SchemeIn */
+        SchemeIn: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** SchemeOut */
+        SchemeOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Default */
+            is_default: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Strategy
+             * @enum {string}
+             */
+            strategy: "percentage_bands" | "credit_gpa" | "marks_only";
+            /** Strategy Label */
+            strategy_label: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Version */
+            version: number;
+            /**
+             * Version Id
+             * Format: uuid
+             */
+            version_id: string;
         };
         /** SessionItem */
         SessionItem: {
@@ -2712,6 +3044,24 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** TemplateOut */
+        TemplateOut: {
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+            /** Description */
+            description: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Strategy
+             * @enum {string}
+             */
+            strategy: "percentage_bands" | "credit_gpa" | "marks_only";
+        };
         /** TenantList */
         TenantList: {
             /** Items */
@@ -2827,6 +3177,36 @@ export interface components {
             slug: string;
             /** Tenant Url */
             tenant_url: string;
+        };
+        /** VersionIn */
+        VersionIn: {
+            /** Based On */
+            based_on: number;
+            /** Config */
+            config: {
+                [key: string]: unknown;
+            };
+            /** Note */
+            note?: string | null;
+        };
+        /** VersionOut */
+        VersionOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Name */
+            created_by_name: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Note */
+            note: string | null;
+            /** Version */
+            version: number;
         };
     };
     responses: never;
@@ -3730,6 +4110,290 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepartmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_schemes_api_v1_admin_grading_schemes_get: {
+        parameters: {
+            query?: {
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_scheme_api_v1_admin_grading_schemes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchemeCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_admin_grading_schemes_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templates_api_v1_admin_grading_schemes_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"][];
+                };
+            };
+        };
+    };
+    get_scheme_api_v1_admin_grading_schemes__scheme_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_scheme_api_v1_admin_grading_schemes__scheme_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SchemeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_archived_api_v1_admin_grading_schemes__scheme_id__archived_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArchivedIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    make_default_api_v1_admin_grading_schemes__scheme_id__default_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_version_api_v1_admin_grading_schemes__scheme_id__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scheme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchemeDetailOut"];
                 };
             };
             /** @description Validation Error */
