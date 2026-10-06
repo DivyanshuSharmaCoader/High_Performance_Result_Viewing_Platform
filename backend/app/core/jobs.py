@@ -340,6 +340,7 @@ class JobStatus:
     attempts: int = 0
     created_at: datetime | None = None
     finished_at: datetime | None = None
+    created_by: uuid.UUID | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -348,8 +349,8 @@ async def get_job_status(uow: UnitOfWork, job_id: uuid.UUID) -> JobStatus | None
     row = (
         await uow.session.execute(
             text(
-                "SELECT id, kind, status, progress, result, last_error, attempts, created_at, finished_at "
-                "FROM jobs WHERE id = :id AND tenant_id = :tid"
+                "SELECT id, kind, status, progress, result, last_error, attempts, created_at, finished_at, "
+                "created_by FROM jobs WHERE id = :id AND tenant_id = :tid"
             ),
             {"id": job_id, "tid": uow.require_tenant()},
         )
@@ -368,4 +369,5 @@ async def get_job_status(uow: UnitOfWork, job_id: uuid.UUID) -> JobStatus | None
         attempts=row.attempts,
         created_at=row.created_at,
         finished_at=row.finished_at,
+        created_by=row.created_by,
     )

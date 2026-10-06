@@ -20,15 +20,15 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 0 → 1** (architecture done; confirm decisions, then start the walking skeleton) |
-| Next step | **P0.4** Confirm decisions D1–D25 |
+| Current phase | **Phases 1–4 in progress** (backend kernel, identity, entitlements built and tested locally; no frontend yet) |
+| Next step | Platform console router (P4.7), isolation suite (P3.10), seed (P4.8), then frontend workspace (P1.4) |
 | Last updated | 2026-10-06 |
 | Open blockers | Domain name (D23), licence/visibility (D24), Thapar branding permission (D25) |
 
 ## 📊 Phase progress
 | Phase | Name | Steps | Done |
 |---|---|---|---|
-| 0 | Product & architecture | 4 | 3 |
+| 0 | Product & architecture | 4 | 4 |
 | 1 | Repository, tooling, CI, walking skeleton | 8 | 0 |
 | 2 | Platform kernel: database, tenancy, RLS, audit, errors | 11 | 0 |
 | 3 | Identity: authentication, sessions, RBAC | 11 | 0 |
@@ -56,7 +56,7 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [x] **P0.1** Write product, business, architecture, security, performance, testing docs · Done when: Docs 01–20 merged
 - [x] **P0.2** Write SRS, SAS and diagrams · Done when: Merged, diagrams render on GitHub
 - [x] **P0.3** Write implementation plan & checklist · Done when: IMPLEMENTATION_PLAN.md + CHECKLIST.md merged
-- [ ] **P0.4** **Confirm decisions D1–D25** and answer open questions in [18](18-risks-and-decisions.md) · Done when: Decision statuses updated to Accepted/Changed
+- [x] **P0.4** **Confirm decisions D1–D25** and answer open questions in [18](18-risks-and-decisions.md) · Done when: Decision statuses updated to Accepted/Changed
 
 ### Phase 1 — Repository, tooling, CI, walking skeleton
 
@@ -236,4 +236,5 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-06 | P0.4, P1.1–P1.3, P1.5 (infra only), P1.7–P1.8, P2.1–P2.11, P3.1–P3.9 (backend), P4.1–P4.3, P4.4 (backend) | Built and tested locally, not in CI yet (no CI workflow exists), so nothing is ticked except P0.4. Passing locally: 56 backend tests (26 unit + 30 integration), ruff, mypy --strict. Written but **not tested yet**: staff invites/roles API, settings/subscription API, sign-up + handoff, audit viewer, job status endpoint, platform service (`app/modules/platform/service.py` has no router yet). Not started: frontend (P1.4), CI (P1.6), compose app profile/Caddy (P1.5 proxy), `scorecode seed` (`app/seed.py` missing), Phases 5–17. Backend Docker image build started but not verified. D23–D25 still need the owner's input. |
 | 2026-10-06 | P0.1–P0.3 | Architecture docs, SRS, SAS, diagrams, plan and checklist written. Next: confirm decisions in docs/18 (P0.4), then P1.1. |

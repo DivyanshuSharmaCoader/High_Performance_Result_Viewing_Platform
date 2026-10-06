@@ -92,7 +92,7 @@ class Session(TenantScoped, Base):
     user_agent: Mapped[str | None] = mapped_column(String(300))
 
 
-AUTH_TOKEN_PURPOSES = ("invite", "password_reset", "activation", "email_verification")
+AUTH_TOKEN_PURPOSES = ("invite", "password_reset", "activation", "email_verification", "signin_handoff")
 
 
 class AuthToken(UUIDPrimaryKey, TenantScoped, Base):
