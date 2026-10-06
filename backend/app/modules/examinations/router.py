@@ -53,39 +53,39 @@ class ExamUpdateIn(In):
     notes: str | None = Field(default=None, max_length=2000)
 
 
-class CohortsIn(In):
+class ExamCohortsIn(In):
     cohort_ids: list[uuid.UUID] = Field(max_length=200)
 
 
-class ComponentIn(In):
+class ExamComponentIn(In):
     code: str = Field(min_length=1, max_length=12)
     label: str = Field(min_length=1, max_length=40)
     max: Decimal
     min_pass: Decimal | None = None
 
 
-class PaperIn(In):
-    components: list[ComponentIn] = Field(min_length=1, max_length=10)
+class ExamPaperIn(In):
+    components: list[ExamComponentIn] = Field(min_length=1, max_length=10)
     pass_total: Decimal | None = Field(default=None, ge=0)
     credits: Decimal | None = Field(default=None, ge=0, le=40)
 
 
-class PaperCreateIn(PaperIn):
+class ExamPaperCreateIn(ExamPaperIn):
     course_id: uuid.UUID
     use_course_credits: bool = True
 
 
-class AssignmentsIn(In):
+class ExamAssignmentsIn(In):
     cohort_id: uuid.UUID
     user_ids: list[uuid.UUID] = Field(max_length=20)
 
 
-class TransitionIn(In):
+class ExamTransitionIn(In):
     action: Literal["open_entry", "close_entry", "reopen_entry"]
     reason: str | None = Field(default=None, max_length=500)
 
 
-class TermRef(BaseModel):
+class ExamTermRef(BaseModel):
     id: uuid.UUID
     code: str
     name: str
@@ -98,7 +98,7 @@ class ExamListItem(BaseModel):
     name: str
     kind: ExamKind
     status: ExamStatusLit
-    term: TermRef
+    term: ExamTermRef
     grading_scheme_name: str
     papers: int
     cohorts: int
@@ -106,7 +106,7 @@ class ExamListItem(BaseModel):
     updated_at: datetime
 
 
-class CohortOut(BaseModel):
+class ExamCohortOut(BaseModel):
     id: uuid.UUID
     code: str
     name: str
@@ -114,46 +114,46 @@ class CohortOut(BaseModel):
     students: int
 
 
-class ComponentOut(BaseModel):
+class ExamComponentOut(BaseModel):
     code: str
     label: str
     max: Decimal
     min_pass: Decimal | None
 
 
-class AssignmentOut(BaseModel):
+class ExamAssignmentOut(BaseModel):
     cohort_id: uuid.UUID
     user_id: uuid.UUID
     full_name: str
 
 
-class SubmissionOut(BaseModel):
+class ExamSubmissionOut(BaseModel):
     cohort_id: uuid.UUID
     status: Literal["open", "submitted", "returned", "locked"]
     submitted_at: datetime | None
 
 
-class PaperOut(BaseModel):
+class ExamPaperOut(BaseModel):
     id: uuid.UUID
     course_id: uuid.UUID
     course_code: str
     course_name: str
     position: int
-    components: list[ComponentOut]
+    components: list[ExamComponentOut]
     max_total: Decimal
     pass_total: Decimal | None
     credits: Decimal | None
-    assignments: list[AssignmentOut]
-    submissions: list[SubmissionOut]
+    assignments: list[ExamAssignmentOut]
+    submissions: list[ExamSubmissionOut]
 
 
-class CheckOut(BaseModel):
+class ExamCheckOut(BaseModel):
     key: str
     ok: bool
     message: str
 
 
-class ActionOut(BaseModel):
+class ExamActionOut(BaseModel):
     action: str
     label: str
     needs_reason: bool
@@ -165,7 +165,7 @@ class ExamOut(BaseModel):
     kind: ExamKind
     status: ExamStatusLit
     version: int
-    term: TermRef
+    term: ExamTermRef
     grading_scheme_id: uuid.UUID
     grading_scheme_name: str
     grading_scheme_version_id: uuid.UUID | None
@@ -173,14 +173,14 @@ class ExamOut(BaseModel):
     notes: str | None
     created_at: datetime
     updated_at: datetime
-    cohorts: list[CohortOut]
-    papers: list[PaperOut]
-    checks: list[CheckOut]
-    actions: list[ActionOut]
+    cohorts: list[ExamCohortOut]
+    papers: list[ExamPaperOut]
+    checks: list[ExamCheckOut]
+    actions: list[ExamActionOut]
 
 
-def _term(term: Any, session: Any) -> TermRef:
-    return TermRef(
+def _term(term: Any, session: Any) -> ExamTermRef:
+    return ExamTermRef(
         id=term.id, code=term.code, name=term.name, session_id=session.id, session_code=session.code
     )
 
@@ -205,38 +205,38 @@ async def _out(uow: Any, service: ExamService, exam_id: uuid.UUID) -> ExamOut:
         created_at=e.created_at,
         updated_at=e.updated_at,
         cohorts=[
-            CohortOut(id=c.id, code=c.code, name=c.name, program_code=p.code, students=n)
+            ExamCohortOut(id=c.id, code=c.code, name=c.name, program_code=p.code, students=n)
             for c, p, n in view.cohorts
         ],
         papers=[
-            PaperOut(
+            ExamPaperOut(
                 id=p.id,
                 course_id=c.id,
                 course_code=c.code,
                 course_name=c.name,
                 position=p.position,
-                components=[ComponentOut(**x) for x in p.components],
+                components=[ExamComponentOut(**x) for x in p.components],
                 max_total=p.max_total,
                 pass_total=p.pass_total,
                 credits=p.credits,
                 assignments=[
-                    AssignmentOut(
+                    ExamAssignmentOut(
                         cohort_id=a.cohort_id, user_id=a.user_id, full_name=view.faculty.get(a.user_id, "")
                     )
                     for a in view.assignments
                     if a.exam_paper_id == p.id
                 ],
                 submissions=[
-                    SubmissionOut(cohort_id=s.cohort_id, status=s.status, submitted_at=s.submitted_at)
+                    ExamSubmissionOut(cohort_id=s.cohort_id, status=s.status, submitted_at=s.submitted_at)
                     for s in view.submissions
                     if s.exam_paper_id == p.id
                 ],
             )
             for p, c in view.papers
         ],
-        checks=[CheckOut(key=k.key, ok=k.ok, message=k.message) for k in view.checks],
+        checks=[ExamCheckOut(key=k.key, ok=k.ok, message=k.message) for k in view.checks],
         actions=[
-            ActionOut(action=t.action.value, label=t.label, needs_reason=t.needs_reason)
+            ExamActionOut(action=t.action.value, label=t.label, needs_reason=t.needs_reason)
             for t in available(e.status)
         ],
     )
@@ -328,7 +328,7 @@ async def delete_exam(
 @router.put("/{exam_id}/cohorts")
 async def set_cohorts(
     exam_id: uuid.UUID,
-    body: CohortsIn,
+    body: ExamCohortsIn,
     uow: UoW,
     infra: InfraDep,
     principal: Principal = require(P.EXAMS_MANAGE),
@@ -341,7 +341,7 @@ async def set_cohorts(
 @router.post("/{exam_id}/papers", status_code=201)
 async def add_paper(
     exam_id: uuid.UUID,
-    body: PaperCreateIn,
+    body: ExamPaperCreateIn,
     uow: UoW,
     infra: InfraDep,
     principal: Principal = require(P.EXAMS_MANAGE),
@@ -364,7 +364,7 @@ async def add_paper(
 async def update_paper(
     exam_id: uuid.UUID,
     paper_id: uuid.UUID,
-    body: PaperIn,
+    body: ExamPaperIn,
     uow: UoW,
     infra: InfraDep,
     principal: Principal = require(P.EXAMS_MANAGE),
@@ -399,7 +399,7 @@ async def remove_paper(
 async def set_assignments(
     exam_id: uuid.UUID,
     paper_id: uuid.UUID,
-    body: AssignmentsIn,
+    body: ExamAssignmentsIn,
     uow: UoW,
     infra: InfraDep,
     principal: Principal = require(P.EXAMS_MANAGE),
@@ -414,7 +414,7 @@ async def set_assignments(
 @router.post("/{exam_id}/transitions")
 async def transition(
     exam_id: uuid.UUID,
-    body: TransitionIn,
+    body: ExamTransitionIn,
     uow: UoW,
     infra: InfraDep,
     principal: Principal = require(P.EXAMS_MANAGE),

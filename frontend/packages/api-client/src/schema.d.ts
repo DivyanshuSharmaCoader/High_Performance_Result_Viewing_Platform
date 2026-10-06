@@ -1745,15 +1745,6 @@ export interface components {
             /** Token */
             token: string;
         };
-        /** ActionOut */
-        ActionOut: {
-            /** Action */
-            action: string;
-            /** Label */
-            label: string;
-            /** Needs Reason */
-            needs_reason: boolean;
-        };
         /** ActivateIn */
         ActivateIn: {
             /** Code */
@@ -1793,31 +1784,6 @@ export interface components {
         ArchivedIn: {
             /** Archived */
             archived: boolean;
-        };
-        /** AssignmentOut */
-        AssignmentOut: {
-            /**
-             * Cohort Id
-             * Format: uuid
-             */
-            cohort_id: string;
-            /** Full Name */
-            full_name: string;
-            /**
-             * User Id
-             * Format: uuid
-             */
-            user_id: string;
-        };
-        /** AssignmentsIn */
-        AssignmentsIn: {
-            /**
-             * Cohort Id
-             * Format: uuid
-             */
-            cohort_id: string;
-            /** User Ids */
-            user_ids: string[];
         };
         /**
          * Attendance
@@ -1962,15 +1928,6 @@ export interface components {
             /** New Password */
             new_password: string;
         };
-        /** CheckOut */
-        CheckOut: {
-            /** Key */
-            key: string;
-            /** Message */
-            message: string;
-            /** Ok */
-            ok: boolean;
-        };
         /** CohortAssignIn */
         CohortAssignIn: {
             /**
@@ -2010,17 +1967,36 @@ export interface components {
             /** Unchanged */
             unchanged: number;
         };
+        /** CohortOut */
+        CohortOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Program Id
+             * Format: uuid
+             */
+            program_id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
         /** CohortUpdateIn */
         CohortUpdateIn: {
             /** Code */
             code: string;
             /** Name */
             name: string;
-        };
-        /** CohortsIn */
-        CohortsIn: {
-            /** Cohort Ids */
-            cohort_ids: string[];
         };
         /** CommitIn */
         CommitIn: {
@@ -2029,28 +2005,6 @@ export interface components {
              * @default false
              */
             skip_errors: boolean;
-        };
-        /** ComponentIn */
-        ComponentIn: {
-            /** Code */
-            code: string;
-            /** Label */
-            label: string;
-            /** Max */
-            max: number | string;
-            /** Min Pass */
-            min_pass?: number | string | null;
-        };
-        /** ComponentOut */
-        ComponentOut: {
-            /** Code */
-            code: string;
-            /** Label */
-            label: string;
-            /** Max */
-            max: string;
-            /** Min Pass */
-            min_pass: string | null;
         };
         /** CopyIn */
         CopyIn: {
@@ -2133,6 +2087,92 @@ export interface components {
             /** Dismissed */
             dismissed: boolean;
         };
+        /** ExamActionOut */
+        ExamActionOut: {
+            /** Action */
+            action: string;
+            /** Label */
+            label: string;
+            /** Needs Reason */
+            needs_reason: boolean;
+        };
+        /** ExamAssignmentOut */
+        ExamAssignmentOut: {
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+            /** Full Name */
+            full_name: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /** ExamAssignmentsIn */
+        ExamAssignmentsIn: {
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+            /** User Ids */
+            user_ids: string[];
+        };
+        /** ExamCheckOut */
+        ExamCheckOut: {
+            /** Key */
+            key: string;
+            /** Message */
+            message: string;
+            /** Ok */
+            ok: boolean;
+        };
+        /** ExamCohortOut */
+        ExamCohortOut: {
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Program Code */
+            program_code: string;
+            /** Students */
+            students: number;
+        };
+        /** ExamCohortsIn */
+        ExamCohortsIn: {
+            /** Cohort Ids */
+            cohort_ids: string[];
+        };
+        /** ExamComponentIn */
+        ExamComponentIn: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Max */
+            max: number | string;
+            /** Min Pass */
+            min_pass?: number | string | null;
+        };
+        /** ExamComponentOut */
+        ExamComponentOut: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Max */
+            max: string;
+            /** Min Pass */
+            min_pass: string | null;
+        };
         /** ExamCreateIn */
         ExamCreateIn: {
             /** Cohort Ids */
@@ -2184,7 +2224,7 @@ export interface components {
              * @enum {string}
              */
             status: "draft" | "marks_entry_open" | "marks_entry_closed" | "processed" | "approved" | "scheduled" | "published" | "correction_draft" | "withdrawn" | "archived";
-            term: components["schemas"]["TermRef"];
+            term: components["schemas"]["ExamTermRef"];
             /**
              * Updated At
              * Format: date-time
@@ -2194,11 +2234,11 @@ export interface components {
         /** ExamOut */
         ExamOut: {
             /** Actions */
-            actions: components["schemas"]["ActionOut"][];
+            actions: components["schemas"]["ExamActionOut"][];
             /** Checks */
-            checks: components["schemas"]["CheckOut"][];
+            checks: components["schemas"]["ExamCheckOut"][];
             /** Cohorts */
-            cohorts: components["schemas"]["app__modules__examinations__router__CohortOut"][];
+            cohorts: components["schemas"]["ExamCohortOut"][];
             /**
              * Created At
              * Format: date-time
@@ -2230,13 +2270,13 @@ export interface components {
             /** Notes */
             notes: string | null;
             /** Papers */
-            papers: components["schemas"]["PaperOut"][];
+            papers: components["schemas"]["ExamPaperOut"][];
             /**
              * Status
              * @enum {string}
              */
             status: "draft" | "marks_entry_open" | "marks_entry_closed" | "processed" | "approved" | "scheduled" | "published" | "correction_draft" | "withdrawn" | "archived";
-            term: components["schemas"]["TermRef"];
+            term: components["schemas"]["ExamTermRef"];
             /**
              * Updated At
              * Format: date-time
@@ -2244,6 +2284,65 @@ export interface components {
             updated_at: string;
             /** Version */
             version: number;
+        };
+        /** ExamPaperCreateIn */
+        ExamPaperCreateIn: {
+            /** Components */
+            components: components["schemas"]["ExamComponentIn"][];
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Credits */
+            credits?: number | string | null;
+            /** Pass Total */
+            pass_total?: number | string | null;
+            /**
+             * Use Course Credits
+             * @default true
+             */
+            use_course_credits: boolean;
+        };
+        /** ExamPaperIn */
+        ExamPaperIn: {
+            /** Components */
+            components: components["schemas"]["ExamComponentIn"][];
+            /** Credits */
+            credits?: number | string | null;
+            /** Pass Total */
+            pass_total?: number | string | null;
+        };
+        /** ExamPaperOut */
+        ExamPaperOut: {
+            /** Assignments */
+            assignments: components["schemas"]["ExamAssignmentOut"][];
+            /** Components */
+            components: components["schemas"]["ExamComponentOut"][];
+            /** Course Code */
+            course_code: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Course Name */
+            course_name: string;
+            /** Credits */
+            credits: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Max Total */
+            max_total: string;
+            /** Pass Total */
+            pass_total: string | null;
+            /** Position */
+            position: number;
+            /** Submissions */
+            submissions: components["schemas"]["ExamSubmissionOut"][];
         };
         /** ExamResultOut */
         ExamResultOut: {
@@ -2267,6 +2366,50 @@ export interface components {
             sgpa: string | null;
             /** Total */
             total: string | null;
+        };
+        /** ExamSubmissionOut */
+        ExamSubmissionOut: {
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "submitted" | "returned" | "locked";
+            /** Submitted At */
+            submitted_at: string | null;
+        };
+        /** ExamTermRef */
+        ExamTermRef: {
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Session Code */
+            session_code: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** ExamTransitionIn */
+        ExamTransitionIn: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "open_entry" | "close_entry" | "reopen_entry";
+            /** Reason */
+            reason?: string | null;
         };
         /** ExamUpdateIn */
         ExamUpdateIn: {
@@ -2672,65 +2815,6 @@ export interface components {
             next_cursor?: string | null;
             /** Total */
             total?: number | null;
-        };
-        /** PaperCreateIn */
-        PaperCreateIn: {
-            /** Components */
-            components: components["schemas"]["ComponentIn"][];
-            /**
-             * Course Id
-             * Format: uuid
-             */
-            course_id: string;
-            /** Credits */
-            credits?: number | string | null;
-            /** Pass Total */
-            pass_total?: number | string | null;
-            /**
-             * Use Course Credits
-             * @default true
-             */
-            use_course_credits: boolean;
-        };
-        /** PaperIn */
-        PaperIn: {
-            /** Components */
-            components: components["schemas"]["ComponentIn"][];
-            /** Credits */
-            credits?: number | string | null;
-            /** Pass Total */
-            pass_total?: number | string | null;
-        };
-        /** PaperOut */
-        PaperOut: {
-            /** Assignments */
-            assignments: components["schemas"]["AssignmentOut"][];
-            /** Components */
-            components: components["schemas"]["ComponentOut"][];
-            /** Course Code */
-            course_code: string;
-            /**
-             * Course Id
-             * Format: uuid
-             */
-            course_id: string;
-            /** Course Name */
-            course_name: string;
-            /** Credits */
-            credits: string | null;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Max Total */
-            max_total: string;
-            /** Pass Total */
-            pass_total: string | null;
-            /** Position */
-            position: number;
-            /** Submissions */
-            submissions: components["schemas"]["SubmissionOut"][];
         };
         /** PaperResultOut */
         PaperResultOut: {
@@ -3386,21 +3470,6 @@ export interface components {
             /** Version */
             version: number;
         };
-        /** SubmissionOut */
-        SubmissionOut: {
-            /**
-             * Cohort Id
-             * Format: uuid
-             */
-            cohort_id: string;
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "open" | "submitted" | "returned" | "locked";
-            /** Submitted At */
-            submitted_at: string | null;
-        };
         /** SubscriptionOut */
         SubscriptionOut: {
             /** Features */
@@ -3527,35 +3596,6 @@ export interface components {
             /** Starts On */
             starts_on: string | null;
         };
-        /** TermRef */
-        TermRef: {
-            /** Code */
-            code: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Session Code */
-            session_code: string;
-            /**
-             * Session Id
-             * Format: uuid
-             */
-            session_id: string;
-        };
-        /** TransitionIn */
-        TransitionIn: {
-            /**
-             * Action
-             * @enum {string}
-             */
-            action: "open_entry" | "close_entry" | "reopen_entry";
-            /** Reason */
-            reason?: string | null;
-        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -3612,46 +3652,6 @@ export interface components {
             note: string | null;
             /** Version */
             version: number;
-        };
-        /** CohortOut */
-        app__modules__academics__router__CohortOut: {
-            /** Archived At */
-            archived_at: string | null;
-            /** Code */
-            code: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /**
-             * Program Id
-             * Format: uuid
-             */
-            program_id: string;
-            /**
-             * Session Id
-             * Format: uuid
-             */
-            session_id: string;
-        };
-        /** CohortOut */
-        app__modules__examinations__router__CohortOut: {
-            /** Code */
-            code: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /** Program Code */
-            program_code: string;
-            /** Students */
-            students: number;
         };
     };
     responses: never;
@@ -4144,7 +4144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"][];
+                    "application/json": components["schemas"]["CohortOut"][];
                 };
             };
             /** @description Validation Error */
@@ -4177,7 +4177,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"];
+                    "application/json": components["schemas"]["CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -4212,7 +4212,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"];
+                    "application/json": components["schemas"]["CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -4247,7 +4247,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"];
+                    "application/json": components["schemas"]["CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -4739,7 +4739,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CohortsIn"];
+                "application/json": components["schemas"]["ExamCohortsIn"];
             };
         };
         responses: {
@@ -4774,7 +4774,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PaperCreateIn"];
+                "application/json": components["schemas"]["ExamPaperCreateIn"];
             };
         };
         responses: {
@@ -4810,7 +4810,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PaperIn"];
+                "application/json": components["schemas"]["ExamPaperIn"];
             };
         };
         responses: {
@@ -4878,7 +4878,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AssignmentsIn"];
+                "application/json": components["schemas"]["ExamAssignmentsIn"];
             };
         };
         responses: {
@@ -4913,7 +4913,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TransitionIn"];
+                "application/json": components["schemas"]["ExamTransitionIn"];
             };
         };
         responses: {
