@@ -61,10 +61,10 @@ test.describe("staff sign-in for each role (P3.11)", () => {
           invitee.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Staff" }),
         ).toBeVisible();
       } else {
-        await expect(invitee).toHaveURL(url(thapar.slug, "/account"));
-        await expect(
-          invitee.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Staff" }),
-        ).toHaveCount(0);
+        await expect(invitee).toHaveURL(url(thapar.slug, "/marking")); // faculty start at their marking
+        const nav = invitee.getByRole("navigation", { name: "Main" });
+        await expect(nav.getByRole("link", { name: "Marks entry" })).toBeVisible();
+        await expect(nav.getByRole("link", { name: "Staff" })).toHaveCount(0);
         await invitee.goto(url(thapar.slug, "/admin/staff"));
         await expect(invitee.getByText("You don't have access to this page")).toBeVisible();
       }

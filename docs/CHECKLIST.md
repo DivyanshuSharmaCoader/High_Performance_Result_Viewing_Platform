@@ -21,7 +21,7 @@
 | | |
 |---|---|
 | Current phase | **Phase 8 — Marks entry & marks import** (Phases 0–7 complete; Gates M1–M3 passed) |
-| Next step | **P8.1, P8.2, P8.4** backend written (tick after CI); then P8.3 marks grid UI, P8.5 marks import, P8.6 templates, P8.7 measurement |
+| Next step | **P8.3/P8.4** marks grid and submissions UI written (tick after CI); then P8.5 marks import profile, P8.6 pre-filled templates, P8.7 import timing |
 | Last updated | 2026-10-07 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -36,7 +36,7 @@
 | 5 | Academic structure | 4 | 4 |
 | 6 | Directory & generic import framework | 8 | 8 |
 | 7 | Examinations & grading engine | 6 | 6 |
-| 8 | Marks entry & marks import | 7 | 0 |
+| 8 | Marks entry & marks import | 7 | 2 |
 | 9 | Result processing, preview, approval | 5 | 0 |
 | 10 | Publication, read model, student portal | 6 | 0 |
 | 11 | Marksheet PDFs & verification | 5 | 0 |
@@ -140,8 +140,8 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 8 — Marks entry & marks import
 
-- [ ] **P8.1** Mark entries schema & service · Done when: Tests incl. conflict 409
-- [ ] **P8.2** Faculty scope enforcement · Done when: Authz matrix tests
+- [x] **P8.1** Mark entries schema & service · Done when: Tests incl. conflict 409
+- [x] **P8.2** Faculty scope enforcement · Done when: Authz matrix tests
 - [ ] **P8.3** Marks grid UI · Done when: Playwright: enter, paste, conflict
 - [ ] **P8.4** Paper submission workflow · Done when: Tests + UI
 - [ ] **P8.5** Marks import profile · Done when: Rule tests + golden files
@@ -236,6 +236,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-07 | P7.6, P8.1, P8.2 ticked | P7.6 verified by CI for a3f6c22; P8.1/P8.2 by CI for 0a388ee (380 backend tests). P8.3/P8.4 UI written: Marks entry work list (faculty now land there), mark sheet grid with Enter/↑/↓ navigation, Excel block paste, AB/EX/MP/WH codes, inline validation shown in the row, debounced autosave with versions, conflict state that loads the colleague's values, submit/return. Deviation: the grid isn't JS-windowed; rows use CSS `content-visibility: auto` (cohorts are usually < 200 students) — to be measured in Phase 14. Design note: attendance codes are per paper (as in the data model and the import rule ABSENT_WITH_MARKS), so a code next to marks is flagged instead of overwriting them — a component test caught the first version silently discarding marks. Local E2E: 21/21 including the new marks spec (real two-session conflict). |
 | 2026-10-07 | P7.4, P7.5 ticked | Verified by CI run for a7a2f4d (all 7 jobs). Exhaustive state tests: all 10 statuses × 14 actions against an independent copy of the diagram. The exams API first shipped with a `CohortOut` schema name that collided with academics (FastAPI renamed both and broke the client types; CI's frontend job would have failed) — fixed with Exam-prefixed names plus a unit test that fails on any colliding schema name. P7.6 UI written: exams list/new-exam dialog, workspace Setup tab (readiness checklist, open/close/reopen with reason, papers with component presets, faculty per paper × cohort, cohorts, details); 3 component tests; Playwright exams spec passes locally (20/20 E2E). Known limit: the add-paper course picker lists the first 200 courses. |
 | 2026-10-07 | P7.1–P7.3 ticked | P7.1/P7.2 verified by CI run for 63b6586 (engine coverage gate: 99.05%). P7.3 verified by CI run 37542061168 (d49265c): migration 0005 (append-only versions: no UPDATE grant + trigger tested against the owner role), scheme API, onboarding steps, demo default schemes, editor UI with live preview; Playwright grading spec. Caught on the way: `scorecode seed` failed in CI because the CLI didn't import every model (new FK) — all entrypoints now import the model registry, with a regression test; an `alembic check` drift test now guards models vs migrations. Local environment: Docker Desktop's credential helper hung on the Keychain, blocking pulls; builds were done with a credential-free DOCKER_CONFIG (documented in docs/ENVIRONMENT.md) and the unneeded `# syntax=` pins were dropped. |
 | 2026-10-07 | P6.1–P6.8, P3.11, Gate M2 ticked; P7.1–P7.2 written | Verified by CI run 37538058576 (all 7 jobs, incl. Playwright on the full stack: student import with errors → fixed file → commit, activation code → student sign-in/out, seeded demo student lands on /me). Phase 6 backend: 172 integration+unit tests locally. Found and fixed during the phase: the API process didn't register job handlers (enqueue would fail outside tests); activation was rate-limited 5/hour **per IP** (would block a classroom on one network) — now 5/hour per enrollment no. as docs/10 specifies plus a 120/hour per-IP bucket; `pluralize()` misuse ("2 new 2 students") caught by a component test. Not built in P6 (documented in docs/13 §8): mapping presets, per-cell edits/row exclusion in staging, import-row retention purge job (Phase 16). Tenant initial JS now 177.1 KB gz (P10.5). P7.1: pure engine (`app/modules/grading/engine`, import-linter purity contract re-added), 26 hand-computed unit cases, 4 Hypothesis properties × 300 examples (a deliberately injected non-monotonic band was caught), 99% branch coverage (CI gate ≥ 90%). P7.2: 3 golden tables with hand-worked expectations; the credit table is a generic CBCS-style scale, **not** Thapar's official policy (unverified, D25). Local note: Docker Desktop hung on this Mac on 2026-10-07 (image pulls and then `docker info`), so the last local full-stack E2E run was before the final UI polish; CI ran it green. |

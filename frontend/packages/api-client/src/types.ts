@@ -163,3 +163,11 @@ export type ExamPaper = Schemas["ExamPaperOut"];
 export type ExamComponent = Schemas["ExamComponentOut"];
 export type ExamCohort = Schemas["ExamCohortOut"];
 export type ExamAction = Schemas["ExamActionOut"];
+
+// ---- Marks ------------------------------------------------------------------------------------------
+export type MarkSheet = Schemas["SheetOut"];
+export type MarkSheetStudent = Schemas["SheetStudentOut"];
+export type MarkEntry = Schemas["EntryOut"];
+export type SavedMark = Schemas["SavedEntryOut"];
+export type MarkingWork = Schemas["WorkItemOut"];
+export type Attendance = MarkEntry["attendance"];

@@ -28,6 +28,8 @@ const Activation = page(() => import("./features/students/activation"));
 const Imports = page(() => import("./features/imports/hub"));
 const Grading = page(() => import("./features/grading/list"));
 const Exams = page(() => import("./features/exams/list"));
+const Marking = page(() => import("./features/marks/list"));
+const MarkSheet = page(() => import("./features/marks/sheet"));
 const ExamWorkspace = page(() => import("./features/exams/workspace"));
 const GradingEditor = page(() => import("./features/grading/editor"));
 const ImportJob = page(() => import("./features/imports/job"));
@@ -125,6 +127,13 @@ export const router = createBrowserRouter([
             element: <Shell />,
             children: [
               { path: "/account", element: <Account /> },
+              {
+                element: <RequirePermission permission="exams.view_assigned" />,
+                children: [
+                  { path: "/marking", element: <Marking /> },
+                  { path: "/marking/:examId/:paperId/:cohortId", element: <MarkSheet /> },
+                ],
+              },
               {
                 path: "/admin",
                 children: [

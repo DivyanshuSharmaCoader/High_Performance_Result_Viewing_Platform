@@ -124,3 +124,27 @@ export async function createTenantViaSignup(
   expect(verify.status(), await verify.text()).toBe(200);
   return { slug, email };
 }
+
+/** Call the API from inside the page, exactly as the SPA does (same origin, cookies and CSRF header).
+ *  Node itself can't resolve *.localhost, so requests are made by the browser. */
+export async function apiAs<T = unknown>(
+  page: Page,
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<T> {
+  const result = await page.evaluate(
+    async ({ method, path, body }) => {
+      const csrf = document.cookie.match(/(?:^|; )(?:__Host-)?sc_csrf=([^;]+)/)?.[1] ?? "";
+      const res = await fetch(path, {
+        method,
+        headers: { "X-CSRF-Token": csrf, "Content-Type": "application/json", Accept: "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      return { ok: res.ok, status: res.status, text: await res.text() };
+    },
+    { method, path, body },
+  );
+  if (!result.ok) throw new Error(`${method} ${path} → ${result.status}: ${result.text}`);
+  return (result.text ? JSON.parse(result.text) : undefined) as T;
+}

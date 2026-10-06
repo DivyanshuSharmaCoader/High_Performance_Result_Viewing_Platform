@@ -256,6 +256,7 @@ describe("activation slips", () => {
   it("sends students to their own home, not the admin area", () => {
     expect(homePathFor({ permissions: ["me.results", "notifications.self"] })).toBe("/me");
     expect(homePathFor({ permissions: ["students.view", "me.results"] })).toBe("/admin");
-    expect(homePathFor({ permissions: ["exams.view_assigned"] })).toBe("/account");
+    expect(homePathFor({ permissions: ["exams.view_assigned"] })).toBe("/marking");
+    expect(homePathFor({ permissions: ["notifications.self"] })).toBe("/account");
   });
 });
