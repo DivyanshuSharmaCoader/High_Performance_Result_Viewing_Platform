@@ -16,6 +16,7 @@ from app.core.config import Settings, get_settings
 from app.core.container import Infra
 from app.core.logging import configure_logging, get_logger
 from app.jobs_registry import load_job_handlers
+from app.models_registry import metadata as _all_models  # noqa: F401  (every table, so FKs resolve)
 from app.modules.identity.authn import CookieAuthenticator
 from app.modules.tenancy.service import TenantResolver
 from app.web.errors import install_error_handlers

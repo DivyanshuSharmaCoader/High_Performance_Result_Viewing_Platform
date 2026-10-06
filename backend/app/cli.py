@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from app.core.config import get_settings
+from app.models_registry import metadata as _all_models  # noqa: F401  (every table, so FKs resolve)
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 

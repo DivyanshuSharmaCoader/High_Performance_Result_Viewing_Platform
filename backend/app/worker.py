@@ -12,6 +12,7 @@ from app.core.container import Infra
 from app.core.jobs import Worker
 from app.core.logging import configure_logging, get_logger
 from app.jobs_registry import load_job_handlers
+from app.models_registry import metadata as _all_models  # noqa: F401  (every table, so FKs resolve)
 
 log = get_logger("scorecode.worker")
 
