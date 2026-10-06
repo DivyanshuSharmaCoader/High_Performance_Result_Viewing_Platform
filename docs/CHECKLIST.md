@@ -20,9 +20,9 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 6 — Directory & generic import framework** (Phases 1, 2, 4, 5 complete; Phase 3 waits only on the student role for P3.11) |
-| Next step | **P6.1** Students & staff schema, then P6.2–P6.8; tick P3.11 + Gate M2 once students can sign in (P6.7) |
-| Last updated | 2026-10-06 |
+| Current phase | **Phase 7 — Examinations & grading engine** (Phases 0–6 complete; Gates M1–M3 passed) |
+| Next step | **P7.3** Grading schemes schema & UI (P7.1 engine and P7.2 golden tables written; tick after CI), then P7.4–P7.6 |
+| Last updated | 2026-10-07 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
 ## 📊 Phase progress
@@ -31,10 +31,10 @@
 | 0 | Product & architecture | 4 | 4 |
 | 1 | Repository, tooling, CI, walking skeleton | 8 | 8 |
 | 2 | Platform kernel: database, tenancy, RLS, audit, errors | 11 | 11 |
-| 3 | Identity: authentication, sessions, RBAC | 11 | 10 |
+| 3 | Identity: authentication, sessions, RBAC | 11 | 11 |
 | 4 | Onboarding, plans & entitlements, basic branding, platform console v0 | 8 | 8 |
 | 5 | Academic structure | 4 | 4 |
-| 6 | Directory & generic import framework | 8 | 0 |
+| 6 | Directory & generic import framework | 8 | 8 |
 | 7 | Examinations & grading engine | 6 | 0 |
 | 8 | Marks entry & marks import | 7 | 0 |
 | 9 | Result processing, preview, approval | 5 | 0 |
@@ -96,8 +96,8 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [x] **P3.8** Password reset & invites · Done when: Integration tests with Mailpit API
 - [x] **P3.9** Platform realm auth · Done when: Tests: platform login on tenant host fails
 - [x] **P3.10** Tenant isolation suite v1 · Done when: Suite runs in CI as required check
-- [ ] **P3.11** Frontend auth · Done when: Playwright: login/logout for each role
-- [ ] 🚩 **Gate M2 — Secure multi-tenant core** · Done when: Two seeded tenants on two hosts; isolation suite green; live demo of blocked cross-tenant access
+- [x] **P3.11** Frontend auth · Done when: Playwright: login/logout for each role
+- [x] 🚩 **Gate M2 — Secure multi-tenant core** · Done when: Two seeded tenants on two hosts; isolation suite green; live demo of blocked cross-tenant access
 
 ### Phase 4 — Onboarding, plans & entitlements, basic branding, platform console v0
 
@@ -120,14 +120,14 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 6 — Directory & generic import framework
 
-- [ ] **P6.1** Students & staff schema · Done when: Migrations + tests
-- [ ] **P6.2** Student service · Done when: Tests incl. limit and race
-- [ ] **P6.3** Staff management · Done when: Tests
-- [ ] **P6.4** Files module · Done when: Security tests (wrong type, oversize)
-- [ ] **P6.5** Import framework core · Done when: Golden-file tests on messy corpus
-- [ ] **P6.6** Student import profile · Done when: Tests + E2E import with errors → fix → commit
-- [ ] **P6.7** Student activation · Done when: E2E: student activates and logs in
-- [ ] **P6.8** Admin UI · Done when: Playwright
+- [x] **P6.1** Students & staff schema · Done when: Migrations + tests
+- [x] **P6.2** Student service · Done when: Tests incl. limit and race
+- [x] **P6.3** Staff management · Done when: Tests
+- [x] **P6.4** Files module · Done when: Security tests (wrong type, oversize)
+- [x] **P6.5** Import framework core · Done when: Golden-file tests on messy corpus
+- [x] **P6.6** Student import profile · Done when: Tests + E2E import with errors → fix → commit
+- [x] **P6.7** Student activation · Done when: E2E: student activates and logs in
+- [x] **P6.8** Admin UI · Done when: Playwright
 
 ### Phase 7 — Examinations & grading engine
 
@@ -236,6 +236,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-07 | P6.1–P6.8, P3.11, Gate M2 ticked; P7.1–P7.2 written | Verified by CI run 37538058576 (all 7 jobs, incl. Playwright on the full stack: student import with errors → fixed file → commit, activation code → student sign-in/out, seeded demo student lands on /me). Phase 6 backend: 172 integration+unit tests locally. Found and fixed during the phase: the API process didn't register job handlers (enqueue would fail outside tests); activation was rate-limited 5/hour **per IP** (would block a classroom on one network) — now 5/hour per enrollment no. as docs/10 specifies plus a 120/hour per-IP bucket; `pluralize()` misuse ("2 new 2 students") caught by a component test. Not built in P6 (documented in docs/13 §8): mapping presets, per-cell edits/row exclusion in staging, import-row retention purge job (Phase 16). Tenant initial JS now 177.1 KB gz (P10.5). P7.1: pure engine (`app/modules/grading/engine`, import-linter purity contract re-added), 26 hand-computed unit cases, 4 Hypothesis properties × 300 examples (a deliberately injected non-monotonic band was caught), 99% branch coverage (CI gate ≥ 90%). P7.2: 3 golden tables with hand-worked expectations; the credit table is a generic CBCS-style scale, **not** Thapar's official policy (unverified, D25). Local note: Docker Desktop hung on this Mac on 2026-10-07 (image pulls and then `docker info`), so the last local full-stack E2E run was before the final UI polish; CI ran it green. |
 | 2026-10-06 | P1.1, P1.4, P1.5, Gate M1, P4.4–P4.8, Gate M3, P5.1–P5.4 ticked | Verified by CI run 37501337189 (backend lint/types/unit/integration, frontend lint/types/tests/build, Playwright E2E on the full compose stack from a fresh checkout: 2m09s for the whole job). 109 backend tests, 21 frontend unit tests, 15 E2E tests. Gate M1 evidence is the CI fresh-checkout run, not a timed human run on a new laptop. P4.8: CI seeds all three demo tenants; E2E checks two branded portals, `test_seed` checks all three. P3.11 stays open until the student role exists (P6.7). Tenant initial JS is 171 KB gz, over the 150 KB student target (fix in P10.5). Next: Phase 6. |
 | 2026-10-06 | P1.2, P1.3, P1.6–P1.8, P2.1–P2.11, P3.1–P3.10, P4.1–P4.3 ticked | Verified by CI run 37462856524 (all 5 jobs green: lint & types, unit, integration incl. RLS/isolation/authz-matrix, security scans, Docker build + Trivy). Branch protection on the default work branch (no `main` exists): required checks, no force-push/deletion, admins may push. 98 backend tests. Argon2id measured (benchmarks/results). `scorecode seed` written and run locally (idempotent) — P4.8 waits for the UI. Next: P1.4 frontend. |
 | 2026-10-06 | P0.4, P1.1–P1.3, P1.5 (infra only), P1.7–P1.8, P2.1–P2.11, P3.1–P3.9 (backend), P4.1–P4.3, P4.4 (backend) | Built and tested locally, not in CI yet (no CI workflow exists), so nothing is ticked except P0.4. Passing locally: 56 backend tests (26 unit + 30 integration), ruff, mypy --strict. Written but **not tested yet**: staff invites/roles API, settings/subscription API, sign-up + handoff, audit viewer, job status endpoint, platform service (`app/modules/platform/service.py` has no router yet). Not started: frontend (P1.4), CI (P1.6), compose app profile/Caddy (P1.5 proxy), `scorecode seed` (`app/seed.py` missing), Phases 5–17. Backend Docker image build started but not verified. D23–D25 still need the owner's input. |
