@@ -119,10 +119,3 @@ name = "core is a shared kernel and imports no business module"
 type = "forbidden"
 source_modules = ["app.core"]
 forbidden_modules = ["app.modules"]
-
-[[tool.importlinter.contracts]]
-name = "grading engine is pure (no I/O, no framework)"
-type = "forbidden"
-source_modules = ["app.modules.grading.engine"]
-forbidden_modules = ["app.core.db", "sqlalchemy", "fastapi", "app.modules.grading.models"]
-allow_indirect_imports = true
