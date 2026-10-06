@@ -145,3 +145,11 @@ export type ImportField = Schemas["FieldOut"];
 export type ImportIssue = Schemas["IssueOut"];
 export type ImportRow = Schemas["RowOut"];
 export type ImportRowsPage = Schemas["RowsPage"];
+
+// ---- Grading ----------------------------------------------------------------------------------------
+export type GradingScheme = Schemas["SchemeOut"];
+export type GradingSchemeDetail = Schemas["SchemeDetailOut"];
+export type GradingTemplate = Schemas["TemplateOut"];
+export type GradingStrategy = GradingScheme["strategy"];
+export type GradePreview = Schemas["ExamResultOut"];
+export type PaperPreview = Schemas["PaperResultOut"];

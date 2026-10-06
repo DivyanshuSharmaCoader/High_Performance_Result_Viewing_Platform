@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 # Build context: repository root (compose: context ".", dockerfile "frontend/Dockerfile").
 # Builds the three SPAs once (one build serves every tenant) and serves them with Caddy.
 FROM node:24-alpine AS build

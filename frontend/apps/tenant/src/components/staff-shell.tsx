@@ -14,6 +14,7 @@ import {
   useColorScheme,
 } from "@scorecode/ui";
 import {
+  Award,
   ChevronsUpDown,
   FileSpreadsheet,
   GraduationCap,
@@ -67,7 +68,10 @@ export const NAV: NavGroup[] = [
   },
   {
     label: "Academics",
-    items: [{ to: "/admin/academics", label: "Structure", icon: Network, permission: "academics.view" }],
+    items: [
+      { to: "/admin/academics", label: "Structure", icon: Network, permission: "academics.view" },
+      { to: "/admin/grading", label: "Grading", icon: Award, permission: "grading.view" },
+    ],
   },
   {
     label: "Institution",

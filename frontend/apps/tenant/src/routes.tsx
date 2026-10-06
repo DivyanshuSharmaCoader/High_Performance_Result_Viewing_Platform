@@ -26,6 +26,8 @@ const Students = page(() => import("./features/students/list"));
 const StudentDetail = page(() => import("./features/students/detail"));
 const Activation = page(() => import("./features/students/activation"));
 const Imports = page(() => import("./features/imports/hub"));
+const Grading = page(() => import("./features/grading/list"));
+const GradingEditor = page(() => import("./features/grading/editor"));
 const ImportJob = page(() => import("./features/imports/job"));
 const AcademicsLayout = page(() => import("./features/academics/layout"));
 const Sessions = page(() => import("./features/academics/sessions"));
@@ -142,6 +144,13 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="students.manage" />,
                     children: [{ path: "students/activation", element: <Activation /> }],
+                  },
+                  {
+                    element: <RequirePermission permission="grading.view" />,
+                    children: [
+                      { path: "grading", element: <Grading /> },
+                      { path: "grading/:schemeId", element: <GradingEditor /> },
+                    ],
                   },
                   {
                     element: <RequirePermission permission="imports.manage" />,

@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 # One image, two modes: `scorecode api` and `scorecode worker` (decision D1).
 
 FROM python:3.12-slim-bookworm AS base

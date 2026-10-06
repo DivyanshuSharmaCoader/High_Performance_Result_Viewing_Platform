@@ -32,6 +32,8 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_REAUTH_WINDOW_MINUTES` | `10` | Password re-confirmation window for sensitive actions |
 | `SCORECODE_RATE_LOGIN_IP_PER_MINUTE` / `_BURST` | `20` / `10` | Login attempts per IP |
 | `SCORECODE_RATE_SIGNUP_IP_PER_HOUR` | `5` | Self-serve sign-ups per IP |
+| `SCORECODE_RATE_ACTIVATION_IP_PER_HOUR` | `120` | Student activation attempts per IP (burst = half); per enrollment no. stays 5/hour |
+| `SCORECODE_MAX_UPLOAD_BYTES` / `_MAX_IMPORT_ROWS` / `_MAX_IMPORT_COLUMNS` / `_MAX_XLSX_UNCOMPRESSED_BYTES` | 10 MB / 50,000 / 200 / 100 MB | Hard caps for spreadsheet imports (plans can be stricter via `max_import_rows`) |
 | `SCORECODE_API_SESSION_PER_MINUTE` / `_BURST` | `300` / `100` | Authenticated API calls per session |
 | `SCORECODE_MAX_UPLOAD_BYTES` / `_MAX_LOGO_BYTES` | 10 MB / 1 MB | Upload size limits |
 | `SCORECODE_WORKER_QUEUES` / `_CONCURRENCY` / `_POLL_INTERVAL_S` / `SCORECODE_JOB_LEASE_S` | see code | Background worker |
@@ -41,3 +43,14 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 
 Frontend apps have no runtime configuration: the tenant, its branding and features come from
 `GET /api/v1/tenant/config` on the same origin. The Caddy edge reads `BASE_DOMAIN` and `FILES_ORIGIN`.
+
+## Troubleshooting the local stack
+
+- **Image builds hang at "resolve image config" / "load metadata", and `docker pull` hangs too.** On macOS
+  the Docker Desktop credential helper (`credsStore: desktop`, backed by the Keychain) can block after a
+  restart, usually on a Keychain prompt. Unlock or approve it. To build without stored credentials (all base
+  images are public), point one command at an empty config:
+  `DOCKER_CONFIG=$(mktemp -d) DOCKER_HOST=unix://$HOME/.docker/run/docker.sock docker compose --profile app up -d --build`
+  (symlink `~/.docker/cli-plugins` into that directory first so `docker compose` is found).
+- **Repeated local E2E runs start failing with "Too many requests".** Rate limits live in Redis and outlast
+  the run; the compose app profile relaxes them, or flush Redis with `docker compose exec redis redis-cli FLUSHDB`.
