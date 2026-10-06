@@ -60,13 +60,18 @@ stateDiagram-v2
 stateDiagram-v2
     [*] --> Uploaded
     Uploaded --> Parsing: worker picks up
-    Parsing --> Failed: unreadable file
+    Parsing --> Failed: unreadable file (wrong format, macros, too large, too many rows)
+    Parsing --> NeedsMapping: a required field has no column
     Parsing --> Validated: rows staged with issues
-    Validated --> Validated: mapping changed (re-validate)
-    Validated --> Committing: admin commits
+    NeedsMapping --> Validating: admin maps columns
+    Validated --> Validating: mapping changed / re-check
+    Validating --> Validated
+    Validating --> NeedsMapping
+    Validated --> Committing: admin commits (no errors, or "skip rows with errors")
+    NeedsMapping --> Cancelled: admin cancels / superseded by re-upload
     Validated --> Cancelled: admin cancels / superseded by re-upload
     Committing --> Committed: single transaction succeeded
-    Committing --> Failed: transaction rolled back
+    Committing --> Validated: refused by a business rule (e.g. seat limit) — nothing written, reason shown
     Committed --> [*]
     Cancelled --> [*]
     Failed --> [*]

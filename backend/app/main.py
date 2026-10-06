@@ -15,6 +15,7 @@ from sqlalchemy import text
 from app.core.config import Settings, get_settings
 from app.core.container import Infra
 from app.core.logging import configure_logging, get_logger
+from app.jobs_registry import load_job_handlers
 from app.modules.identity.authn import CookieAuthenticator
 from app.modules.tenancy.service import TenantResolver
 from app.web.errors import install_error_handlers
@@ -50,6 +51,7 @@ def create_app(settings: Settings | None = None, infra: Infra | None = None) -> 
     configure_logging(settings.log_level, settings.log_json, settings.service_name)
     _init_sentry(settings)
     infra = infra or Infra.build(settings, app_name="scorecode-api")
+    load_job_handlers()  # the API enqueues jobs, so every job kind must be known here too
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

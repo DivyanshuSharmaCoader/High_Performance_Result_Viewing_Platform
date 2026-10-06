@@ -110,9 +110,37 @@ async def _student(infra: Any, t: TenantFixture) -> uuid.UUID:
     return await make_student(infra, t, cohort_id=s.cohort_id)
 
 
+async def _import(infra: Any, t: TenantFixture) -> uuid.UUID:
+    import hashlib
+
+    from app.modules.files.service import CSV, FileService
+    from app.modules.ingestion.models import ImportJob
+
+    data = f"Enrollment,Name\nX{uuid.uuid4().hex[:6]},X\n".encode()
+    async with infra.db.uow(t.id) as uow:
+        stored = await FileService(infra).store(
+            uow, data=data, kind="import", file_type=CSV, original_name="x.csv", uploaded_by=None
+        )
+        job = ImportJob(
+            tenant_id=t.id,
+            kind="students",
+            status="validated",
+            file_id=stored.id,
+            file_name="x.csv",
+            file_sha256=hashlib.sha256(data).digest(),
+            params={},
+            rows_valid=1,
+            rows_total=1,
+        )
+        uow.session.add(job)
+        await uow.flush()
+        return job.id
+
+
 PROVIDERS: dict[str, Provider] = {
     "user_id": _staff_user,
     "student_id": _student,
+    "import_id": _import,
     "job_id": _job,
     "token": _invite_token,
     **{
@@ -151,6 +179,8 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("PUT", "/api/v1/admin/students/{student_id}/status"): {"status": "archived"},
     ("POST", "/api/v1/admin/students/{student_id}/cohorts"): {"cohort_id": str(uuid.uuid4())},
     ("POST", "/api/v1/admin/cohorts/{cohort_id}/students"): {"student_ids": [str(uuid.uuid4())]},
+    ("PUT", "/api/v1/admin/imports/{import_id}/mapping"): {"mapping": {"enrollment_no": 0, "full_name": 1}},
+    ("POST", "/api/v1/admin/imports/{import_id}/commit"): {"skip_errors": False},
 }
 
 
@@ -187,7 +217,12 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                 )
             )
         ).scalar_one()
-    return audit, users, roles, jobs, students, members
+        imports = (
+            await uow.session.execute(
+                text("SELECT string_agg(id::text || status, ',' ORDER BY id) FROM import_jobs")
+            )
+        ).scalar_one()
+    return audit, users, roles, jobs, students, members, imports
 
 
 async def _call(c: Client, route: RouteInfo, url: str) -> Any:

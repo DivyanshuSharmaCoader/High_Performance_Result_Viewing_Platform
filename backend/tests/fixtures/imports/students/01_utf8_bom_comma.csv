@@ -1,0 +1,12 @@
+﻿Enrollment No.,Student Name,Email,DOB,Cohort,Admission Year
+102303001,Aarav Gupta,aarav@example.com,14/03/2005,CSE-G1,2023
+ 102303002 ,  Diya   Sharma ,DIYA@EXAMPLE.COM,2005-07-21,cse-g1,2023
+102303003,Kabir Singh,not-an-email,31/02/2005,CSE-G9,2023
+,Missing Enrollment,,,,
+102303001,Aarav Duplicate,,,CSE-G2,2023
+1.02303E+11,Mangled Number,,,,
+,,,,,
+102303050,Existing Student Renamed,existing@example.com,,CSE-G2,2022
+102303004,Meera Iyer,meera@example.com,5 Mar 2006,OLD-X,2024
+102303005,Rohan Das,,38425,CSE-G2,2023-24
+"102303006","Fatima ""Fiza"" Khan",,"07/11/2005",CSE-G1,1890

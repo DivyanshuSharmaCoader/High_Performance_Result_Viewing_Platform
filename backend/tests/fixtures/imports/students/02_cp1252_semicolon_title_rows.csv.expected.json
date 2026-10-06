@@ -1,0 +1,68 @@
+{
+  "delimiter": ";",
+  "encoding": "cp1252",
+  "file_issues": [],
+  "header_row": 3,
+  "mapping": {
+    "cohort": "Section",
+    "enrollment_no": "Roll No",
+    "full_name": "Name",
+    "guardian_name": "Father's Name",
+    "phone": "Mobile"
+  },
+  "missing": [],
+  "rows": [
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [],
+      "row": 4,
+      "status": "valid",
+      "values": {
+        "enrollment_no": "102303101",
+        "full_name": "Zoë Fernández",
+        "guardian_name": "José Fernández",
+        "phone": "98765 43210"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G2",
+      "issues": [
+        "INVALID_PHONE"
+      ],
+      "row": 5,
+      "status": "warning",
+      "values": {
+        "enrollment_no": "102303102",
+        "full_name": "Ananya Rao",
+        "guardian_name": "R. Rao",
+        "phone": "12"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [],
+      "row": 6,
+      "status": "valid",
+      "values": {
+        "enrollment_no": "102303103",
+        "full_name": "Ishaan Mehta",
+        "phone": "+91-98100-12345"
+      }
+    }
+  ],
+  "sheet": "CSV",
+  "summary": {
+    "blank_rows": 0,
+    "cohort_column": true,
+    "create": 3,
+    "mode": "upsert",
+    "seats_remaining": 100,
+    "session_code": "2025-26",
+    "skip": 0,
+    "unchanged": 0,
+    "update": 0
+  }
+}

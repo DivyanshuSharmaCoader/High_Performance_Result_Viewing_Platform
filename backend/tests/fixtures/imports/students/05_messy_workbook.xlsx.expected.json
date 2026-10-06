@@ -1,0 +1,101 @@
+{
+  "delimiter": null,
+  "encoding": null,
+  "file_issues": [],
+  "header_row": 3,
+  "mapping": {
+    "cohort": "Class",
+    "date_of_birth": "Date of Birth",
+    "enrollment_no": "Enrollment Number",
+    "full_name": "Name of Student"
+  },
+  "missing": [],
+  "rows": [
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [],
+      "row": 4,
+      "status": "valid",
+      "values": {
+        "date_of_birth": "2005-01-09",
+        "enrollment_no": "102303401",
+        "full_name": "Arjun Nair"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G2",
+      "issues": [],
+      "row": 5,
+      "status": "valid",
+      "values": {
+        "date_of_birth": "2005-01-09",
+        "enrollment_no": "102303402",
+        "full_name": "Sara Khan"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [
+        "FORMULA_LIKE"
+      ],
+      "row": 6,
+      "status": "warning",
+      "values": {
+        "enrollment_no": "102303403",
+        "full_name": "=HYPERLINK(\"http://evil.example\",\"click\")"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G2",
+      "issues": [],
+      "row": 7,
+      "status": "valid",
+      "values": {
+        "date_of_birth": "2004-12-31",
+        "enrollment_no": "102303404",
+        "full_name": "Hidden Row Student"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [],
+      "row": 8,
+      "status": "valid",
+      "values": {
+        "date_of_birth": "2004-02-29",
+        "enrollment_no": "102303405",
+        "full_name": "Vikram Rao"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [
+        "INVALID_DATE"
+      ],
+      "row": 9,
+      "status": "error",
+      "values": {
+        "enrollment_no": "102303406",
+        "full_name": "Leap Day Typo"
+      }
+    }
+  ],
+  "sheet": "Students",
+  "summary": {
+    "blank_rows": 0,
+    "cohort_column": true,
+    "create": 5,
+    "mode": "upsert",
+    "seats_remaining": 100,
+    "session_code": "2025-26",
+    "skip": 0,
+    "unchanged": 0,
+    "update": 0
+  }
+}

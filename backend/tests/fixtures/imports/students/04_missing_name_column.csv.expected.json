@@ -1,0 +1,18 @@
+{
+  "delimiter": ",",
+  "encoding": "utf-8",
+  "file_issues": [
+    "MISSING_COLUMN"
+  ],
+  "header_row": 1,
+  "mapping": {
+    "email": "Email",
+    "enrollment_no": "Enrollment"
+  },
+  "missing": [
+    "full_name"
+  ],
+  "rows": [],
+  "sheet": "CSV",
+  "summary": {}
+}

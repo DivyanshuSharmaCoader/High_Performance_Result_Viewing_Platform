@@ -1,0 +1,62 @@
+{
+  "delimiter": "\t",
+  "encoding": "utf-16",
+  "file_issues": [],
+  "header_row": 1,
+  "mapping": {
+    "email": "E-mail",
+    "enrollment_no": "Reg No",
+    "first_name": "First Name",
+    "last_name": "Last Name"
+  },
+  "missing": [],
+  "rows": [
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [],
+      "row": 2,
+      "status": "valid",
+      "values": {
+        "email": "nikhil@example.com",
+        "enrollment_no": "102303201",
+        "full_name": "Nikhil Verma"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [],
+      "row": 3,
+      "status": "valid",
+      "values": {
+        "enrollment_no": "102303202",
+        "full_name": "Pooja"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [],
+      "row": 4,
+      "status": "valid",
+      "values": {
+        "email": "karan@example.com",
+        "enrollment_no": "CSE/21/045",
+        "full_name": "Karan Malhotra"
+      }
+    }
+  ],
+  "sheet": "CSV",
+  "summary": {
+    "blank_rows": 0,
+    "cohort_column": false,
+    "create": 3,
+    "mode": "upsert",
+    "seats_remaining": 100,
+    "session_code": "2025-26",
+    "skip": 0,
+    "unchanged": 0,
+    "update": 0
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "delimiter": ",",
+  "encoding": "utf-8-sig",
+  "file_issues": [],
+  "header_row": 1,
+  "mapping": {
+    "admission_year": "Admission Year",
+    "cohort": "Cohort",
+    "date_of_birth": "DOB",
+    "email": "Email",
+    "enrollment_no": "Enrollment No.",
+    "full_name": "Student Name"
+  },
+  "missing": [],
+  "rows": [
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [],
+      "row": 2,
+      "status": "valid",
+      "values": {
+        "admission_year": 2023,
+        "date_of_birth": "2005-03-14",
+        "email": "aarav@example.com",
+        "enrollment_no": "102303001",
+        "full_name": "Aarav Gupta"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [],
+      "row": 3,
+      "status": "valid",
+      "values": {
+        "admission_year": 2023,
+        "date_of_birth": "2005-07-21",
+        "email": "diya@example.com",
+        "enrollment_no": "102303002",
+        "full_name": "Diya Sharma"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [
+        "INVALID_EMAIL",
+        "INVALID_DATE",
+        "UNKNOWN_COHORT"
+      ],
+      "row": 4,
+      "status": "error",
+      "values": {
+        "admission_year": 2023,
+        "enrollment_no": "102303003",
+        "full_name": "Kabir Singh"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [
+        "MISSING_VALUE"
+      ],
+      "row": 5,
+      "status": "error",
+      "values": {
+        "enrollment_no": "",
+        "full_name": "Missing Enrollment"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G2",
+      "issues": [
+        "DUPLICATE_IN_FILE"
+      ],
+      "row": 6,
+      "status": "error",
+      "values": {
+        "admission_year": 2023,
+        "enrollment_no": "102303001",
+        "full_name": "Aarav Duplicate"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [
+        "MANGLED_NUMBER"
+      ],
+      "row": 7,
+      "status": "error",
+      "values": {
+        "enrollment_no": "1.02303E+11",
+        "full_name": "Mangled Number"
+      }
+    },
+    {
+      "action": "update",
+      "cohort": "CSE-G2",
+      "issues": [
+        "OVERWRITES_EXISTING"
+      ],
+      "row": 9,
+      "status": "valid",
+      "values": {
+        "admission_year": 2022,
+        "email": "existing@example.com",
+        "enrollment_no": "102303050",
+        "full_name": "Existing Student Renamed"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": null,
+      "issues": [
+        "ARCHIVED_COHORT"
+      ],
+      "row": 10,
+      "status": "error",
+      "values": {
+        "admission_year": 2024,
+        "date_of_birth": "2006-03-05",
+        "email": "meera@example.com",
+        "enrollment_no": "102303004",
+        "full_name": "Meera Iyer"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G2",
+      "issues": [],
+      "row": 11,
+      "status": "valid",
+      "values": {
+        "admission_year": 2023,
+        "date_of_birth": "2005-03-14",
+        "enrollment_no": "102303005",
+        "full_name": "Rohan Das"
+      }
+    },
+    {
+      "action": "create",
+      "cohort": "CSE-G1",
+      "issues": [
+        "INVALID_YEAR"
+      ],
+      "row": 12,
+      "status": "error",
+      "values": {
+        "date_of_birth": "2005-11-07",
+        "enrollment_no": "102303006",
+        "full_name": "Fatima \"Fiza\" Khan"
+      }
+    }
+  ],
+  "sheet": "CSV",
+  "summary": {
+    "blank_rows": 1,
+    "cohort_column": true,
+    "create": 3,
+    "mode": "upsert",
+    "seats_remaining": 100,
+    "session_code": "2025-26",
+    "skip": 0,
+    "unchanged": 0,
+    "update": 1
+  }
+}

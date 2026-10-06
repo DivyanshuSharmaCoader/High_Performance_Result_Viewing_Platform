@@ -351,6 +351,160 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Imports */
+        get: operations["list_imports_api_v1_admin_imports_get"];
+        put?: never;
+        /** Upload Import */
+        post: operations["upload_import_api_v1_admin_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/template.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Template */
+        get: operations["download_template_api_v1_admin_imports_template_xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/{import_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Import */
+        get: operations["get_import_api_v1_admin_imports__import_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/{import_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Import */
+        post: operations["cancel_import_api_v1_admin_imports__import_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/{import_id}/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Commit Import */
+        post: operations["commit_import_api_v1_admin_imports__import_id__commit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/{import_id}/mapping": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Mapping */
+        put: operations["set_mapping_api_v1_admin_imports__import_id__mapping_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/{import_id}/report.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Report */
+        get: operations["download_report_api_v1_admin_imports__import_id__report_xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/{import_id}/revalidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revalidate */
+        post: operations["revalidate_api_v1_admin_imports__import_id__revalidate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/imports/{import_id}/rows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Import Rows */
+        get: operations["list_import_rows_api_v1_admin_imports__import_id__rows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/onboarding": {
         parameters: {
             query?: never;
@@ -1388,6 +1542,26 @@ export interface components {
             /** Slug */
             slug: string;
         };
+        /** Body_upload_import_api_v1_admin_imports_post */
+        Body_upload_import_api_v1_admin_imports_post: {
+            /** File */
+            file: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "students";
+            /**
+             * Mode
+             * @default upsert
+             * @enum {string}
+             */
+            mode: "upsert" | "create_only";
+            /** Session Id */
+            session_id?: string | null;
+            /** Supersedes Id */
+            supersedes_id?: string | null;
+        };
         /** Body_upload_logo_api_v1_admin_branding_logo_post */
         Body_upload_logo_api_v1_admin_branding_logo_post: {
             /** File */
@@ -1526,6 +1700,14 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** CommitIn */
+        CommitIn: {
+            /**
+             * Skip Errors
+             * @default false
+             */
+            skip_errors: boolean;
+        };
         /** CopyIn */
         CopyIn: {
             /**
@@ -1607,6 +1789,17 @@ export interface components {
             /** Dismissed */
             dismissed: boolean;
         };
+        /** FieldOut */
+        FieldOut: {
+            /** Help */
+            help: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Required */
+            required: boolean;
+        };
         /** ForgotIn */
         ForgotIn: {
             /** Identifier */
@@ -1621,6 +1814,120 @@ export interface components {
         HandoffIn: {
             /** Token */
             token: string;
+        };
+        /** ImportListItem */
+        ImportListItem: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Name */
+            created_by_name: string | null;
+            /** File Name */
+            file_name: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "students";
+            /** Rows Error */
+            rows_error: number;
+            /** Rows Total */
+            rows_total: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "uploaded" | "parsing" | "needs_mapping" | "validating" | "validated" | "committing" | "committed" | "failed" | "cancelled";
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+        };
+        /** ImportOut */
+        ImportOut: {
+            /** Columns */
+            columns: string[];
+            /** Committed At */
+            committed_at: string | null;
+            /** Committed By Name */
+            committed_by_name: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Created By Name */
+            created_by_name: string | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Detail */
+            error_detail: string | null;
+            /** Fields */
+            fields: components["schemas"]["FieldOut"][];
+            /** File Issues */
+            file_issues: components["schemas"]["IssueOut"][];
+            /** File Name */
+            file_name: string | null;
+            /** Header Row */
+            header_row: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "students";
+            /** Mapping */
+            mapping: {
+                [key: string]: number;
+            };
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /**
+             * Resumed
+             * @default false
+             */
+            resumed: boolean;
+            /** Rows Error */
+            rows_error: number;
+            /** Rows Total */
+            rows_total: number;
+            /** Rows Valid */
+            rows_valid: number;
+            /** Rows Warning */
+            rows_warning: number;
+            /** Sheet Name */
+            sheet_name: string | null;
+            /** Sheets */
+            sheets: string[];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "uploaded" | "parsing" | "needs_mapping" | "validating" | "validated" | "committing" | "committed" | "failed" | "cancelled";
+            /** Summary */
+            summary: {
+                [key: string]: unknown;
+            };
+            /** Supersedes Id */
+            supersedes_id: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** InviteIn */
         InviteIn: {
@@ -1643,6 +1950,20 @@ export interface components {
             email: string;
             /** Full Name */
             full_name: string;
+        };
+        /** IssueOut */
+        IssueOut: {
+            /** Code */
+            code: string;
+            /** Field */
+            field?: string | null;
+            /** Msg */
+            msg: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "error" | "warning" | "info";
         };
         /** JobOut */
         JobOut: {
@@ -1694,6 +2015,17 @@ export interface components {
         LogoutAllOut: {
             /** Revoked */
             revoked: number;
+        };
+        /** MappingIn */
+        MappingIn: {
+            /** Header Row */
+            header_row?: number | null;
+            /** Mapping */
+            mapping: {
+                [key: string]: number | null;
+            };
+            /** Sheet Name */
+            sheet_name?: string | null;
         };
         /** MeOut */
         MeOut: {
@@ -1978,6 +2310,31 @@ export interface components {
              * @enum {string}
              */
             role: "institution_admin" | "faculty";
+        };
+        /** RowOut */
+        RowOut: {
+            /** Issues */
+            issues: components["schemas"]["IssueOut"][];
+            /** Normalized */
+            normalized: {
+                [key: string]: unknown;
+            } | null;
+            /** Raw */
+            raw: string[];
+            /** Row No */
+            row_no: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "valid" | "warning" | "error" | "skipped";
+        };
+        /** RowsPage */
+        RowsPage: {
+            /** Items */
+            items: components["schemas"]["RowOut"][];
+            /** Next After */
+            next_after: number | null;
         };
         /** SessionItem */
         SessionItem: {
@@ -3261,6 +3618,330 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepartmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_imports_api_v1_admin_imports_get: {
+        parameters: {
+            query?: {
+                kind?: "students" | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportListItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_import_api_v1_admin_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_import_api_v1_admin_imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_template_api_v1_admin_imports_template_xlsx_get: {
+        parameters: {
+            query?: {
+                kind?: "students";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_import_api_v1_admin_imports__import_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_import_api_v1_admin_imports__import_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    commit_import_api_v1_admin_imports__import_id__commit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_mapping_api_v1_admin_imports__import_id__mapping_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MappingIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_report_api_v1_admin_imports__import_id__report_xlsx_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revalidate_api_v1_admin_imports__import_id__revalidate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_import_rows_api_v1_admin_imports__import_id__rows_get: {
+        parameters: {
+            query?: {
+                status?: ("valid" | "warning" | "error" | "skipped" | "problems") | null;
+                after?: number | null;
+                limit?: number | null;
+            };
+            header?: never;
+            path: {
+                import_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RowsPage"];
                 };
             };
             /** @description Validation Error */
