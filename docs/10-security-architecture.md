@@ -103,6 +103,7 @@ allowed = role_has_permission(principal.roles, "marks.enter")         # RBAC
 | Login per account | 5 failures → exponential backoff |
 | Password reset per account/IP | 3/hour |
 | Activation attempts per enrollment no. | 5/hour |
+| Activation attempts per IP | 120/hour, burst 60 — a whole class often activates from one school network; a 10-character code stays unguessable at this rate (`SCORECODE_RATE_ACTIVATION_IP_PER_HOUR`) |
 | Verification lookups per IP | 60/min |
 | Authenticated API per session | 300/min |
 | Imports per tenant | 10/hour |

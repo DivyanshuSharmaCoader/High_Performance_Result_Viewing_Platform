@@ -123,3 +123,28 @@ async def test_archived_students_get_no_codes_and_input_is_validated(app, infra)
     faculty = await client_as(app, infra, t, "faculty")
     async with faculty:
         assert (await faculty.post(CODES, json={"student_ids": [str(sid)]})).status_code == 403
+
+
+async def test_a_class_can_activate_from_one_network_but_one_student_cannot_be_brute_forced(app, infra) -> None:
+    """docs/10 §7: 5 attempts/hour per enrollment no.; the per-IP limit is wide enough for a classroom."""
+    t = await make_tenant(infra)
+    s = await make_structure(infra, t)
+    for i in range(8):
+        await make_student(infra, t, enrollment_no=f"CLS{i}", cohort_id=s.cohort_id)
+    async with Client(app, t.host) as admin:
+        await admin.login(t.owner_email)
+        slips = (await admin.post(CODES, json={"cohort_id": str(s.cohort_id)})).json()["issued"]
+    shared_ip = "203.0.113.7"  # every student behind the school's NAT
+    for slip in slips:
+        async with Client(app, t.host, ip=shared_ip) as student:
+            r = await _activate(student, slip["enrollment_no"], slip["code"])
+            assert r.status_code == 200, (slip["enrollment_no"], r.text)
+    sid = await make_student(infra, t, enrollment_no="TARGET1")
+    async with Client(app, t.host) as admin:
+        await admin.login(t.owner_email)
+        await admin.post(CODES, json={"student_ids": [str(sid)]})
+    statuses = []
+    for _ in range(6):
+        async with Client(app, t.host) as attacker:  # a new address each time doesn't help
+            statuses.append((await _activate(attacker, "TARGET1", "AAAAA-AAAAA")).status_code)
+    assert statuses[:5] == [422] * 5 and statuses[5] == 429

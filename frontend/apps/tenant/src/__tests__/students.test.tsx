@@ -216,7 +216,9 @@ describe("import job page", () => {
       "/admin/imports/i1",
       (qc) => qc.setQueryData(meKey, admin),
     );
-    expect(await screen.findByText("“nope” isn't a valid email address.")).toBeInTheDocument();
+    const table = await screen.findByRole("table");
+    expect(await within(table).findByText("“nope” isn't a valid email address.")).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "Checked rows" })).getByText(/Row 3/)).toBeInTheDocument();
     expect(screen.getByText(/2 new students will be added\./)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Download checked file/ })).toHaveAttribute(
       "href",

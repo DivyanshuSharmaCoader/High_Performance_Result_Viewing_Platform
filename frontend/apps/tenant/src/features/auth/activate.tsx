@@ -83,7 +83,7 @@ export default function ActivatePage() {
         </Field>
         <Field
           label="Activation code"
-          description="10 characters, like 7KQ3-M9XD-PA. Letters O and I are read as 0 and 1."
+          description="10 characters, like 7KQ3M-9XDPA. Letters O and I are read as 0 and 1."
           error={form.formState.errors.code?.message}
         >
           <Input

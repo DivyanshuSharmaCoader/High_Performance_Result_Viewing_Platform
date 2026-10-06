@@ -281,8 +281,8 @@ export default function StudentDetailPage() {
           </Section>
           <CohortPlacement student={s} canManage={canManage} />
         </div>
-        <Section title="Portal account">
-          <div className="flex flex-col gap-3 text-sm">
+        <Section title="Portal account" className="self-start">
+          <div className="flex flex-col items-start gap-3 text-sm">
             <AccountBadge account={s.account} />
             <p className="text-fg-muted">
               {s.account === "none" &&
@@ -300,7 +300,6 @@ export default function StudentDetailPage() {
                 leadingIcon={<KeyRound />}
                 loading={issue.isPending}
                 onClick={() => issue.mutate(s.account === "pending")}
-                className="self-start"
               >
                 {s.account === "pending" ? "Replace code" : "Issue activation code"}
               </Button>

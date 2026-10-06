@@ -45,7 +45,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { toastError } from "../../lib/forms";
@@ -250,27 +250,51 @@ function rowLabel(r: ImportRow): { id: string; name: string } {
   };
 }
 
-function RowsTable({ job }: { job: ImportJob }) {
+function RowsTable({ job, actions }: { job: ImportJob; actions?: ReactNode }) {
   const problems = job.rows_error + job.rows_warning;
   const [filter, setFilter] = useState<"problems" | "error" | "warning" | "">(problems ? "problems" : "");
   const rows = useImportRows(job.id, filter, true);
   const items = rows.data?.pages.flatMap((p) => p.items) ?? [];
   return (
     <div>
-      <div className="mb-3 overflow-x-auto">
-        <Segmented
-          label="Show rows"
-          value={filter}
-          onChange={setFilter}
-          options={[
-            { value: "problems", label: "Needs attention", count: problems },
-            { value: "error", label: "Errors", count: job.rows_error },
-            { value: "warning", label: "Warnings", count: job.rows_warning },
-            { value: "", label: "All rows", count: job.rows_total },
-          ]}
-        />
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="max-w-full overflow-x-auto">
+          <Segmented
+            label="Show rows"
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: "problems", label: "Needs attention", count: problems },
+              { value: "error", label: "Errors", count: job.rows_error },
+              { value: "warning", label: "Warnings", count: job.rows_warning },
+              { value: "", label: "All rows", count: job.rows_total },
+            ]}
+          />
+        </div>
+        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
-      <TableContainer>
+      <ul className="flex flex-col gap-2 md:hidden" aria-label="Checked rows">
+        {rows.isPending
+          ? Array.from({ length: 3 }, (_, i) => (
+              <li key={i} className="h-20 animate-pulse rounded-lg bg-surface-2" />
+            ))
+          : items.map((r) => {
+              const label = rowLabel(r);
+              return (
+                <li key={r.row_no} className="rounded-lg border border-border p-3 text-[13px]">
+                  <p className="mb-1.5 text-fg-subtle">
+                    Row {r.row_no} · <span className="font-mono text-fg">{label.id || "—"}</span>
+                    {label.name && <> · {label.name}</>}
+                  </p>
+                  <Issues issues={r.issues} />
+                </li>
+              );
+            })}
+        {!rows.isPending && items.length === 0 && (
+          <li className="py-6 text-center text-[13px] text-fg-subtle">No rows match this filter.</li>
+        )}
+      </ul>
+      <TableContainer className="hidden md:block">
         <Table>
           <THead>
             <tr>
@@ -427,7 +451,7 @@ function Review({ job }: { job: ImportJob }) {
           {i.msg}
         </Callout>
       ))}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-3">
         <StatTile
           label="Ready"
           value={formatNumber(job.rows_valid)}
@@ -436,36 +460,42 @@ function Review({ job }: { job: ImportJob }) {
         <StatTile
           label="Warnings"
           value={formatNumber(job.rows_warning)}
-          hint="Will import; worth a look"
+          hint={<span className="hidden sm:inline">Will import; worth a look</span>}
           icon={<AlertTriangle className="text-warning" />}
         />
         <StatTile
           label="Errors"
           value={formatNumber(job.rows_error)}
-          hint={job.rows_error ? "Can't import until fixed" : undefined}
+          hint={
+            job.rows_error ? (
+              <span className="hidden sm:inline">Can&apos;t import until fixed</span>
+            ) : undefined
+          }
           icon={<AlertCircle className="text-danger" />}
         />
       </div>
       <Section
         title="Rows"
         description={`${formatNumber(job.rows_total)} rows from “${job.sheet_name ?? "sheet"}”, header on row ${job.header_row ?? 1}.`}
-        actions={
-          <>
-            <Button variant="ghost" size="sm" leadingIcon={<Columns3 />} onClick={() => setRemap(true)}>
-              Columns
-            </Button>
-            <Button variant="secondary" size="sm" asChild>
-              <a href={`${I}/${job.id}/report.xlsx`}>
-                <FileDown aria-hidden /> Download checked file
-              </a>
-            </Button>
-          </>
-        }
       >
-        <RowsTable job={job} />
+        <RowsTable
+          job={job}
+          actions={
+            <>
+              <Button variant="ghost" size="sm" leadingIcon={<Columns3 />} onClick={() => setRemap(true)}>
+                Columns
+              </Button>
+              <Button variant="secondary" size="sm" asChild>
+                <a href={`${I}/${job.id}/report.xlsx`}>
+                  <FileDown aria-hidden /> Download checked file
+                </a>
+              </Button>
+            </>
+          }
+        />
       </Section>
-      <div className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-3 rounded-xl border border-border bg-surface/95 p-4 shadow-md backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-fg-muted">
+      <div className="z-10 flex flex-col gap-3 rounded-xl border border-border bg-surface/95 p-4 shadow-md backdrop-blur sm:sticky sm:bottom-0 lg:flex-row lg:items-center lg:justify-between">
+        <p className="min-w-0 flex-1 text-sm text-fg-muted">
           {blocking.length > 0
             ? "Fix the problem above before importing."
             : ready === 0
@@ -477,7 +507,7 @@ function Review({ job }: { job: ImportJob }) {
             <> {pluralize(job.rows_error, "row")} with errors can be skipped.</>
           )}
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2 lg:flex-nowrap">
           <Button variant="ghost" leadingIcon={<X />} onClick={() => setCancelling(true)}>
             Cancel import
           </Button>

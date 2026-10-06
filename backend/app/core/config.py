@@ -91,6 +91,7 @@ class Settings(BaseSettings):
     rate_login_ip_per_minute: int = 20
     rate_login_ip_burst: int = 10
     rate_signup_ip_per_hour: int = 5
+    rate_activation_ip_per_hour: int = 120
     api_session_per_minute: int = 300  # authenticated API calls per session (docs/10 §7)
     api_session_burst: int = 100
     login_max_failures: int = 5

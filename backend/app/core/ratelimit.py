@@ -39,7 +39,10 @@ class Bucket:
 LOGIN_PER_IP = Bucket.per_minute("login_ip", 20, burst=10)
 LOGIN_PER_ACCOUNT = Bucket.per_minute("login_account", 10, burst=10)
 PASSWORD_RESET = Bucket.per_hour("password_reset", 3, burst=3)
-ACTIVATION = Bucket.per_hour("activation", 5, burst=5)
+ACTIVATION = Bucket.per_hour("activation", 5, burst=5)  # per enrollment no. (docs/10 §7)
+# Per network address: generous, because a whole class often activates from one school network (NAT).
+# Guessing a 10-character code (32^10 combinations) stays hopeless at this rate.
+ACTIVATION_PER_IP = Bucket.per_hour("activation_ip", 120, burst=60)
 VERIFY_PER_IP = Bucket.per_minute("verify_ip", 60, burst=30)
 API_PER_SESSION = Bucket.per_minute("api_session", 300, burst=100)
 IMPORTS_PER_TENANT = Bucket.per_hour("imports_tenant", 30, burst=10)
@@ -76,6 +79,14 @@ return {allowed, tostring(retry)}
 def login_ip_bucket(settings: Any) -> Bucket:
     return Bucket.per_minute(
         LOGIN_PER_IP.name, settings.rate_login_ip_per_minute, burst=settings.rate_login_ip_burst
+    )
+
+
+def activation_ip_bucket(settings: Any) -> Bucket:
+    return Bucket.per_hour(
+        ACTIVATION_PER_IP.name,
+        settings.rate_activation_ip_per_hour,
+        burst=max(1, settings.rate_activation_ip_per_hour // 2),
     )
 
 

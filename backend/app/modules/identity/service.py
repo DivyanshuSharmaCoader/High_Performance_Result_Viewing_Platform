@@ -25,6 +25,7 @@ from app.core.ratelimit import (
     LOGIN_PER_ACCOUNT,
     PASSWORD_RESET,
     PLATFORM_LOGIN_PER_IP,
+    activation_ip_bucket,
     login_ip_bucket,
 )
 from app.core.security import hash_token, new_token, normalise_human_code, password_problems
@@ -338,7 +339,7 @@ class AuthService:
     ) -> LoginResult:
         login_id = normalise_login_id(enrollment_no)
         await self.infra.limiter.hit(ACTIVATION, f"{tenant.tenant_id}:{login_id}")
-        await self.infra.limiter.hit(ACTIVATION, f"ip:{ip}")
+        await self.infra.limiter.hit(activation_ip_bucket(self.settings), ip)
         token_hash = activation_token_hash(tenant.tenant_id, login_id, code)
         async with self.infra.db.uow(tenant.tenant_id, ip=ip, user_agent=user_agent) as uow:
             row = (

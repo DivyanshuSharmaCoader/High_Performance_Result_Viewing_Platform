@@ -22,7 +22,8 @@ test("P6.6: import students with errors → upload the fixed file → commit", a
     `Roll No,Student Name,Email,Section\n${tag}1,Ira Kapoor,ira@example.com,JEE-MA\n${tag}2,Kabir Shah,not-an-email,JEE-MA\n`,
   );
   await expect(page).toHaveURL(/\/admin\/imports\/[0-9a-f-]+$/);
-  await expect(page.getByText("“not-an-email” isn't a valid email address.")).toBeVisible({
+  // Problems show as a table on desktop and as cards on phones; check the visible one.
+  await expect(page.getByRole("table").getByText("“not-an-email” isn't a valid email address.")).toBeVisible({
     timeout: 30_000,
   });
   await expect(page.getByRole("button", { name: "Import 1 valid row" })).toBeEnabled();
@@ -84,7 +85,7 @@ test("P6.7: admin issues an activation code, the student activates, signs out an
   await student.goto(url(COACHING.slug, "/activate"));
   await student.getByLabel("Enrollment / roll number").fill(enrollment.toLowerCase());
   await student.getByLabel("Activation code").fill(code.replace("-", " "));
-  const password = "meher-strong-passphrase-1";
+  const password = `${uniq("meher")}-pass-phrase`; // generated per run: no fixed credential in the repo
   await student.getByLabel("New password").fill(password);
   await student.getByLabel("Confirm password").fill(password);
   await student.getByRole("button", { name: "Activate and sign in" }).click();
