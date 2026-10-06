@@ -5,8 +5,9 @@
 Institutions import marks, catch errors before students do, publish with one click, and give every student a branded, verifiable marksheet on a portal built to stay up on result day. Every institution (schools, colleges, coaching institutes) is a tenant on one shared platform with strict data isolation. *Thapar Institute of Engineering & Technology is one demo tenant, not the product.*
 
 > **Status: implementation in progress.** Platform kernel, tenancy, identity, entitlements, onboarding, the
-> tenant admin app, the platform console and self-serve sign-up are built and verified in CI. Exams, marks,
-> results and publication are next. Exact progress: [docs/CHECKLIST.md](docs/CHECKLIST.md).
+> tenant admin app, the platform console, self-serve sign-up, academic structure, the student directory,
+> spreadsheet imports (check → fix → commit) and student activation are built and verified in CI. The grading
+> engine, exams, marks, results and publication are next. Exact progress: [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ---
 
@@ -83,13 +84,13 @@ Then open (browsers resolve `*.localhost` to your machine):
 | Address | What |
 |---|---|
 | http://localhost:8080 | Marketing site and self-serve sign-up |
-| http://thapar.localhost:8080 | Thapar (Enterprise plan) — owner `registrar@thapar.example.com` |
-| http://demoschool.localhost:8080 | Demo Public School (Free plan) — owner `principal@demoschool.example.com` |
-| http://democoaching.localhost:8080 | Demo Coaching Academy (Growth plan) — owner `director@democoaching.example.com` |
+| http://thapar.localhost:8080 | Thapar (Enterprise plan) — owner `registrar@thapar.example.com`, demo student `102401001` |
+| http://demoschool.localhost:8080 | Demo Public School (Free plan) — owner `principal@demoschool.example.com`, demo student `DPS25101` |
+| http://democoaching.localhost:8080 | Demo Coaching Academy (Growth plan) — owner `director@democoaching.example.com`, demo student `DCA251001` |
 | http://admin.localhost:8080 | Platform console — `ops@scorecode.example.com`, TOTP secret printed by `seed` |
 | http://localhost:58025 | Mailpit — every email the system sends (invites, resets, sign-up) |
 
-The demo password and TOTP secret are printed by `scorecode seed` (development only; the command refuses to run in production).
+Each demo tenant gets 120 synthetic students in its current-session cohorts; the first one has an activated account so the student portal can be tried without printing activation slips. The demo password and TOTP secret are printed by `scorecode seed` (development only; the command refuses to run in production).
 
 ### Option B — host processes with hot reload
 ```bash

@@ -125,7 +125,9 @@ async def test_archived_students_get_no_codes_and_input_is_validated(app, infra)
         assert (await faculty.post(CODES, json={"student_ids": [str(sid)]})).status_code == 403
 
 
-async def test_a_class_can_activate_from_one_network_but_one_student_cannot_be_brute_forced(app, infra) -> None:
+async def test_a_class_can_activate_from_one_network_but_one_student_cannot_be_brute_forced(
+    app, infra
+) -> None:
     """docs/10 §7: 5 attempts/hour per enrollment no.; the per-IP limit is wide enough for a classroom."""
     t = await make_tenant(infra)
     s = await make_structure(infra, t)
