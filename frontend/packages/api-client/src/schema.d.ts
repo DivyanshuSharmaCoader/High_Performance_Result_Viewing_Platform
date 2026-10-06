@@ -371,6 +371,129 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/exams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Exams */
+        get: operations["list_exams_api_v1_admin_exams_get"];
+        put?: never;
+        /** Create Exam */
+        post: operations["create_exam_api_v1_admin_exams_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Exam */
+        get: operations["get_exam_api_v1_admin_exams__exam_id__get"];
+        /** Update Exam */
+        put: operations["update_exam_api_v1_admin_exams__exam_id__put"];
+        post?: never;
+        /** Delete Exam */
+        delete: operations["delete_exam_api_v1_admin_exams__exam_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/cohorts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Cohorts */
+        put: operations["set_cohorts_api_v1_admin_exams__exam_id__cohorts_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/papers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add Paper */
+        post: operations["add_paper_api_v1_admin_exams__exam_id__papers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/papers/{paper_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Paper */
+        put: operations["update_paper_api_v1_admin_exams__exam_id__papers__paper_id__put"];
+        post?: never;
+        /** Remove Paper */
+        delete: operations["remove_paper_api_v1_admin_exams__exam_id__papers__paper_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/papers/{paper_id}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Assignments */
+        put: operations["set_assignments_api_v1_admin_exams__exam_id__papers__paper_id__assignments_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/transitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transition */
+        post: operations["transition_api_v1_admin_exams__exam_id__transitions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/grading-schemes": {
         parameters: {
             query?: never;
@@ -1622,6 +1745,15 @@ export interface components {
             /** Token */
             token: string;
         };
+        /** ActionOut */
+        ActionOut: {
+            /** Action */
+            action: string;
+            /** Label */
+            label: string;
+            /** Needs Reason */
+            needs_reason: boolean;
+        };
         /** ActivateIn */
         ActivateIn: {
             /** Code */
@@ -1661,6 +1793,31 @@ export interface components {
         ArchivedIn: {
             /** Archived */
             archived: boolean;
+        };
+        /** AssignmentOut */
+        AssignmentOut: {
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+            /** Full Name */
+            full_name: string;
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
+        /** AssignmentsIn */
+        AssignmentsIn: {
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+            /** User Ids */
+            user_ids: string[];
         };
         /**
          * Attendance
@@ -1805,6 +1962,15 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** CheckOut */
+        CheckOut: {
+            /** Key */
+            key: string;
+            /** Message */
+            message: string;
+            /** Ok */
+            ok: boolean;
+        };
         /** CohortAssignIn */
         CohortAssignIn: {
             /**
@@ -1844,36 +2010,17 @@ export interface components {
             /** Unchanged */
             unchanged: number;
         };
-        /** CohortOut */
-        CohortOut: {
-            /** Archived At */
-            archived_at: string | null;
-            /** Code */
-            code: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Name */
-            name: string;
-            /**
-             * Program Id
-             * Format: uuid
-             */
-            program_id: string;
-            /**
-             * Session Id
-             * Format: uuid
-             */
-            session_id: string;
-        };
         /** CohortUpdateIn */
         CohortUpdateIn: {
             /** Code */
             code: string;
             /** Name */
             name: string;
+        };
+        /** CohortsIn */
+        CohortsIn: {
+            /** Cohort Ids */
+            cohort_ids: string[];
         };
         /** CommitIn */
         CommitIn: {
@@ -1882,6 +2029,28 @@ export interface components {
              * @default false
              */
             skip_errors: boolean;
+        };
+        /** ComponentIn */
+        ComponentIn: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Max */
+            max: number | string;
+            /** Min Pass */
+            min_pass?: number | string | null;
+        };
+        /** ComponentOut */
+        ComponentOut: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Max */
+            max: string;
+            /** Min Pass */
+            min_pass: string | null;
         };
         /** CopyIn */
         CopyIn: {
@@ -1964,6 +2133,118 @@ export interface components {
             /** Dismissed */
             dismissed: boolean;
         };
+        /** ExamCreateIn */
+        ExamCreateIn: {
+            /** Cohort Ids */
+            cohort_ids?: string[];
+            /** Grading Scheme Id */
+            grading_scheme_id?: string | null;
+            /**
+             * Kind
+             * @default term
+             * @enum {string}
+             */
+            kind: "unit_test" | "term" | "semester" | "supplementary" | "other";
+            /** Marks Deadline */
+            marks_deadline?: string | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Term Id
+             * Format: uuid
+             */
+            term_id: string;
+        };
+        /** ExamListItem */
+        ExamListItem: {
+            /** Cohorts */
+            cohorts: number;
+            /** Grading Scheme Name */
+            grading_scheme_name: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "unit_test" | "term" | "semester" | "supplementary" | "other";
+            /** Marks Deadline */
+            marks_deadline: string | null;
+            /** Name */
+            name: string;
+            /** Papers */
+            papers: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "marks_entry_open" | "marks_entry_closed" | "processed" | "approved" | "scheduled" | "published" | "correction_draft" | "withdrawn" | "archived";
+            term: components["schemas"]["TermRef"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ExamOut */
+        ExamOut: {
+            /** Actions */
+            actions: components["schemas"]["ActionOut"][];
+            /** Checks */
+            checks: components["schemas"]["CheckOut"][];
+            /** Cohorts */
+            cohorts: components["schemas"]["app__modules__examinations__router__CohortOut"][];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Grading Scheme Id
+             * Format: uuid
+             */
+            grading_scheme_id: string;
+            /** Grading Scheme Name */
+            grading_scheme_name: string;
+            /** Grading Scheme Version Id */
+            grading_scheme_version_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "unit_test" | "term" | "semester" | "supplementary" | "other";
+            /** Marks Deadline */
+            marks_deadline: string | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes: string | null;
+            /** Papers */
+            papers: components["schemas"]["PaperOut"][];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "marks_entry_open" | "marks_entry_closed" | "processed" | "approved" | "scheduled" | "published" | "correction_draft" | "withdrawn" | "archived";
+            term: components["schemas"]["TermRef"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Version */
+            version: number;
+        };
         /** ExamResultOut */
         ExamResultOut: {
             /** Credits Attempted */
@@ -1986,6 +2267,27 @@ export interface components {
             sgpa: string | null;
             /** Total */
             total: string | null;
+        };
+        /** ExamUpdateIn */
+        ExamUpdateIn: {
+            /**
+             * Grading Scheme Id
+             * Format: uuid
+             */
+            grading_scheme_id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "unit_test" | "term" | "semester" | "supplementary" | "other";
+            /** Marks Deadline */
+            marks_deadline?: string | null;
+            /** Name */
+            name: string;
+            /** Notes */
+            notes?: string | null;
+            /** Version */
+            version: number;
         };
         /** FieldOut */
         FieldOut: {
@@ -2370,6 +2672,65 @@ export interface components {
             next_cursor?: string | null;
             /** Total */
             total?: number | null;
+        };
+        /** PaperCreateIn */
+        PaperCreateIn: {
+            /** Components */
+            components: components["schemas"]["ComponentIn"][];
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Credits */
+            credits?: number | string | null;
+            /** Pass Total */
+            pass_total?: number | string | null;
+            /**
+             * Use Course Credits
+             * @default true
+             */
+            use_course_credits: boolean;
+        };
+        /** PaperIn */
+        PaperIn: {
+            /** Components */
+            components: components["schemas"]["ComponentIn"][];
+            /** Credits */
+            credits?: number | string | null;
+            /** Pass Total */
+            pass_total?: number | string | null;
+        };
+        /** PaperOut */
+        PaperOut: {
+            /** Assignments */
+            assignments: components["schemas"]["AssignmentOut"][];
+            /** Components */
+            components: components["schemas"]["ComponentOut"][];
+            /** Course Code */
+            course_code: string;
+            /**
+             * Course Id
+             * Format: uuid
+             */
+            course_id: string;
+            /** Course Name */
+            course_name: string;
+            /** Credits */
+            credits: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Max Total */
+            max_total: string;
+            /** Pass Total */
+            pass_total: string | null;
+            /** Position */
+            position: number;
+            /** Submissions */
+            submissions: components["schemas"]["SubmissionOut"][];
         };
         /** PaperResultOut */
         PaperResultOut: {
@@ -3025,6 +3386,21 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** SubmissionOut */
+        SubmissionOut: {
+            /**
+             * Cohort Id
+             * Format: uuid
+             */
+            cohort_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "open" | "submitted" | "returned" | "locked";
+            /** Submitted At */
+            submitted_at: string | null;
+        };
         /** SubscriptionOut */
         SubscriptionOut: {
             /** Features */
@@ -3151,6 +3527,35 @@ export interface components {
             /** Starts On */
             starts_on: string | null;
         };
+        /** TermRef */
+        TermRef: {
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Session Code */
+            session_code: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** TransitionIn */
+        TransitionIn: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "open_entry" | "close_entry" | "reopen_entry";
+            /** Reason */
+            reason?: string | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -3207,6 +3612,46 @@ export interface components {
             note: string | null;
             /** Version */
             version: number;
+        };
+        /** CohortOut */
+        app__modules__academics__router__CohortOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Program Id
+             * Format: uuid
+             */
+            program_id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** CohortOut */
+        app__modules__examinations__router__CohortOut: {
+            /** Code */
+            code: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Program Code */
+            program_code: string;
+            /** Students */
+            students: number;
         };
     };
     responses: never;
@@ -3699,7 +4144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CohortOut"][];
+                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"][];
                 };
             };
             /** @description Validation Error */
@@ -3732,7 +4177,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CohortOut"];
+                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -3767,7 +4212,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CohortOut"];
+                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -3802,7 +4247,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CohortOut"];
+                    "application/json": components["schemas"]["app__modules__academics__router__CohortOut"];
                 };
             };
             /** @description Validation Error */
@@ -4110,6 +4555,375 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DepartmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_exams_api_v1_admin_exams_get: {
+        parameters: {
+            query?: {
+                status?: ("draft" | "marks_entry_open" | "marks_entry_closed" | "processed" | "approved" | "scheduled" | "published" | "correction_draft" | "withdrawn" | "archived") | null;
+                term_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamListItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_exam_api_v1_admin_exams_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExamCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_exam_api_v1_admin_exams__exam_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_exam_api_v1_admin_exams__exam_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExamUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_exam_api_v1_admin_exams__exam_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_cohorts_api_v1_admin_exams__exam_id__cohorts_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CohortsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_paper_api_v1_admin_exams__exam_id__papers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaperCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_paper_api_v1_admin_exams__exam_id__papers__paper_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                paper_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaperIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_paper_api_v1_admin_exams__exam_id__papers__paper_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                paper_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_assignments_api_v1_admin_exams__exam_id__papers__paper_id__assignments_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                paper_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentsIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transition_api_v1_admin_exams__exam_id__transitions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransitionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExamOut"];
                 };
             };
             /** @description Validation Error */

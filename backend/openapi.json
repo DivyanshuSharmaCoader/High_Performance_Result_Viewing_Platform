@@ -153,6 +153,29 @@
         "title": "AcceptInviteIn",
         "type": "object"
       },
+      "ActionOut": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "needs_reason": {
+            "title": "Needs Reason",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "action",
+          "label",
+          "needs_reason"
+        ],
+        "title": "ActionOut",
+        "type": "object"
+      },
       "ActivateIn": {
         "additionalProperties": false,
         "properties": {
@@ -278,6 +301,56 @@
           "archived"
         ],
         "title": "ArchivedIn",
+        "type": "object"
+      },
+      "AssignmentOut": {
+        "properties": {
+          "cohort_id": {
+            "format": "uuid",
+            "title": "Cohort Id",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cohort_id",
+          "user_id",
+          "full_name"
+        ],
+        "title": "AssignmentOut",
+        "type": "object"
+      },
+      "AssignmentsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cohort_id": {
+            "format": "uuid",
+            "title": "Cohort Id",
+            "type": "string"
+          },
+          "user_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "User Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cohort_id",
+          "user_ids"
+        ],
+        "title": "AssignmentsIn",
         "type": "object"
       },
       "Attendance": {
@@ -795,6 +868,29 @@
         "title": "ChangePasswordIn",
         "type": "object"
       },
+      "CheckOut": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "ok",
+          "message"
+        ],
+        "title": "CheckOut",
+        "type": "object"
+      },
       "CohortAssignIn": {
         "additionalProperties": false,
         "properties": {
@@ -888,55 +984,6 @@
         "title": "CohortMembersOut",
         "type": "object"
       },
-      "CohortOut": {
-        "properties": {
-          "archived_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Archived At"
-          },
-          "code": {
-            "title": "Code",
-            "type": "string"
-          },
-          "id": {
-            "format": "uuid",
-            "title": "Id",
-            "type": "string"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "program_id": {
-            "format": "uuid",
-            "title": "Program Id",
-            "type": "string"
-          },
-          "session_id": {
-            "format": "uuid",
-            "title": "Session Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "code",
-          "name",
-          "program_id",
-          "session_id",
-          "archived_at"
-        ],
-        "title": "CohortOut",
-        "type": "object"
-      },
       "CohortUpdateIn": {
         "additionalProperties": false,
         "properties": {
@@ -960,6 +1007,25 @@
         "title": "CohortUpdateIn",
         "type": "object"
       },
+      "CohortsIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cohort_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Cohort Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "cohort_ids"
+        ],
+        "title": "CohortsIn",
+        "type": "object"
+      },
       "CommitIn": {
         "additionalProperties": false,
         "properties": {
@@ -970,6 +1036,94 @@
           }
         },
         "title": "CommitIn",
+        "type": "object"
+      },
+      "ComponentIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 12,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ],
+            "title": "Max"
+          },
+          "min_pass": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Pass"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "max"
+        ],
+        "title": "ComponentIn",
+        "type": "object"
+      },
+      "ComponentOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "max": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max",
+            "type": "string"
+          },
+          "min_pass": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Pass"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "max",
+          "min_pass"
+        ],
+        "title": "ComponentOut",
         "type": "object"
       },
       "CopyIn": {
@@ -1225,6 +1379,321 @@
         "title": "DismissIn",
         "type": "object"
       },
+      "ExamCreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cohort_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 200,
+            "title": "Cohort Ids",
+            "type": "array"
+          },
+          "grading_scheme_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grading Scheme Id"
+          },
+          "kind": {
+            "default": "term",
+            "enum": [
+              "unit_test",
+              "term",
+              "semester",
+              "supplementary",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "marks_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marks Deadline"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "term_id": {
+            "format": "uuid",
+            "title": "Term Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "term_id"
+        ],
+        "title": "ExamCreateIn",
+        "type": "object"
+      },
+      "ExamListItem": {
+        "properties": {
+          "cohorts": {
+            "title": "Cohorts",
+            "type": "integer"
+          },
+          "grading_scheme_name": {
+            "title": "Grading Scheme Name",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "unit_test",
+              "term",
+              "semester",
+              "supplementary",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "marks_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marks Deadline"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "papers": {
+            "title": "Papers",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "marks_entry_open",
+              "marks_entry_closed",
+              "processed",
+              "approved",
+              "scheduled",
+              "published",
+              "correction_draft",
+              "withdrawn",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "term": {
+            "$ref": "#/components/schemas/TermRef"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "status",
+          "term",
+          "grading_scheme_name",
+          "papers",
+          "cohorts",
+          "marks_deadline",
+          "updated_at"
+        ],
+        "title": "ExamListItem",
+        "type": "object"
+      },
+      "ExamOut": {
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/ActionOut"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/CheckOut"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "cohorts": {
+            "items": {
+              "$ref": "#/components/schemas/app__modules__examinations__router__CohortOut"
+            },
+            "title": "Cohorts",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "grading_scheme_id": {
+            "format": "uuid",
+            "title": "Grading Scheme Id",
+            "type": "string"
+          },
+          "grading_scheme_name": {
+            "title": "Grading Scheme Name",
+            "type": "string"
+          },
+          "grading_scheme_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grading Scheme Version Id"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "unit_test",
+              "term",
+              "semester",
+              "supplementary",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "marks_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marks Deadline"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "papers": {
+            "items": {
+              "$ref": "#/components/schemas/PaperOut"
+            },
+            "title": "Papers",
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "marks_entry_open",
+              "marks_entry_closed",
+              "processed",
+              "approved",
+              "scheduled",
+              "published",
+              "correction_draft",
+              "withdrawn",
+              "archived"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "term": {
+            "$ref": "#/components/schemas/TermRef"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "status",
+          "version",
+          "term",
+          "grading_scheme_id",
+          "grading_scheme_name",
+          "grading_scheme_version_id",
+          "marks_deadline",
+          "notes",
+          "created_at",
+          "updated_at",
+          "cohorts",
+          "papers",
+          "checks",
+          "actions"
+        ],
+        "title": "ExamOut",
+        "type": "object"
+      },
       "ExamResultOut": {
         "properties": {
           "credits_attempted": {
@@ -1347,6 +1816,70 @@
           "papers"
         ],
         "title": "ExamResultOut",
+        "type": "object"
+      },
+      "ExamUpdateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "grading_scheme_id": {
+            "format": "uuid",
+            "title": "Grading Scheme Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "unit_test",
+              "term",
+              "semester",
+              "supplementary",
+              "other"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "marks_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marks Deadline"
+          },
+          "name": {
+            "maxLength": 150,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "name",
+          "kind",
+          "grading_scheme_id"
+        ],
+        "title": "ExamUpdateIn",
         "type": "object"
       },
       "FieldOut": {
@@ -2475,6 +3008,212 @@
           "items"
         ],
         "title": "Page[StudentOut]",
+        "type": "object"
+      },
+      "PaperCreateIn": {
+        "additionalProperties": false,
+        "properties": {
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentIn"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Components",
+            "type": "array"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "credits": {
+            "anyOf": [
+              {
+                "maximum": 40.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits"
+          },
+          "pass_total": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pass Total"
+          },
+          "use_course_credits": {
+            "default": true,
+            "title": "Use Course Credits",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "components",
+          "course_id"
+        ],
+        "title": "PaperCreateIn",
+        "type": "object"
+      },
+      "PaperIn": {
+        "additionalProperties": false,
+        "properties": {
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentIn"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Components",
+            "type": "array"
+          },
+          "credits": {
+            "anyOf": [
+              {
+                "maximum": 40.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits"
+          },
+          "pass_total": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pass Total"
+          }
+        },
+        "required": [
+          "components"
+        ],
+        "title": "PaperIn",
+        "type": "object"
+      },
+      "PaperOut": {
+        "properties": {
+          "assignments": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentOut"
+            },
+            "title": "Assignments",
+            "type": "array"
+          },
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentOut"
+            },
+            "title": "Components",
+            "type": "array"
+          },
+          "course_code": {
+            "title": "Course Code",
+            "type": "string"
+          },
+          "course_id": {
+            "format": "uuid",
+            "title": "Course Id",
+            "type": "string"
+          },
+          "course_name": {
+            "title": "Course Name",
+            "type": "string"
+          },
+          "credits": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "max_total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Total",
+            "type": "string"
+          },
+          "pass_total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pass Total"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "submissions": {
+            "items": {
+              "$ref": "#/components/schemas/SubmissionOut"
+            },
+            "title": "Submissions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "course_id",
+          "course_code",
+          "course_name",
+          "position",
+          "components",
+          "max_total",
+          "pass_total",
+          "credits",
+          "assignments",
+          "submissions"
+        ],
+        "title": "PaperOut",
         "type": "object"
       },
       "PaperResultOut": {
@@ -4591,6 +5330,44 @@
         "title": "StudentUpdateIn",
         "type": "object"
       },
+      "SubmissionOut": {
+        "properties": {
+          "cohort_id": {
+            "format": "uuid",
+            "title": "Cohort Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "submitted",
+              "returned",
+              "locked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          }
+        },
+        "required": [
+          "cohort_id",
+          "status",
+          "submitted_at"
+        ],
+        "title": "SubmissionOut",
+        "type": "object"
+      },
       "SubscriptionOut": {
         "properties": {
           "features": {
@@ -4939,6 +5716,72 @@
         "title": "TermOut",
         "type": "object"
       },
+      "TermRef": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "session_code": {
+            "title": "Session Code",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "session_id",
+          "session_code"
+        ],
+        "title": "TermRef",
+        "type": "object"
+      },
+      "TransitionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "open_entry",
+              "close_entry",
+              "reopen_entry"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "TransitionIn",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -5098,6 +5941,89 @@
           "created_by_name"
         ],
         "title": "VersionOut",
+        "type": "object"
+      },
+      "app__modules__academics__router__CohortOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "program_id": {
+            "format": "uuid",
+            "title": "Program Id",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "program_id",
+          "session_id",
+          "archived_at"
+        ],
+        "title": "CohortOut",
+        "type": "object"
+      },
+      "app__modules__examinations__router__CohortOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "program_code": {
+            "title": "Program Code",
+            "type": "string"
+          },
+          "students": {
+            "title": "Students",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "program_code",
+          "students"
+        ],
+        "title": "CohortOut",
         "type": "object"
       }
     }
@@ -5898,7 +6824,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/CohortOut"
+                    "$ref": "#/components/schemas/app__modules__academics__router__CohortOut"
                   },
                   "title": "Response List Cohorts Api V1 Admin Cohorts Get",
                   "type": "array"
@@ -5940,7 +6866,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CohortOut"
+                  "$ref": "#/components/schemas/app__modules__academics__router__CohortOut"
                 }
               }
             },
@@ -5993,7 +6919,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CohortOut"
+                  "$ref": "#/components/schemas/app__modules__academics__router__CohortOut"
                 }
               }
             },
@@ -6046,7 +6972,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CohortOut"
+                  "$ref": "#/components/schemas/app__modules__academics__router__CohortOut"
                 }
               }
             },
@@ -6556,6 +7482,591 @@
         "summary": "Archive Department",
         "tags": [
           "academics"
+        ]
+      }
+    },
+    "/api/v1/admin/exams": {
+      "get": {
+        "operationId": "list_exams_api_v1_admin_exams_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "draft",
+                    "marks_entry_open",
+                    "marks_entry_closed",
+                    "processed",
+                    "approved",
+                    "scheduled",
+                    "published",
+                    "correction_draft",
+                    "withdrawn",
+                    "archived"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "term_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Term Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExamListItem"
+                  },
+                  "title": "Response List Exams Api V1 Admin Exams Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Exams",
+        "tags": [
+          "exams"
+        ]
+      },
+      "post": {
+        "operationId": "create_exam_api_v1_admin_exams_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExamCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Exam",
+        "tags": [
+          "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}": {
+      "delete": {
+        "operationId": "delete_exam_api_v1_admin_exams__exam_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Exam",
+        "tags": [
+          "exams"
+        ]
+      },
+      "get": {
+        "operationId": "get_exam_api_v1_admin_exams__exam_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Exam",
+        "tags": [
+          "exams"
+        ]
+      },
+      "put": {
+        "operationId": "update_exam_api_v1_admin_exams__exam_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExamUpdateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Exam",
+        "tags": [
+          "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/cohorts": {
+      "put": {
+        "operationId": "set_cohorts_api_v1_admin_exams__exam_id__cohorts_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CohortsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Cohorts",
+        "tags": [
+          "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/papers": {
+      "post": {
+        "operationId": "add_paper_api_v1_admin_exams__exam_id__papers_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaperCreateIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Paper",
+        "tags": [
+          "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/papers/{paper_id}": {
+      "delete": {
+        "operationId": "remove_paper_api_v1_admin_exams__exam_id__papers__paper_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Paper Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Remove Paper",
+        "tags": [
+          "exams"
+        ]
+      },
+      "put": {
+        "operationId": "update_paper_api_v1_admin_exams__exam_id__papers__paper_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Paper Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaperIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Paper",
+        "tags": [
+          "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/papers/{paper_id}/assignments": {
+      "put": {
+        "operationId": "set_assignments_api_v1_admin_exams__exam_id__papers__paper_id__assignments_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "paper_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Paper Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignmentsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Assignments",
+        "tags": [
+          "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/transitions": {
+      "post": {
+        "operationId": "transition_api_v1_admin_exams__exam_id__transitions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExamOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Transition",
+        "tags": [
+          "exams"
         ]
       }
     },

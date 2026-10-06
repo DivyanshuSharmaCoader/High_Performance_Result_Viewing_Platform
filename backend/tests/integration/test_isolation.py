@@ -152,8 +152,43 @@ async def _scheme(infra: Any, t: TenantFixture) -> uuid.UUID:
         return scheme.id
 
 
+async def _exam_and_paper(infra: Any, t: TenantFixture) -> tuple[uuid.UUID, uuid.UUID]:
+    from decimal import Decimal
+
+    from app.modules.examinations.models import Examination, ExamPaper
+
+    st = await make_structure(infra, t, current=False)
+    scheme_id = await _scheme(infra, t)
+    async with infra.db.uow(t.id) as uow:
+        exam = Examination(
+            tenant_id=t.id, term_id=st.term_id, name=f"E{uuid.uuid4().hex[:6]}", grading_scheme_id=scheme_id
+        )
+        uow.session.add(exam)
+        await uow.flush()
+        paper = ExamPaper(
+            tenant_id=t.id,
+            exam_id=exam.id,
+            course_id=st.course_id,
+            components=[{"code": "T", "label": "T", "max": "100", "min_pass": None}],
+            max_total=Decimal(100),
+        )
+        uow.session.add(paper)
+        await uow.flush()
+        return exam.id, paper.id
+
+
+async def _exam(infra: Any, t: TenantFixture) -> uuid.UUID:
+    return (await _exam_and_paper(infra, t))[0]
+
+
+async def _paper(infra: Any, t: TenantFixture) -> uuid.UUID:
+    return (await _exam_and_paper(infra, t))[1]
+
+
 PROVIDERS: dict[str, Provider] = {
     "user_id": _staff_user,
+    "exam_id": _exam,
+    "paper_id": _paper,
     "scheme_id": _scheme,
     "student_id": _student,
     "import_id": _import,
@@ -199,6 +234,25 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("POST", "/api/v1/admin/imports/{import_id}/commit"): {"skip_errors": False},
     ("PUT", "/api/v1/admin/grading-schemes/{scheme_id}"): {"name": "X"},
     ("PUT", "/api/v1/admin/grading-schemes/{scheme_id}/archived"): _ARCHIVE,
+    ("PUT", "/api/v1/admin/exams/{exam_id}"): {
+        "version": 1,
+        "name": "X",
+        "kind": "term",
+        "grading_scheme_id": str(uuid.uuid4()),
+    },
+    ("PUT", "/api/v1/admin/exams/{exam_id}/cohorts"): {"cohort_ids": []},
+    ("POST", "/api/v1/admin/exams/{exam_id}/papers"): {
+        "course_id": str(uuid.uuid4()),
+        "components": [{"code": "T", "label": "T", "max": "100"}],
+    },
+    ("PUT", "/api/v1/admin/exams/{exam_id}/papers/{paper_id}"): {
+        "components": [{"code": "T", "label": "T", "max": "100"}]
+    },
+    ("PUT", "/api/v1/admin/exams/{exam_id}/papers/{paper_id}/assignments"): {
+        "cohort_id": str(uuid.uuid4()),
+        "user_ids": [],
+    },
+    ("POST", "/api/v1/admin/exams/{exam_id}/transitions"): {"action": "open_entry"},
     ("POST", "/api/v1/admin/grading-schemes/{scheme_id}/versions"): {
         "config": {"strategy": "marks_only"},
         "based_on": 1,
@@ -254,7 +308,16 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                 )
             )
         ).scalar_one()
-    return audit, users, roles, jobs, students, members, imports, schemes
+        exams = (
+            await uow.session.execute(
+                text(
+                    "SELECT string_agg(e.id::text || e.status || e.version::text, ',' ORDER BY e.id)"
+                    " || (SELECT count(*)::text FROM exam_papers) || (SELECT count(*)::text FROM exam_cohorts)"
+                    " FROM examinations e"
+                )
+            )
+        ).scalar_one()
+    return audit, users, roles, jobs, students, members, imports, schemes, exams
 
 
 async def _call(c: Client, route: RouteInfo, url: str) -> Any:
