@@ -80,6 +80,9 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S105", "S106", "S108", "S311", "S608", "PTH", "N802"]
 "migrations/**" = ["S608"]
+"app/{cli,seed}.py" = ["T201"]  # command-line output
+"app/modules/platform/bootstrap.py" = ["T201"]
+"scripts/**" = ["T201"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]

@@ -20,19 +20,19 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phases 1–4 in progress** (backend kernel, identity, entitlements built and tested locally; no frontend yet) |
-| Next step | Platform console router (P4.7), isolation suite (P3.10), seed (P4.8), then frontend workspace (P1.4) |
+| Current phase | **Phase 1/4 → frontend** (backend kernel, identity, entitlements verified in CI; frontend workspace next) |
+| Next step | **P1.4** Frontend workspace, then P1.5 (compose app profile + Caddy), P3.11, P4.4–P4.8 UI |
 | Last updated | 2026-10-06 |
-| Open blockers | Domain name (D23), licence/visibility (D24), Thapar branding permission (D25) |
+| Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
 ## 📊 Phase progress
 | Phase | Name | Steps | Done |
 |---|---|---|---|
 | 0 | Product & architecture | 4 | 4 |
-| 1 | Repository, tooling, CI, walking skeleton | 8 | 0 |
-| 2 | Platform kernel: database, tenancy, RLS, audit, errors | 11 | 0 |
-| 3 | Identity: authentication, sessions, RBAC | 11 | 0 |
-| 4 | Onboarding, plans & entitlements, basic branding, platform console v0 | 8 | 0 |
+| 1 | Repository, tooling, CI, walking skeleton | 8 | 5 |
+| 2 | Platform kernel: database, tenancy, RLS, audit, errors | 11 | 11 |
+| 3 | Identity: authentication, sessions, RBAC | 11 | 10 |
+| 4 | Onboarding, plans & entitlements, basic branding, platform console v0 | 8 | 3 |
 | 5 | Academic structure | 4 | 0 |
 | 6 | Directory & generic import framework | 8 | 0 |
 | 7 | Examinations & grading engine | 6 | 0 |
@@ -61,49 +61,49 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 ### Phase 1 — Repository, tooling, CI, walking skeleton
 
 - [ ] **P1.1** Monorepo skeleton · Done when: Structure matches [SAS §7](SAS.md#7-development-view-41-development)
-- [ ] **P1.2** Backend project · Done when: `curl /livez` → 200; unit test for config validation
-- [ ] **P1.3** Backend quality tooling · Done when: `make lint test` passes locally
+- [x] **P1.2** Backend project · Done when: `curl /livez` → 200; unit test for config validation
+- [x] **P1.3** Backend quality tooling · Done when: `make lint test` passes locally
 - [ ] **P1.4** Frontend workspace · Done when: `pnpm -r build` and `pnpm -r test` pass
 - [ ] **P1.5** Docker & compose · Done when: `docker compose up` → `http://demo.localhost:8080/api/livez` 200 and SPA placeholder loads
-- [ ] **P1.6** CI pipeline v1 · Done when: CI green on PR; branch protection on `main`
-- [ ] **P1.7** Job queue spike (D8) · Done when: ADR written with chosen option; spike code removed or promoted
-- [ ] **P1.8** ADRs · Done when: ADR files merged
+- [x] **P1.6** CI pipeline v1 · Done when: CI green on PR; branch protection on `main`
+- [x] **P1.7** Job queue spike (D8) · Done when: ADR written with chosen option; spike code removed or promoted
+- [x] **P1.8** ADRs · Done when: ADR files merged
 - [ ] 🚩 **Gate M1 — Walking skeleton** · Done when: Compose up works on a fresh clone in < 10 min following README
 
 ### Phase 2 — Platform kernel: database, tenancy, RLS, audit, errors
 
-- [ ] **P2.1** DB roles & connection · Done when: Integration test connects with each role; app role cannot `CREATE TABLE`
-- [ ] **P2.2** Conventions & base classes · Done when: Unit tests for id generation ordering
-- [ ] **P2.3** Tenancy tables · Done when: Migration up/down test
-- [ ] **P2.4** Tenant resolution middleware · Done when: Tests for each host type and suspended/unknown
-- [ ] **P2.5** Unit of Work + RLS context · Done when: Test: query without context errors; with context only own rows
-- [ ] **P2.6** RLS policy helper + coverage test · Done when: Test fails if a tenant table lacks RLS
-- [ ] **P2.7** Composite FK pattern · Done when: Integration test
-- [ ] **P2.8** Audit module · Done when: Test: rolled-back change leaves no audit row; app role cannot UPDATE/DELETE
-- [ ] **P2.9** Errors & API conventions · Done when: Unit + integration tests
-- [ ] **P2.10** Cache abstraction · Done when: Test: Redis down → fallback works
-- [ ] **P2.11** Observability basics · Done when: Test: scrubber removes password/token fields
+- [x] **P2.1** DB roles & connection · Done when: Integration test connects with each role; app role cannot `CREATE TABLE`
+- [x] **P2.2** Conventions & base classes · Done when: Unit tests for id generation ordering
+- [x] **P2.3** Tenancy tables · Done when: Migration up/down test
+- [x] **P2.4** Tenant resolution middleware · Done when: Tests for each host type and suspended/unknown
+- [x] **P2.5** Unit of Work + RLS context · Done when: Test: query without context errors; with context only own rows
+- [x] **P2.6** RLS policy helper + coverage test · Done when: Test fails if a tenant table lacks RLS
+- [x] **P2.7** Composite FK pattern · Done when: Integration test
+- [x] **P2.8** Audit module · Done when: Test: rolled-back change leaves no audit row; app role cannot UPDATE/DELETE
+- [x] **P2.9** Errors & API conventions · Done when: Unit + integration tests
+- [x] **P2.10** Cache abstraction · Done when: Test: Redis down → fallback works
+- [x] **P2.11** Observability basics · Done when: Test: scrubber removes password/token fields
 
 ### Phase 3 — Identity: authentication, sessions, RBAC
 
-- [ ] **P3.1** Users & roles schema · Done when: Migrations + RLS test pass
-- [ ] **P3.2** Password hashing · Done when: Unit tests; measured value documented
-- [ ] **P3.3** Login/logout · Done when: Integration tests incl. wrong tenant host → 401
-- [ ] **P3.4** Session validation dependency · Done when: Tests: expired, revoked, cross-host replay
-- [ ] **P3.5** CSRF protection · Done when: Test: POST without token → 403
-- [ ] **P3.6** RBAC · Done when: Authz matrix test scaffold green
-- [ ] **P3.7** Rate limiting · Done when: Tests incl. Redis-down fallback
-- [ ] **P3.8** Password reset & invites · Done when: Integration tests with Mailpit API
-- [ ] **P3.9** Platform realm auth · Done when: Tests: platform login on tenant host fails
-- [ ] **P3.10** Tenant isolation suite v1 · Done when: Suite runs in CI as required check
+- [x] **P3.1** Users & roles schema · Done when: Migrations + RLS test pass
+- [x] **P3.2** Password hashing · Done when: Unit tests; measured value documented
+- [x] **P3.3** Login/logout · Done when: Integration tests incl. wrong tenant host → 401
+- [x] **P3.4** Session validation dependency · Done when: Tests: expired, revoked, cross-host replay
+- [x] **P3.5** CSRF protection · Done when: Test: POST without token → 403
+- [x] **P3.6** RBAC · Done when: Authz matrix test scaffold green
+- [x] **P3.7** Rate limiting · Done when: Tests incl. Redis-down fallback
+- [x] **P3.8** Password reset & invites · Done when: Integration tests with Mailpit API
+- [x] **P3.9** Platform realm auth · Done when: Tests: platform login on tenant host fails
+- [x] **P3.10** Tenant isolation suite v1 · Done when: Suite runs in CI as required check
 - [ ] **P3.11** Frontend auth · Done when: Playwright: login/logout for each role
 - [ ] 🚩 **Gate M2 — Secure multi-tenant core** · Done when: Two seeded tenants on two hosts; isolation suite green; live demo of blocked cross-tenant access
 
 ### Phase 4 — Onboarding, plans & entitlements, basic branding, platform console v0
 
-- [ ] **P4.1** Plans & features schema + seed · Done when: Migration + seed idempotent
-- [ ] **P4.2** Entitlement service · Done when: Table-driven tests + race test
-- [ ] **P4.3** Tenant provisioning service · Done when: Integration test
+- [x] **P4.1** Plans & features schema + seed · Done when: Migration + seed idempotent
+- [x] **P4.2** Entitlement service · Done when: Table-driven tests + race test
+- [x] **P4.3** Tenant provisioning service · Done when: Integration test
 - [ ] **P4.4** Self-serve sign-up · Done when: E2E-1 passes
 - [ ] **P4.5** Basic branding · Done when: E2E: two tenants render different branding
 - [ ] **P4.6** Onboarding checklist · Done when: Component + API tests
@@ -236,5 +236,6 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-06 | P1.2, P1.3, P1.6–P1.8, P2.1–P2.11, P3.1–P3.10, P4.1–P4.3 ticked | Verified by CI run 37462856524 (all 5 jobs green: lint & types, unit, integration incl. RLS/isolation/authz-matrix, security scans, Docker build + Trivy). Branch protection on the default work branch (no `main` exists): required checks, no force-push/deletion, admins may push. 98 backend tests. Argon2id measured (benchmarks/results). `scorecode seed` written and run locally (idempotent) — P4.8 waits for the UI. Next: P1.4 frontend. |
 | 2026-10-06 | P0.4, P1.1–P1.3, P1.5 (infra only), P1.7–P1.8, P2.1–P2.11, P3.1–P3.9 (backend), P4.1–P4.3, P4.4 (backend) | Built and tested locally, not in CI yet (no CI workflow exists), so nothing is ticked except P0.4. Passing locally: 56 backend tests (26 unit + 30 integration), ruff, mypy --strict. Written but **not tested yet**: staff invites/roles API, settings/subscription API, sign-up + handoff, audit viewer, job status endpoint, platform service (`app/modules/platform/service.py` has no router yet). Not started: frontend (P1.4), CI (P1.6), compose app profile/Caddy (P1.5 proxy), `scorecode seed` (`app/seed.py` missing), Phases 5–17. Backend Docker image build started but not verified. D23–D25 still need the owner's input. |
 | 2026-10-06 | P0.1–P0.3 | Architecture docs, SRS, SAS, diagrams, plan and checklist written. Next: confirm decisions in docs/18 (P0.4), then P1.1. |

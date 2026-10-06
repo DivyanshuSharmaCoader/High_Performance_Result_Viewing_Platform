@@ -30,14 +30,14 @@ async def _post_migrate() -> None:
     infra = Infra.build(settings, app_name="scorecode-migrate")
     try:
         result = await sync_catalogue(infra.db)
-        print(f"catalogue synced: {result}")  # noqa: T201
+        print(f"catalogue synced: {result}")
         ensure = getattr(infra.storage, "ensure_bucket", None)
         if ensure is not None:
             try:
                 await ensure()
-                print(f"object storage bucket ready: {settings.s3_bucket}")  # noqa: T201
+                print(f"object storage bucket ready: {settings.s3_bucket}")
             except Exception as exc:  # storage may be provisioned separately in production
-                print(f"warning: could not verify bucket {settings.s3_bucket}: {type(exc).__name__}")  # noqa: T201
+                print(f"warning: could not verify bucket {settings.s3_bucket}: {type(exc).__name__}")
     finally:
         await infra.close()
 

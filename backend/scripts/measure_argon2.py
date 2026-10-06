@@ -23,7 +23,9 @@ def main() -> None:
     parser.add_argument("--n", type=int, default=60)
     args = parser.parse_args()
     s = Settings()
-    ph = PasswordHasher(time_cost=s.argon2_time_cost, memory_cost=s.argon2_memory_kib, parallelism=s.argon2_parallelism)
+    ph = PasswordHasher(
+        time_cost=s.argon2_time_cost, memory_cost=s.argon2_memory_kib, parallelism=s.argon2_parallelism
+    )
     stored = ph.hash("benchmark-password-123")
     for _ in range(5):  # warm-up
         ph.verify(stored, "benchmark-password-123")
@@ -34,7 +36,9 @@ def main() -> None:
         samples.append((time.perf_counter() - t0) * 1000)
     samples.sort()
     q = statistics.quantiles(samples, n=100)
-    print(f"machine: {platform.machine()} {platform.processor() or ''} cpus={os.cpu_count()} python={platform.python_version()}")
+    print(
+        f"machine: {platform.machine()} {platform.processor() or ''} cpus={os.cpu_count()} python={platform.python_version()}"
+    )
     print(f"params: t={s.argon2_time_cost} m={s.argon2_memory_kib}KiB p={s.argon2_parallelism}")
     print(f"single verify ms (n={args.n}): p50={q[49]:.1f} p95={q[94]:.1f} max={samples[-1]:.1f}")
     for workers in (1, 2, 4, 8):

@@ -71,7 +71,7 @@ async def create_platform_user_cli(email: str, name: str, password: str, role: s
         created = await create_platform_user(infra, email, name, password, role)
     finally:
         await infra.close()
-    print(f"Created platform user {created.email} ({role}).")  # noqa: T201
-    print("Enrol this TOTP secret in an authenticator app now — it is not shown again:")  # noqa: T201
-    print(f"  secret: {created.totp_secret}")  # noqa: T201
-    print(f"  uri:    {created.provisioning_uri}")  # noqa: T201
+    print(f"Created platform user {created.email} ({role}).")
+    print("Enrol this TOTP secret in an authenticator app now — it is not shown again:")
+    print(f"  secret: {created.totp_secret}")
+    print(f"  uri:    {created.provisioning_uri}")
