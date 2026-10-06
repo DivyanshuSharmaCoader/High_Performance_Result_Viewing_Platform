@@ -152,3 +152,17 @@ export const api = {
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();
 }
+
+/**
+ * Split a server error into per-field messages (for the given form fields) and a form-level message.
+ * `formMessage` is null when every problem could be shown next to a field.
+ */
+export function splitProblem(
+  error: unknown,
+  fields: readonly string[],
+): { fields: Record<string, string>; formMessage: string | null } {
+  if (!(error instanceof ApiError))
+    return { fields: {}, formMessage: "Something went wrong. Please try again." };
+  const placed = Object.fromEntries(Object.entries(error.fieldErrors()).filter(([f]) => fields.includes(f)));
+  return { fields: placed, formMessage: Object.keys(placed).length > 0 ? null : error.detail };
+}

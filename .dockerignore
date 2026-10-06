@@ -1,0 +1,12 @@
+# Root build context is used only by frontend/Dockerfile.
+.git
+**/node_modules
+**/dist
+**/.venv
+**/__pycache__
+backend
+benchmarks
+docs
+**/coverage
+**/playwright-report
+**/test-results

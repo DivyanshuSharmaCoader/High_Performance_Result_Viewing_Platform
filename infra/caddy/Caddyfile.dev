@@ -1,0 +1,45 @@
+# Development proxy: one port (8080), routing by Host exactly like production (ADR 0004).
+# API/worker run on the host (`make api`), Vite dev servers on the host (`make web`).
+{
+	auto_https off
+	admin off
+}
+
+(api) {
+	@api path /api/* /v/*
+	handle @api {
+		reverse_proxy {$API_UPSTREAM:host.docker.internal:8000}
+	}
+}
+
+http://admin.localhost:8080 {
+	import api
+	handle {
+		reverse_proxy {$PLATFORM_UPSTREAM:host.docker.internal:5174}
+	}
+}
+
+http://verify.localhost:8080 {
+	import api
+	handle {
+		reverse_proxy {$API_UPSTREAM:host.docker.internal:8000}
+	}
+}
+
+http://files.localhost:8080 {
+	reverse_proxy {$S3_UPSTREAM:s3:8333}
+}
+
+http://localhost:8080, http://www.localhost:8080 {
+	import api
+	handle {
+		reverse_proxy {$SITE_UPSTREAM:host.docker.internal:5175}
+	}
+}
+
+http://*.localhost:8080 {
+	import api
+	handle {
+		reverse_proxy {$TENANT_UPSTREAM:host.docker.internal:5173}
+	}
+}

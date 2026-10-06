@@ -1,0 +1,64 @@
+# Production-style edge for the container stack: serves the three SPAs by Host and proxies the API.
+# TLS is terminated in front of this (Cloudflare / a TLS Caddy in Phase 16); this listens on :8080.
+{
+	auto_https off
+	admin off
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		-Server
+	}
+	@api path /api/* /v/*
+	handle @api {
+		reverse_proxy {$API_UPSTREAM:api:8000} {
+			header_up X-Request-ID {http.request.uuid}
+		}
+	}
+	@hashed path /assets/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+}
+
+(spa) {
+	handle {
+		root * /srv/{args[0]}
+		header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: {$FILES_ORIGIN:http://files.localhost:8080}; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		header /index.html Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+http://admin.{$BASE_DOMAIN:localhost}:8080 {
+	import common
+	import spa platform
+}
+
+http://verify.{$BASE_DOMAIN:localhost}:8080 {
+	import common
+	handle {
+		reverse_proxy {$API_UPSTREAM:api:8000}
+	}
+}
+
+http://files.{$BASE_DOMAIN:localhost}:8080 {
+	reverse_proxy {$S3_UPSTREAM:s3:8333}
+}
+
+http://{$BASE_DOMAIN:localhost}:8080, http://www.{$BASE_DOMAIN:localhost}:8080 {
+	import common
+	import spa site
+}
+
+http://*.{$BASE_DOMAIN:localhost}:8080 {
+	import common
+	import spa tenant
+}

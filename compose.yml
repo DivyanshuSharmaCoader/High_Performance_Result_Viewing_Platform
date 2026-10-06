@@ -22,6 +22,7 @@ x-backend-env: &backend-env
   SCORECODE_SMTP_HOST: mailpit
   SCORECODE_SMTP_PORT: "1025"
   SCORECODE_LOG_JSON: "true"
+  SCORECODE_TRUST_PROXY_HEADERS: "true"
 
 services:
   postgres:
@@ -70,6 +71,13 @@ services:
     image: axllent/mailpit:latest
     ports: ["127.0.0.1:58025:8025", "127.0.0.1:51025:1025"]
 
+  # ---- development proxy (profile "dev"): routes *.localhost:8080 to host-run API and Vite servers --
+  devproxy:
+    profiles: [dev]
+    build: { context: ./infra/caddy, dockerfile: Dockerfile.dev }
+    ports: ["127.0.0.1:8080:8080"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
   # ---- application (profile "app") -------------------------------------------------------------
   migrate:
     profiles: [app]
@@ -102,10 +110,11 @@ services:
 
   proxy:
     profiles: [app]
-    build: { context: ./frontend, dockerfile: Dockerfile }
+    build: { context: ., dockerfile: frontend/Dockerfile }
     ports: ["127.0.0.1:8080:8080"]
     environment:
-      SCORECODE_BASE_DOMAIN: localhost
+      BASE_DOMAIN: localhost
+      FILES_ORIGIN: http://files.localhost:8080
     depends_on:
       api: { condition: service_healthy }
 

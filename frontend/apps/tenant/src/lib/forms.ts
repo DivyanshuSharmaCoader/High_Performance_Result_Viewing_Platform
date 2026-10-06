@@ -1,4 +1,4 @@
-import { ApiError } from "@scorecode/api-client";
+import { ApiError, splitProblem } from "@scorecode/api-client";
 import { toast } from "@scorecode/ui";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 
@@ -11,13 +11,10 @@ export function applyServerError<T extends FieldValues>(
   setError: UseFormSetError<T>,
   fields: readonly string[],
 ): string | null {
-  if (!(error instanceof ApiError)) {
-    return "Something went wrong. Please try again.";
-  }
-  const placed = Object.entries(error.fieldErrors()).filter(([f]) => fields.includes(f));
-  for (const [field, message] of placed) setError(field as Path<T>, { type: "server", message });
-  if (placed.length > 0) return null;
-  return error.detail;
+  const { fields: placed, formMessage } = splitProblem(error, fields);
+  for (const [field, message] of Object.entries(placed))
+    setError(field as Path<T>, { type: "server", message });
+  return formMessage;
 }
 
 export function toastError(error: unknown, fallback = "Something went wrong. Please try again."): void {
