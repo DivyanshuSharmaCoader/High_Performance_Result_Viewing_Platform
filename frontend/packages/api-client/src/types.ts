@@ -8,6 +8,10 @@ export type Staff = Schemas["StaffOut"];
 export type BrandingOut = Schemas["BrandingOut"];
 export type SettingsOut = Schemas["SettingsOut"];
 export type SubscriptionOut = Schemas["SubscriptionOut"];
+export type TrialOut = Schemas["TrialOut"];
+export type TrialState = TrialOut["state"];
+export type PlanCatalogue = Schemas["PlanCatalogue"];
+export type PublicPlan = Schemas["PublicPlan"];
 export type AuditEntry = Schemas["AuditEntry"];
 export type JobOut = Schemas["JobOut"];
 export type TenantRow = Schemas["TenantRow"];
@@ -80,6 +84,16 @@ export interface TenantDetail {
   }[];
   overrides: { feature_key: string; value: unknown; reason: string; expires_at: string | null }[];
   usage: Record<string, number>;
+  trial: {
+    status: "active" | "ended" | "converted" | "revoked";
+    started_at: string;
+    ends_at: string;
+    ended_at: string | null;
+    end_reason: string | null;
+    risk_score: number;
+    flags: string[];
+    granted: boolean;
+  } | null;
   users: { staff: number; students: number };
   last_activity_at: string | null;
 }

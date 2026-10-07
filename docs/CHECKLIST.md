@@ -21,7 +21,7 @@
 | | |
 |---|---|
 | Current phase | **Phase 10 — Publication, read model, student portal** (Phases 0–9 complete; Gates M1–M4 passed) |
-| Next step | **P10.1–P10.4** backend written (tick after CI); next P10.5 student portal and the publish UI, P10.6 k6 baseline |
+| Next step | **P4.9** free caps and Pro trial (tick after CI); then P10.5 student portal and publish UI, P10.6 k6 baseline |
 | Last updated | 2026-10-07 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -38,7 +38,7 @@
 | 7 | Examinations & grading engine | 6 | 6 |
 | 8 | Marks entry & marks import | 7 | 7 |
 | 9 | Result processing, preview, approval | 5 | 5 |
-| 10 | Publication, read model, student portal | 6 | 0 |
+| 10 | Publication, read model, student portal | 6 | 4 |
 | 11 | Marksheet PDFs & verification | 5 | 0 |
 | 12 | Notifications | 3 | 0 |
 | 13 | Analytics (basic) & audit viewer | 5 | 0 |
@@ -110,6 +110,7 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [x] **P4.7** Platform console v0 · Done when: E2E: suspend → tenant portal shows unavailable page
 - [x] **P4.8** Seed tenants · Done when: Fresh clone + `make seed` shows 3 branded portals
 - [x] 🚩 **Gate M3 — Self-serve SaaS** · Done when: Sign-up to branded portal works end-to-end; platform console shows all tenants
+- [ ] **P4.9** Free caps and Pro trial *(added 2026-10-08 at the owner's request; after Gate M3)* · Done when: Abuse, expiry and conversion tests; Playwright trial flow
 
 ### Phase 5 — Academic structure
 
@@ -159,10 +160,10 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 10 — Publication, read model, student portal
 
-- [ ] **P10.1** Publication schema · Done when: Tests: app role cannot update snapshots
-- [ ] **P10.2** Snapshot builder · Done when: Unit tests
-- [ ] **P10.3** Publish now / schedule / withdraw · Done when: Fault-injection test (rollback mid-way)
-- [ ] **P10.4** Student APIs · Done when: Isolation tests (student X vs Y)
+- [x] **P10.1** Publication schema · Done when: Tests: app role cannot update snapshots
+- [x] **P10.2** Snapshot builder · Done when: Unit tests
+- [x] **P10.3** Publish now / schedule / withdraw · Done when: Fault-injection test (rollback mid-way)
+- [x] **P10.4** Student APIs · Done when: Isolation tests (student X vs Y)
 - [ ] **P10.5** Student portal UI · Done when: Playwright on mobile viewport; budget < 150 KB gz
 - [ ] **P10.6** Load test harness · Done when: Baseline report in `benchmarks/results/`
 - [ ] 🚩 **Gate M5a — Result day (view)** · Done when: Publish → students view results; baseline numbers recorded (whatever they are)
@@ -236,6 +237,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-08 | P10.1–P10.4 ticked; P4.9 written | P10.1–P10.4 verified by CI for 17aa98b (all 7 jobs). P4.9 (owner's request): researched free tiers. The hosted free tiers we checked cap at 100 students (ScholaBook, OurSchoolSoftware, Zoho Classes); trials are 3–30 days. Sources and date are in docs/02 §2.1. Free is now 150 students, 5 staff, 2 admins and 6 publications a year; a guarded data migration only changes values still at the old defaults. The 30-day Pro trial: owner only, no card, up to 1,000 students, without custom domain or API. It runs once per tenant (unique `tenant_trials`). Across tenants, a global `trial_claims` table that only the platform role can reach holds HMAC digests of normalised signals: hard (refuse) are the owner email with Gmail dots and +tags collapsed, the institutional domain, a server-issued device cookie and the tenant; soft (risk score; 2 or more goes to a person) are the unverified phone, the institution name and a busy network. Advisory locks plus a partial unique index handle concurrent attempts. Reminder and end jobs return the tenant to Free without deleting anything. Staff can grant or revoke from the console, and refusals are audited with signal kinds only. UI: the Plan & usage page has a trial card for each state (start, countdown ring, ended), usage with full-limit hints, and a plan comparison (table on desktop, cards on phones); the shell shows a trial banner; every plan-limit error offers "See plans"; site pricing copy is updated. Tests: 23 signal unit tests, 12 trial integration tests (two mutations caught), 6 component tests, and a Playwright trial flow. Local E2E 25/25. Known limit (docs/12 §6): without card or phone verification, a determined person with several real mailboxes, browsers and networks can still repeat a trial; the signals make that slow and visible. |
 | 2026-10-07 | P10.1–P10.4 backend written (not ticked; CI pending) | Migration 0009: `publications` (one live and one scheduled per exam), immutable `published_results` and `exam_statistics` (app has SELECT and INSERT only, and a trigger refuses UPDATE or DELETE for every role, including the owner; tested). Pure snapshot builder (schema 1, canonical numbers, payload hash, no internal ids) with unit tests. Publish now or scheduled (re-auth, Idempotency-Key, approved run, scheduling feature, per-session publication limit counted live under a tenant lock), `publishing.go_live` job, cancel, withdraw, and republish as a new version. Fault injection: a failure after half the snapshots leaves nothing behind and the idempotency key isn't kept. Student APIs `/api/v1/me/results[/latest\|/{id}\|/{id}/stats]` take identity from the session only and send `no-store`. Tests: the same publication id returns each student's own row; withdrawn results are hidden. Two read-filter mutations were caught. The isolation suite now covers student-only routes with a real student. 420 backend tests pass locally. **Next:** tick after CI; P10.5 student portal UI and bundle budget (177 KB gz today, target 150); publish UI in the exam workspace; P10.6 k6 baseline; Gate M5a. |
 | 2026-10-07 | P9.3, P9.5, Gate M4 ticked — Phase 9 complete | Verified by CI for 6ffe04d (all 7 jobs). That run includes 86b5332, whose own run had no E2E job because of the GitHub outage. Gate M4 evidence on the Thapar seed, both from CI: `students.spec` (student import with errors → fixed file → commit) and `results.spec` (marks with an error → fixed file → close → process → preview → approve → marks read-only). It is not one timed manual run. |
 | 2026-10-07 | P9.5 measured | [Benchmark](../benchmarks/results/2026-10-07-result-processing-8000x6.md): 8,000 × 6 processed in 9.59 s on the laptop under Rosetta (target < 2 min), with identical content hashes across 3 runs. The first measurement was 18.44 s; 77% of it was writing 56,000 rows through ORM-entity inserts, and Core inserts (65d0caa) halved it. Approval takes 1.16 s because it recomputes the input hash. GitHub returned 500s on 2026-10-07 (a run with the E2E job missing, a failed re-run request, one rejected push); CI evidence for 86b5332 comes from the next run. |

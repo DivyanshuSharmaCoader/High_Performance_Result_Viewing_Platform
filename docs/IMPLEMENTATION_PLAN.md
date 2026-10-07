@@ -91,6 +91,7 @@
 | P4.7 | Platform console v0 | Tenants list/detail, change plan, overrides, suspend/reactivate (platform role, audited in platform audit log) | E2E: suspend → tenant portal shows unavailable page |
 | P4.8 | Seed tenants | `make seed`: Thapar (Enterprise-like), Demo School (Free), Demo Coaching (Growth) via provisioning service | Fresh clone + `make seed` shows 3 branded portals |
 | **Gate M3** | Self-serve SaaS | | Sign-up to branded portal works end-to-end; platform console shows all tenants |
+| P4.9 *(added 2026-10-08 at the owner's request; after Gate M3)* | Free caps and Pro trial | Free caps checked against the market; a 30-day Pro trial once per institution, using hashed identity signals; plan page, trial banner and plan comparison; console grant/revoke | Abuse tests (email variants, domain, device, soft-signal review, network), expiry and conversion tests, Playwright trial flow |
 
 ---
 

@@ -19,7 +19,17 @@ export function applyServerError<T extends FieldValues>(
 
 export function toastError(error: unknown, fallback = "Something went wrong. Please try again."): void {
   if (error instanceof ApiError) {
-    toast.error(error.title !== error.detail ? error.title : fallback, { description: error.detail });
+    // A plan limit or a feature outside the plan: say so, and offer the way forward.
+    const plan = error.status === 402 || error.code === "feature-not-in-plan";
+    toast.error(error.title !== error.detail ? error.title : fallback, {
+      description: error.detail,
+      action: plan
+        ? {
+            label: "See plans",
+            onClick: () => void import("../routes").then((m) => m.router.navigate("/admin/plan")),
+          }
+        : undefined,
+    });
     return;
   }
   toast.error(fallback);

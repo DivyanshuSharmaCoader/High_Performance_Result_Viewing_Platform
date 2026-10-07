@@ -268,6 +268,98 @@ function OverrideDialog({
   );
 }
 
+const TRIAL_TONE = { active: "info", ended: "neutral", converted: "success", revoked: "warning" } as const;
+const FLAG_LABEL: Record<string, string> = {
+  phone: "phone seen before",
+  name: "same institution name",
+  subnet: "busy network",
+};
+
+function TrialSection({ t, canManage }: { t: TenantDetail; canManage: boolean }) {
+  const qc = useQueryClient();
+  const [action, setAction] = useState<"grant" | "revoke" | null>(null);
+  const run = useMutation({
+    mutationFn: ({ kind, reason }: { kind: "grant" | "revoke"; reason: string }) =>
+      api.post(`/api/v1/platform/tenants/${t.id}/trial${kind === "revoke" ? "/revoke" : ""}`, { reason }),
+    onSuccess: (_d, v) => {
+      void qc.invalidateQueries({ queryKey: ["tenant", t.id] });
+      void qc.invalidateQueries({ queryKey: ["tenant-audit", t.id] });
+      toast.success(v.kind === "grant" ? "Trial started" : "Trial revoked — back on Free");
+      setAction(null);
+    },
+    onError: (e) => {
+      setAction(null);
+      toast.error(e instanceof ApiError ? e.detail : "That didn't work");
+    },
+  });
+  const trial = t.trial;
+  return (
+    <Section
+      title="Free trial"
+      description="One per institution, ever. Started by the owner, or by staff after a review."
+      actions={
+        canManage &&
+        (trial === null ? (
+          <Button size="sm" variant="secondary" onClick={() => setAction("grant")}>
+            Start trial
+          </Button>
+        ) : trial.status === "active" ? (
+          <Button size="sm" variant="danger-outline" onClick={() => setAction("revoke")}>
+            Revoke
+          </Button>
+        ) : null)
+      }
+    >
+      {trial === null ? (
+        <p className="text-sm text-fg-subtle">Not used yet.</p>
+      ) : (
+        <div className="flex flex-col gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge tone={TRIAL_TONE[trial.status]} dot>
+              {trial.status}
+            </Badge>
+            {trial.granted && <Badge tone="neutral">Started by staff</Badge>}
+            {trial.risk_score > 0 && (
+              <Badge tone="warning">
+                Risk {trial.risk_score}: {trial.flags.map((f) => FLAG_LABEL[f] ?? f).join(", ")}
+              </Badge>
+            )}
+          </div>
+          <p className="text-fg-muted">
+            {formatDate(trial.started_at)} → {formatDate(trial.ends_at)}
+            {trial.ended_at && (
+              <>
+                {" "}
+                · ended {formatDate(trial.ended_at)}
+                {trial.end_reason ? ` (${trial.end_reason})` : ""}
+              </>
+            )}
+          </p>
+        </div>
+      )}
+      <ConfirmDialog
+        open={action !== null}
+        onOpenChange={(o) => !o && setAction(null)}
+        title={
+          action === "grant" ? "Start the 30-day trial for this institution?" : "Revoke the running trial?"
+        }
+        description={
+          action === "grant"
+            ? "Use this after checking a trial the automatic review held back. It still counts as their one trial."
+            : "The institution returns to Free now. Nothing is deleted."
+        }
+        confirmLabel={action === "grant" ? "Start trial" : "Revoke trial"}
+        variant={action === "revoke" ? "danger" : "primary"}
+        requireReason
+        loading={run.isPending}
+        onConfirm={(reason) => {
+          if (action) run.mutate({ kind: action, reason });
+        }}
+      />
+    </Section>
+  );
+}
+
 export default function TenantDetailPage() {
   const { id = "" } = useParams();
   const qc = useQueryClient();
@@ -396,6 +488,7 @@ export default function TenantDetailPage() {
               ))}
             </dl>
           </Section>
+          <TrialSection t={t} canManage={canManage} />
           <Section
             title="Overrides"
             description="Per-institution exceptions to the plan."

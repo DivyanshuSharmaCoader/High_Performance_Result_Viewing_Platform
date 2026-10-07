@@ -74,7 +74,7 @@ const FEATURES = [
 const PLANS = [
   {
     name: "Free",
-    detail: "Up to 150 students · 3 staff",
+    detail: "Up to 150 students · 5 staff · 6 publications a year",
     note: "Full publish flow, import and verifiable marksheets",
   },
   { name: "Starter", detail: "Up to 600 students · 15 staff", note: "Your colours and login page" },
@@ -118,7 +118,9 @@ export default function HomePage() {
               See how it works
             </a>
           </div>
-          <p className="mt-4 text-[13px] text-fg-subtle">Free for up to 150 students. No card required.</p>
+          <p className="mt-4 text-[13px] text-fg-subtle">
+            Free for up to 150 students. Try every Pro feature free for 30 days — no card required.
+          </p>
         </div>
       </section>
 
@@ -182,6 +184,18 @@ export default function HomePage() {
               <p className="mt-1 text-sm leading-6 text-fg-muted">{p.note}</p>
             </div>
           ))}
+        </div>
+        <div className="mt-6 flex flex-col gap-3 rounded-xl border border-brand/20 bg-brand-soft/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-fg">
+            <span className="font-semibold">Try Pro free for 30 days.</span>{" "}
+            <span className="text-fg-muted">
+              Up to 1,000 students, no card, and you're back on Free automatically when it ends — nothing is
+              deleted. One trial per institution.
+            </span>
+          </p>
+          <Link to="/signup" className={buttonClasses("primary", "md")}>
+            Start free
+          </Link>
         </div>
         <p className="mt-6 text-[13px] text-fg-subtle">
           Universities and multi-campus groups: Enterprise plans with custom limits and dedicated deployments

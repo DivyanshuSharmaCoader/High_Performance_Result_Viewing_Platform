@@ -96,12 +96,13 @@ export function linkFrom(text: string, pattern: RegExp): string {
 export async function createTenantViaSignup(
   request: APIRequestContext,
   name: string,
+  ownerEmail?: string,
 ): Promise<{ slug: string; email: string }> {
   const host = { Host: `${BASE}:${PORT}` };
   const origin = `http://127.0.0.1:${PORT}`;
   await request.get(`${origin}/api/v1/auth/csrf`, { headers: host });
   const csrf = (await request.storageState()).cookies.find((c) => c.name.endsWith("sc_csrf"))?.value ?? "";
-  const email = `${uniq("owner")}@e2e.example.com`;
+  const email = ownerEmail ?? `${uniq("owner")}@e2e.example.com`;
   const slug = uniq("e2e-");
   const res = await request.post(`${origin}/api/v1/signup`, {
     headers: { ...host, "X-CSRF-Token": csrf },

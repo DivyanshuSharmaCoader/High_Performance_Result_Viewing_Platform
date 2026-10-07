@@ -37,6 +37,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 
+import { TrialBanner } from "../features/plan/trial-banner";
 import { useLogout, useSession } from "../lib/session";
 import { useTenant } from "../lib/tenant";
 
@@ -292,7 +293,10 @@ export function StaffShell({ children }: { children?: ReactNode }) {
         key={location.pathname}
         className="min-w-0 animate-fade-in px-4 py-6 sm:px-6 lg:px-10 lg:py-8"
       >
-        <div className="mx-auto max-w-6xl">{children ?? <Outlet />}</div>
+        <div className="mx-auto max-w-6xl">
+          <TrialBanner />
+          {children ?? <Outlet />}
+        </div>
       </main>
     </div>
   );
