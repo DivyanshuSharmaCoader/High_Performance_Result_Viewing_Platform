@@ -14,10 +14,10 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import anyio
-from sqlalchemy import func, insert, or_, select, update
+from sqlalchemy import Table, func, insert, or_, select, update
 
 from app.core.clock import utcnow
 from app.core.container import Infra
@@ -61,6 +61,8 @@ ROSTER_STATUSES = ("active", "graduated")
 PROCESSABLE = (ExamStatus.MARKS_ENTRY_CLOSED, ExamStatus.PROCESSED)
 PREVIOUS = ("completed", "stale", "approved", "published")
 CHUNK = 1000  # rows per INSERT: ~17 columns each stays well under the 32,767-parameter limit
+EXAM_RESULTS = cast(Table, StudentExamResult.__table__)
+PAPER_RESULTS = cast(Table, StudentPaperResult.__table__)
 
 
 @dataclass
@@ -433,10 +435,12 @@ class ResultsService:
                         "missing_components": p["missing_components"],
                     }
                 )
+        # Core inserts on the tables (not the ORM entities): no per-row ORM bookkeeping for rows that are
+        # never loaded back into this session.
         for i in range(0, len(exams), CHUNK):
-            await uow.session.execute(insert(StudentExamResult), exams[i : i + CHUNK])
+            await uow.session.execute(insert(EXAM_RESULTS), exams[i : i + CHUNK])
         for i in range(0, len(papers), CHUNK):
-            await uow.session.execute(insert(StudentPaperResult), papers[i : i + CHUNK])
+            await uow.session.execute(insert(PAPER_RESULTS), papers[i : i + CHUNK])
 
     async def discard(
         self, uow: UnitOfWork, principal: Principal, exam_id: uuid.UUID, reason: str
