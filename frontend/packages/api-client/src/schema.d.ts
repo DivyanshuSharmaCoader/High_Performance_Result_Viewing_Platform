@@ -477,6 +477,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/exams/{exam_id}/publications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Publications */
+        get: operations["list_publications_api_v1_admin_exams__exam_id__publications_get"];
+        put?: never;
+        /** Publish Results */
+        post: operations["publish_results_api_v1_admin_exams__exam_id__publications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Publication */
+        post: operations["cancel_publication_api_v1_admin_exams__exam_id__publications__publication_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw Publication */
+        post: operations["withdraw_publication_api_v1_admin_exams__exam_id__publications__publication_id__withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/exams/{exam_id}/results": {
         parameters: {
             query?: never;
@@ -1543,6 +1595,74 @@ export interface paths {
         get?: never;
         /** Change Password */
         put: operations["change_password_api_v1_me_password_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Results */
+        get: operations["my_results_api_v1_me_results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/results/latest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Latest Result */
+        get: operations["my_latest_result_api_v1_me_results_latest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/results/{publication_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Result */
+        get: operations["my_result_api_v1_me_results__publication_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/results/{publication_id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Result Stats */
+        get: operations["my_result_stats_api_v1_me_results__publication_id__stats_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -3001,6 +3121,57 @@ export interface components {
             /** Session Is Current */
             session_is_current: boolean;
         };
+        /** MyResultItem */
+        MyResultItem: {
+            exam: components["schemas"]["SnapExam"];
+            /** Grade */
+            grade: string | null;
+            /** Outcome */
+            outcome: string;
+            /** Percentage */
+            percentage: string | null;
+            /**
+             * Publication Id
+             * Format: uuid
+             */
+            publication_id: string;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Revised */
+            revised: boolean;
+            /** Sgpa */
+            sgpa: string | null;
+        };
+        /** MyResultOut */
+        MyResultOut: {
+            payload: components["schemas"]["ResultPayload"];
+            /**
+             * Publication Id
+             * Format: uuid
+             */
+            publication_id: string;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Revised */
+            revised: boolean;
+            /** Version */
+            version: number;
+        };
+        /** MyStatsOut */
+        MyStatsOut: {
+            /** Available */
+            available: boolean;
+            /** Stats */
+            stats?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** OkOut */
         OkOut: {
             /**
@@ -3272,6 +3443,51 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** PublicationOut */
+        PublicationOut: {
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Published At */
+            published_at: string | null;
+            /** Scheduled At */
+            scheduled_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "scheduled" | "published" | "superseded" | "withdrawn" | "cancelled";
+            /** Students */
+            students: number;
+            /** Version */
+            version: number;
+            /** Withdraw Reason */
+            withdraw_reason: string | null;
+            /** Withdrawn At */
+            withdrawn_at: string | null;
+        };
+        /** PublicationReasonIn */
+        PublicationReasonIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** PublishIn */
+        PublishIn: {
+            /**
+             * At
+             * @description Go live at this time; omit to publish now.
+             */
+            at?: string | null;
+        };
         /** ReasonIn */
         ReasonIn: {
             /** Reason */
@@ -3371,6 +3587,18 @@ export interface components {
             percentage: string | null;
             /** Total */
             total: string | null;
+        };
+        /** ResultPayload */
+        ResultPayload: {
+            exam: components["schemas"]["SnapExam"];
+            institution: components["schemas"]["SnapInstitution"];
+            /** Papers */
+            papers: components["schemas"]["SnapPaper"][];
+            result: components["schemas"]["SnapResult"];
+            /** Schema */
+            schema: number;
+            scheme: components["schemas"]["SnapScheme"];
+            student: components["schemas"]["SnapStudent"];
         };
         /** ResultProcessIn */
         ResultProcessIn: {
@@ -3939,6 +4167,116 @@ export interface components {
              * Format: uuid
              */
             student_id: string;
+        };
+        /** SnapCohort */
+        SnapCohort: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+        };
+        /** SnapComponent */
+        SnapComponent: {
+            /** Code */
+            code: string;
+            /** Label */
+            label: string;
+            /** Marks */
+            marks: string | null;
+            /** Max */
+            max: string | null;
+        };
+        /** SnapExam */
+        SnapExam: {
+            /** Kind */
+            kind: string;
+            /** Name */
+            name: string;
+            /** Session */
+            session: string;
+            /** Term */
+            term: string;
+        };
+        /** SnapInstitution */
+        SnapInstitution: {
+            /** Display Name */
+            display_name: string;
+            /** Name */
+            name: string;
+        };
+        /** SnapPaper */
+        SnapPaper: {
+            /** Attendance */
+            attendance: string | null;
+            /** Components */
+            components: components["schemas"]["SnapComponent"][];
+            /** Course Code */
+            course_code: string;
+            /** Course Name */
+            course_name: string;
+            /** Credits */
+            credits: string | null;
+            /** Failed Components */
+            failed_components: string[];
+            /** Grade */
+            grade: string | null;
+            /** Grade Point */
+            grade_point: string | null;
+            /** Max Total */
+            max_total: string | null;
+            /** Missing Components */
+            missing_components: string[];
+            /** Outcome */
+            outcome: string;
+            /** Percentage */
+            percentage: string | null;
+            /** Total */
+            total: string | null;
+        };
+        /** SnapResult */
+        SnapResult: {
+            /** Credits Attempted */
+            credits_attempted: string | null;
+            /** Credits Earned */
+            credits_earned: string | null;
+            /** Grade */
+            grade: string | null;
+            /** Grade Point */
+            grade_point: string | null;
+            /** Max Total */
+            max_total: string | null;
+            /** Notes */
+            notes: string[];
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "pass" | "fail" | "absent" | "withheld" | "incomplete";
+            /** Percentage */
+            percentage: string | null;
+            /** Rank */
+            rank: number | null;
+            /** Sgpa */
+            sgpa: string | null;
+            /** Total */
+            total: string | null;
+        };
+        /** SnapScheme */
+        SnapScheme: {
+            /** Name */
+            name: string;
+            /** Strategy */
+            strategy: string;
+        };
+        /** SnapStudent */
+        SnapStudent: {
+            cohort: components["schemas"]["SnapCohort"];
+            /** Enrollment No */
+            enrollment_no: string;
+            /** Full Name */
+            full_name: string;
+            /** Program */
+            program: string | null;
         };
         /** StaffOut */
         StaffOut: {
@@ -5549,6 +5887,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_publications_api_v1_admin_exams__exam_id__publications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_results_api_v1_admin_exams__exam_id__publications_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublishIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_publication_api_v1_admin_exams__exam_id__publications__publication_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                publication_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_publication_api_v1_admin_exams__exam_id__publications__publication_id__withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                publication_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicationReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationOut"];
                 };
             };
             /** @description Validation Error */
@@ -7826,6 +8298,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_results_api_v1_me_results_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyResultItem"][];
+                };
+            };
+        };
+    };
+    my_latest_result_api_v1_me_results_latest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyResultOut"] | null;
+                };
+            };
+        };
+    };
+    my_result_api_v1_me_results__publication_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publication_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_result_stats_api_v1_me_results__publication_id__stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publication_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyStatsOut"];
                 };
             };
             /** @description Validation Error */

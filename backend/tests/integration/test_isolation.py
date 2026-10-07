@@ -26,6 +26,7 @@ from app.core.clock import utcnow
 from app.core.jobs import enqueue
 from app.core.security import hash_token, new_token
 from app.modules.identity.models import AuthToken
+from app.modules.identity.permissions import permissions_for
 from tests.conftest import PG_HOST, PG_PORT
 from tests.helpers import Client, TenantFixture, make_structure, make_student, make_tenant, make_user
 from tests.routes import RouteInfo, api_routes
@@ -185,9 +186,53 @@ async def _paper(infra: Any, t: TenantFixture) -> uuid.UUID:
     return (await _exam_and_paper(infra, t))[1]
 
 
+async def _publication(infra: Any, t: TenantFixture) -> uuid.UUID:
+    from sqlalchemy import select
+
+    from app.core.clock import utcnow
+    from app.modules.examinations.models import Examination
+    from app.modules.grading.models import GradingSchemeVersion
+    from app.modules.publishing.models import Publication
+    from app.modules.results.models import ResultRun
+
+    exam_id = await _exam(infra, t)
+    async with infra.db.uow(t.id) as uow:
+        exam = (await uow.session.scalars(select(Examination).where(Examination.id == exam_id))).one()
+        version = (
+            await uow.session.scalars(
+                select(GradingSchemeVersion.id).where(
+                    GradingSchemeVersion.scheme_id == exam.grading_scheme_id
+                )
+            )
+        ).first()
+        run = ResultRun(
+            tenant_id=t.id,
+            exam_id=exam_id,
+            revision=1,
+            status="published",
+            grading_scheme_version_id=version,
+            content_hash="0" * 64,
+        )
+        uow.session.add(run)
+        await uow.flush()
+        pub = Publication(
+            tenant_id=t.id,
+            exam_id=exam_id,
+            result_run_id=run.id,
+            version=1,
+            status="published",
+            published_at=utcnow(),
+            content_hash="0" * 64,
+        )
+        uow.session.add(pub)
+        await uow.flush()
+        return pub.id
+
+
 PROVIDERS: dict[str, Provider] = {
     "user_id": _staff_user,
     "exam_id": _exam,
+    "publication_id": _publication,
     "paper_id": _paper,
     "scheme_id": _scheme,
     "student_id": _student,
@@ -262,6 +307,7 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("POST", "/api/v1/admin/exams/{exam_id}/results/approve"): {"run_id": str(uuid.uuid4())},
     ("POST", "/api/v1/admin/exams/{exam_id}/results/reject"): {"run_id": str(uuid.uuid4()), "reason": "xyz"},
     ("POST", "/api/v1/admin/exams/{exam_id}/results/revoke"): {"reason": "xyz"},
+    ("POST", "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/withdraw"): {"reason": "xyz"},
     ("POST", "/api/v1/admin/grading-schemes/{scheme_id}/versions"): {
         "config": {"strategy": "marks_only"},
         "based_on": 1,
@@ -338,7 +384,9 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                 text(
                     "SELECT coalesce(string_agg(id::text || status, ',' ORDER BY id), '')"
                     " || (SELECT count(*)::text FROM approvals)"
-                    " || (SELECT count(*)::text FROM student_exam_results) FROM result_runs"
+                    " || (SELECT count(*)::text FROM student_exam_results)"
+                    " || (SELECT coalesce(string_agg(id::text || status, ',' ORDER BY id), '') FROM publications)"
+                    " || (SELECT count(*)::text FROM published_results) FROM result_runs"
                 )
             )
         ).scalar_one()
@@ -366,9 +414,19 @@ async def test_id_swap_on_every_tenant_route_returns_404_and_changes_nothing(app
     assert not missing, f"isolation suite has no tenant-B provider for path params: {missing}"
     assert routes, "expected tenant routes with ids"
     checked = []
-    async with Client(app, a.host) as c:
-        await c.login(a.owner_email)
+    # Student-only routes are called by a real student of A (linked to a student record), the rest by A's owner.
+    student_id = await make_student(infra, a, enrollment_no=f"ISO{uuid.uuid4().hex[:6]}")
+    user_id, student_login = await make_user(infra, a, "student")
+    async with infra.db.uow(a.id) as uow:
+        await uow.session.execute(
+            text("UPDATE students SET user_id = :u WHERE id = :s"), {"u": user_id, "s": student_id}
+        )
+    owner_perms = permissions_for(["institution_owner"])
+    async with Client(app, a.host) as owner, Client(app, a.host) as student:
+        await owner.login(a.owner_email)
+        await student.login(student_login)
         for route in routes:
+            c = owner if route.realm != "tenant" or route.allows(owner_perms) else student
             values = {p: await PROVIDERS[p](infra, b) for p in route.params}
             before = await _b_fingerprint(infra, b)
             r = await _call(c, route, route.url(values))
