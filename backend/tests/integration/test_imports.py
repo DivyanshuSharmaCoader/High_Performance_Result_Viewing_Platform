@@ -275,7 +275,9 @@ async def test_template_download_and_permissions(app, infra) -> None:
     async with faculty:
         assert (await _upload(faculty, _csv("Enrollment,Name", "G1,G"))).status_code == 403
         assert (await faculty.get(BASE)).json() == []  # faculty list only their own (marks) imports
-        assert (await faculty.get(f"{BASE}/template.xlsx")).status_code == 403  # students template: admins only
+        assert (
+            await faculty.get(f"{BASE}/template.xlsx")
+        ).status_code == 403  # students template: admins only
 
 
 async def test_storage_usage_counts_uploaded_files(app, infra) -> None:

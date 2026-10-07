@@ -20,11 +20,12 @@ from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any, ClassVar
 
-from sqlalchemy import select, tuple_
+from sqlalchemy import select
 
 from app.core.container import Infra
 from app.core.db import UnitOfWork
 from app.core.errors import InvalidState
+from app.core.sql import in_rows
 from app.modules.academics.models import Cohort, Course
 from app.modules.audit.service import Actor, record
 from app.modules.directory.models import CohortMembership, Student
@@ -625,7 +626,7 @@ class MarksProfile:
                 for e in (
                     await uow.session.scalars(
                         select(MarkEntry)
-                        .where(tuple_(MarkEntry.exam_paper_id, MarkEntry.student_id).in_(keys))
+                        .where(in_rows((MarkEntry.exam_paper_id, MarkEntry.student_id), keys))
                         .with_for_update()
                     )
                 ).all()

@@ -14,11 +14,12 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, ClassVar
 
-from sqlalchemy import delete, select, tuple_
+from sqlalchemy import delete, select
 
 from app.core.container import Infra
 from app.core.db import UnitOfWork
 from app.core.errors import InvalidState, ValidationFailed
+from app.core.sql import in_rows, in_values
 from app.modules.academics.models import AcademicSession, Cohort
 from app.modules.audit.service import Actor, record
 from app.modules.directory.models import CohortMembership, Student
@@ -411,7 +412,7 @@ class StudentsProfile:
             s.enrollment_no: s
             for s in (
                 await uow.session.scalars(
-                    select(Student).where(Student.enrollment_no.in_(list(by_enrollment))).with_for_update()
+                    select(Student).where(in_values(Student.enrollment_no, by_enrollment)).with_for_update()
                 )
             ).all()
         }
@@ -501,11 +502,14 @@ class StudentsProfile:
             for m in (
                 await uow.session.scalars(
                     select(CohortMembership).where(
-                        tuple_(
-                            CohortMembership.student_id,
-                            CohortMembership.session_id,
-                            CohortMembership.program_id,
-                        ).in_(list(keys))
+                        in_rows(
+                            (
+                                CohortMembership.student_id,
+                                CohortMembership.session_id,
+                                CohortMembership.program_id,
+                            ),
+                            keys,
+                        )
                     )
                 )
             ).all():
@@ -535,7 +539,7 @@ class StudentsProfile:
         if remove:
             await uow.session.execute(
                 delete(CohortMembership).where(
-                    tuple_(CohortMembership.student_id, CohortMembership.cohort_id).in_(remove)
+                    in_rows((CohortMembership.student_id, CohortMembership.cohort_id), remove)
                 )
             )
         uow.session.add_all(add)
