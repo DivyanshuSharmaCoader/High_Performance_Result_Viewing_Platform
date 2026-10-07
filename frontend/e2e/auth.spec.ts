@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-import { DEMO_TENANTS, latestEmail, linkFrom, signIn, uniq, url } from "./support";
+import { DEMO_TENANTS, latestEmail, linkFrom, settled, signIn, uniq, url } from "./support";
 
 const thapar = DEMO_TENANTS.thapar;
 
@@ -73,12 +73,16 @@ test.describe("staff sign-in for each role (P3.11)", () => {
   }
 
   test("sign-in and dashboard have no detectable accessibility violations", async ({ page }) => {
+    // Measure settled pages: mid-fade text is semi-transparent and fails contrast for the wrong reason.
+    await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto(url(thapar.slug, "/login"));
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await settled(page);
     const login = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     expect(login.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
     await signIn(page, thapar.slug, thapar.owner);
     await expect(page.getByText("Plan usage")).toBeVisible();
+    await settled(page);
     const dashboard = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     expect(dashboard.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
   });

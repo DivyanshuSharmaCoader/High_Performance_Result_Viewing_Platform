@@ -99,7 +99,7 @@ allowed = role_has_permission(principal.roles, "marks.enter")         # RBAC
 ## 7. Rate limiting & abuse prevention
 | Bucket | Example limit (tune after load tests) |
 |---|---|
-| Login per IP, every attempt | 600/min, burst 300: a flood ceiling only. A school lab, or thousands of phones behind one mobile carrier's NAT, share an address on result day (`SCORECODE_RATE_LOGIN_IP_PER_MINUTE`) |
+| Login per IP, every attempt | 3,000/min, burst 1,000: a flood ceiling only. A school lab, or thousands of phones behind one mobile carrier's NAT, share an address on result day (`SCORECODE_RATE_LOGIN_IP_PER_MINUTE`) |
 | Login per IP, **failed** attempts | 60/min, burst 60 (credential stuffing); once exhausted, that address waits even with a correct password (`SCORECODE_RATE_LOGIN_FAILURES_IP_PER_MINUTE`). Each account also has its own limit and progressive lockout |
 | Login per account | 5 failures → exponential backoff |
 | Password reset per account/IP | 3/hour |

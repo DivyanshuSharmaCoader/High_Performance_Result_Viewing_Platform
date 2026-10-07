@@ -6595,6 +6595,18 @@
             "minLength": 3,
             "title": "Slug",
             "type": "string"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
           }
         },
         "required": [

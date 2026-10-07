@@ -39,7 +39,7 @@ class Bucket:
 # Sign-in per network address. A whole school lab, or thousands of phones behind one mobile carrier's NAT,
 # share an address on result day, so *every* attempt only meets a flood ceiling; *failed* attempts have
 # their own, much tighter bucket (credential stuffing), and each account its own limit and lockout.
-LOGIN_PER_IP = Bucket.per_minute("login_ip", 600, burst=300)
+LOGIN_PER_IP = Bucket.per_minute("login_ip", 3000, burst=1000)
 LOGIN_FAILURES_PER_IP = Bucket.per_minute("login_fail_ip", 60, burst=60)
 LOGIN_PER_ACCOUNT = Bucket.per_minute("login_account", 10, burst=10)
 PASSWORD_RESET = Bucket.per_hour("password_reset", 3, burst=3)

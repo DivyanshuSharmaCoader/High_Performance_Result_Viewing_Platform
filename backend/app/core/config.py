@@ -92,8 +92,10 @@ class Settings(BaseSettings):
     staff_session_absolute_days: int = 7
     platform_session_hours: int = 8
     # Abuse limits (docs/10 §7). Production defaults; local stacks may relax them for automated tests.
-    rate_login_ip_per_minute: int = 600  # every attempt: a flood ceiling only (shared school/carrier NAT)
-    rate_login_ip_burst: int = 300
+    # Every attempt: a flood ceiling only. One mobile carrier's NAT address can carry thousands of students
+    # signing in within the same minute on result day; failures have their own, tight bucket below.
+    rate_login_ip_per_minute: int = 3000
+    rate_login_ip_burst: int = 1000
     rate_login_failures_ip_per_minute: int = 60  # failed attempts: credential stuffing
     rate_login_failures_ip_burst: int = 60
     rate_signup_ip_per_hour: int = 5

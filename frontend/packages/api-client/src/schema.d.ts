@@ -4249,6 +4249,8 @@ export interface components {
             phone?: string | null;
             /** Slug */
             slug: string;
+            /** Website */
+            website?: string | null;
         };
         /** SignupStartedOut */
         SignupStartedOut: {

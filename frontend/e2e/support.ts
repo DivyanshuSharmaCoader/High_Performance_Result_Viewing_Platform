@@ -57,7 +57,13 @@ export async function signIn(
   await page.getByLabel("Email or enrollment number").fill(loginId);
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).not.toHaveURL(/\/login/);
+  // Signing in also loads the staff shell's code on first use; allow for a busy CI machine.
+  await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+}
+
+/** Wait until no CSS animation or transition is running (accessibility checks measure settled pages). */
+export async function settled(page: Page): Promise<void> {
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running"));
 }
 
 /** Newest email to `to` from Mailpit, polling until it arrives (the worker sends asynchronously). */
