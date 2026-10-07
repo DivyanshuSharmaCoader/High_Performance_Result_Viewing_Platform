@@ -257,6 +257,11 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
         "changes": [{"student_id": str(uuid.uuid4()), "components": {"T": "1"}}]
     },
     ("POST", "/api/v1/exams/{exam_id}/papers/{paper_id}/cohorts/{cohort_id}/marks/return"): {"reason": "xyz"},
+    ("POST", "/api/v1/admin/exams/{exam_id}/results/process"): {"override_reason": "xyz"},
+    ("POST", "/api/v1/admin/exams/{exam_id}/results/discard"): {"reason": "xyz"},
+    ("POST", "/api/v1/admin/exams/{exam_id}/results/approve"): {"run_id": str(uuid.uuid4())},
+    ("POST", "/api/v1/admin/exams/{exam_id}/results/reject"): {"run_id": str(uuid.uuid4()), "reason": "xyz"},
+    ("POST", "/api/v1/admin/exams/{exam_id}/results/revoke"): {"reason": "xyz"},
     ("POST", "/api/v1/admin/grading-schemes/{scheme_id}/versions"): {
         "config": {"strategy": "marks_only"},
         "based_on": 1,
@@ -328,7 +333,16 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                 )
             )
         ).scalar_one()
-    return audit, users, roles, jobs, students, members, imports, schemes, exams, marks
+        results = (
+            await uow.session.execute(
+                text(
+                    "SELECT coalesce(string_agg(id::text || status, ',' ORDER BY id), '')"
+                    " || (SELECT count(*)::text FROM approvals)"
+                    " || (SELECT count(*)::text FROM student_exam_results) FROM result_runs"
+                )
+            )
+        ).scalar_one()
+    return audit, users, roles, jobs, students, members, imports, schemes, exams, marks, results
 
 
 async def _call(c: Client, route: RouteInfo, url: str) -> Any:

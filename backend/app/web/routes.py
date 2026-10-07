@@ -16,6 +16,7 @@ from app.modules.identity.staff_router import router as staff_router
 from app.modules.ingestion.router import router as imports_router
 from app.modules.marks.router import router as marks_router
 from app.modules.platform.router import router as platform_router
+from app.modules.results.router import router as results_router
 from app.modules.tenancy.router import router as settings_router
 from app.modules.tenancy.signup_router import router as signup_router
 from app.web.jobs_router import router as jobs_router
@@ -38,5 +39,6 @@ def include_routers(app: FastAPI) -> None:
         grading_router,
         exams_router,
         marks_router,
+        results_router,
     ):
         app.include_router(router)

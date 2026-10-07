@@ -39,6 +39,7 @@ from app.modules.examinations.models import (
 from app.modules.ingestion.engine import FieldSpec, Issue, RowInput, RowResult, suggest
 from app.modules.ingestion.values import is_mangled_number
 from app.modules.marks.models import MarkEntry
+from app.modules.results.staleness import marks_changed
 from app.modules.tenancy.models import TenantSettings
 
 DEFAULT_CODES = {"AB": "absent", "EX": "exempt", "MP": "malpractice", "WH": "withheld"}
@@ -55,7 +56,7 @@ ATTENDANCE_WORDS = {
     "p": "present",
 }
 ROSTER_STATUSES = ("active", "graduated")
-WRITE_STATES_ADMIN = ("marks_entry_open", "marks_entry_closed")
+WRITE_STATES_ADMIN = ("marks_entry_open", "marks_entry_closed", "processed")
 
 
 @dataclass(frozen=True)
@@ -613,6 +614,12 @@ class MarksProfile:
     ) -> dict[str, Any]:
         """Write the checked marks in one transaction. Anything that changed since the check (a mark saved in
         the grid meanwhile, entry closed, a paper submitted) refuses the whole commit; re-check and retry."""
+        # Like a grid save, hold the exam row: result processing can't run half-way through this write.
+        exam = (
+            await uow.session.scalars(
+                select(Examination).where(Examination.id == uuid.UUID(params["exam_id"])).with_for_update()
+            )
+        ).one()
         ctx = await self.load_context(uow, params)
         if ctx.exam_status not in WRITE_STATES_ADMIN or (
             ctx.allowed is not None and ctx.exam_status != "marks_entry_open"
@@ -694,6 +701,8 @@ class MarksProfile:
             summary=f"Imported marks: {created} new, {updated} changed",
             after={**summary, "import_id": str(job_id)},
         )
+        if created or updated:
+            await marks_changed(uow, actor, exam)
         return summary
 
 

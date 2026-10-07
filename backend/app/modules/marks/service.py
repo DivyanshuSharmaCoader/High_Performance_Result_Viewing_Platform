@@ -38,6 +38,7 @@ from app.modules.examinations.models import (
 from app.modules.identity.models import User
 from app.modules.identity.permissions import P
 from app.modules.marks.models import ATTENDANCE, MarkEntry
+from app.modules.results.staleness import marks_changed
 
 ROSTER_STATUSES = ("active", "graduated")
 MAX_AUDITED_CHANGES = 200
@@ -179,8 +180,8 @@ class MarksService:
             return True, False, False
         if exam.status == "marks_entry_open":
             editable = admin or status in ("open", "returned")
-        elif exam.status == "marks_entry_closed":
-            editable = admin
+        elif exam.status in ("marks_entry_closed", "processed"):
+            editable = admin  # after processing, a change sets the results aside (results.staleness)
         else:
             editable = False
         return True, editable, editable and status in ("open", "returned")
@@ -430,6 +431,7 @@ class MarksService:
                     "truncated": max(0, len(audit) - MAX_AUDITED_CHANGES),
                 },
             )
+            await marks_changed(uow, Actor.from_principal(principal), exam)
         return saved
 
     async def submit(

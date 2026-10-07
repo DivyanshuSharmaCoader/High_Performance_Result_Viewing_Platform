@@ -141,8 +141,9 @@ GET/PUT /api/v1/exams/{id}/papers/{pid}/marks ★     (faculty: assigned only)
 POST /api/v1/exams/{id}/papers/{pid}/submit ★ | /return
 POST /api/v1/imports ★ (multipart) · GET /imports/{id} ★ · GET /imports/{id}/rows?status=error ★
 PATCH /api/v1/imports/{id}/mapping ★ · POST /imports/{id}/commit ★ · GET /imports/{id}/error-report.xlsx ★
-POST /api/v1/exams/{id}/process ★ · GET /exams/{id}/preview ★ · GET /exams/{id}/anomalies ★
-POST /api/v1/exams/{id}/approve ★ | /reject
+POST /api/v1/admin/exams/{id}/results/process ★ (Idempotency-Key) · GET …/results ★ (run, stats, anomalies, approvals)
+GET …/results/students ★ · GET …/results/students/{sid} ★ · POST …/results/discard
+POST /api/v1/admin/exams/{id}/results/approve ★ | /reject | /revoke (re-auth)
 POST /api/v1/exams/{id}/publications ★ (now | scheduled_at) · POST /publications/{id}/withdraw ★
 POST /api/v1/exams/{id}/corrections · GET /publications/{id}/diff
 GET  /api/v1/admin/analytics/exams/{id} ★ · GET /admin/audit-logs ★
@@ -212,6 +213,15 @@ REGISTRY = {s.code: s for s in (PercentageBandsStrategy(), CreditGpaStrategy(), 
 - Tested by example tables (golden files with hand-worked expectations in `backend/tests/fixtures/grading/`), and property-based tests (Hypothesis): monotonicity, bounds (0 ≤ percentage ≤ 100), absent handling, determinism and paper-order independence. The credit golden table is a generic CBCS-style scale used by the Thapar demo tenant — not Thapar's official policy (D25).
 - Rules every strategy shares (implemented in `app/modules/grading/engine/strategies.py`): exempt papers are left out of every total; absent papers score nothing, never pass and show the scheme's `absent_grade`; withheld/malpractice on any paper withholds the exam; a missing component mark makes the paper and the exam `incomplete` (never computed from partial marks); grades come from the **rounded** percentage the student sees; division runs in a local `Decimal` context so results never depend on global state.
 - The engine lives in `app/modules/grading/engine/` and an import-linter contract forbids it from importing the database, the web framework or any other module.
+
+### 7.1 Result processing (implemented in Phase 9, `app/modules/results/`)
+- **Request** (`POST …/results/process`, `results.process`): the exam must be *marks entry closed* or *processed*. Unsubmitted papers block it unless the request gives a reason, which is audited and listed as an anomaly. The request pins the latest version of the exam's grading scheme, inserts run *n* (`running`; a partial unique index allows one running run per exam) and queues `results.process` on the `processing` queue.
+- **Job** (`results/service.py` `execute`): locks the exam row `FOR UPDATE` for the whole computation. Grid saves and import commits lock the same row, so marks can't change mid-run. It loads every input in four set-based queries (scheme version, papers, roster, marks) and computes in a worker thread with the pure engine (`results/compute.py`). It bulk-inserts `student_exam_results` and `student_paper_results`, then stores `input_hash` and `content_hash`, statistics and anomalies. Older completed runs become `stale`, and the exam moves to *processed*. Ungradable data, such as a mark above a lowered maximum, fails the run with the student named and writes nothing.
+- **Determinism**: inputs are sorted before computing, so the same inputs in any order give identical rows and identical hashes. This is unit-tested (including a Hypothesis property) and checked end to end: processing twice gives the same hashes.
+- **Staleness** (FR-10.3): administrators may still correct marks after processing. Any change runs `results/staleness.py` in the same transaction: completed runs become stale and the exam returns to *marks entry closed*. Approval recomputes the input hash, so a change that bypassed this, or a roster or paper change, still blocks approval.
+- **Approval** (`results.approve`, re-auth required): it must name the latest run, which must be completed and not stale. In maker-checker mode (`tenant_settings.approval_mode` plus the plan's `maker_checker_approval`), the person who processed the run can't approve it. Approval appends an `approvals` row carrying the run's content hash, marks the run approved, moves the exam to *approved* and locks every paper. *Reject* records the decision and leaves the exam processed. *Revoke* (with a reason) returns the exam to processed and unlocks papers. *Discard* sets processed results aside and returns to marks entry.
+- **Immutability**: the app role may only `SELECT, INSERT` on `student_exam_results`, `student_paper_results` and `approvals` (tested). Result columns use 3 decimal places, the engine's widest rounding, so stored values equal the hashed ones.
+- **Not built yet**: marksheet pre-rendering on approval (FR-11.3) comes with PDFs in Phase 11; purging old runs' rows is a later retention job.
 
 ---
 

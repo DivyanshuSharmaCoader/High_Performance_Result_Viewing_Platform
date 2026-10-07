@@ -4378,6 +4378,840 @@
         "title": "ResetIn",
         "type": "object"
       },
+      "ResultActions": {
+        "properties": {
+          "approve_blocked_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approve Blocked Reason"
+          },
+          "can_approve": {
+            "title": "Can Approve",
+            "type": "boolean"
+          },
+          "can_discard": {
+            "title": "Can Discard",
+            "type": "boolean"
+          },
+          "can_process": {
+            "title": "Can Process",
+            "type": "boolean"
+          },
+          "can_reject": {
+            "title": "Can Reject",
+            "type": "boolean"
+          },
+          "can_revoke": {
+            "title": "Can Revoke",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "can_process",
+          "can_discard",
+          "can_approve",
+          "can_reject",
+          "can_revoke",
+          "approve_blocked_reason"
+        ],
+        "title": "ResultActions",
+        "type": "object"
+      },
+      "ResultApprovalOut": {
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decided_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By Name"
+          },
+          "decision": {
+            "enum": [
+              "approved",
+              "rejected",
+              "revoked"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision"
+          }
+        },
+        "required": [
+          "id",
+          "decision",
+          "decided_by_name",
+          "created_at",
+          "comment",
+          "revision",
+          "content_hash"
+        ],
+        "title": "ResultApprovalOut",
+        "type": "object"
+      },
+      "ResultApproveIn": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "ResultApproveIn",
+        "type": "object"
+      },
+      "ResultPaperOut": {
+        "properties": {
+          "attendance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attendance"
+          },
+          "components": {
+            "additionalProperties": true,
+            "title": "Components",
+            "type": "object"
+          },
+          "credits": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits"
+          },
+          "exam_paper_id": {
+            "format": "uuid",
+            "title": "Exam Paper Id",
+            "type": "string"
+          },
+          "failed_components": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Failed Components",
+            "type": "array"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "grade_point": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade Point"
+          },
+          "max_total": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Max Total",
+            "type": "string"
+          },
+          "missing_components": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Components",
+            "type": "array"
+          },
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          },
+          "percentage": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percentage"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "exam_paper_id",
+          "outcome",
+          "attendance",
+          "components",
+          "total",
+          "max_total",
+          "percentage",
+          "grade",
+          "grade_point",
+          "credits",
+          "failed_components",
+          "missing_components"
+        ],
+        "title": "ResultPaperOut",
+        "type": "object"
+      },
+      "ResultProcessIn": {
+        "additionalProperties": false,
+        "properties": {
+          "override_reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Reason"
+          }
+        },
+        "title": "ResultProcessIn",
+        "type": "object"
+      },
+      "ResultReasonIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "ResultReasonIn",
+        "type": "object"
+      },
+      "ResultRejectIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "reason"
+        ],
+        "title": "ResultRejectIn",
+        "type": "object"
+      },
+      "ResultRunBrief": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "started_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started By Name"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "stale",
+              "approved",
+              "published"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "status",
+          "created_at",
+          "started_by_name"
+        ],
+        "title": "ResultRunBrief",
+        "type": "object"
+      },
+      "ResultRunOut": {
+        "properties": {
+          "anomalies": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Anomalies",
+            "type": "array"
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Detail"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "input_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Hash"
+          },
+          "override_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Reason"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "scheme": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultSchemeRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "started_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started By Name"
+          },
+          "stats": {
+            "additionalProperties": true,
+            "title": "Stats",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "stale",
+              "approved",
+              "published"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "students": {
+            "title": "Students",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "revision",
+          "status",
+          "created_at",
+          "finished_at",
+          "started_by_name",
+          "error_detail",
+          "students",
+          "input_hash",
+          "content_hash",
+          "scheme",
+          "override_reason",
+          "stats",
+          "anomalies"
+        ],
+        "title": "ResultRunOut",
+        "type": "object"
+      },
+      "ResultSchemeRef": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "version"
+        ],
+        "title": "ResultSchemeRef",
+        "type": "object"
+      },
+      "ResultStudentOut": {
+        "properties": {
+          "cohort_code": {
+            "title": "Cohort Code",
+            "type": "string"
+          },
+          "credits_attempted": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Attempted"
+          },
+          "credits_earned": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credits Earned"
+          },
+          "enrollment_no": {
+            "title": "Enrollment No",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "grade_point": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade Point"
+          },
+          "max_total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Total"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "outcome": {
+            "enum": [
+              "pass",
+              "fail",
+              "absent",
+              "withheld",
+              "incomplete"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "papers": {
+            "items": {
+              "$ref": "#/components/schemas/ResultPaperOut"
+            },
+            "title": "Papers",
+            "type": "array"
+          },
+          "percentage": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percentage"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "sgpa": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sgpa"
+          },
+          "student_id": {
+            "format": "uuid",
+            "title": "Student Id",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "student_id",
+          "enrollment_no",
+          "full_name",
+          "cohort_code",
+          "outcome",
+          "total",
+          "max_total",
+          "percentage",
+          "grade",
+          "grade_point",
+          "sgpa",
+          "credits_attempted",
+          "credits_earned",
+          "rank",
+          "notes",
+          "papers"
+        ],
+        "title": "ResultStudentOut",
+        "type": "object"
+      },
+      "ResultStudentsPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ResultStudentOut"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_after": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "items",
+          "next_after"
+        ],
+        "title": "ResultStudentsPage",
+        "type": "object"
+      },
+      "ResultUnsubmitted": {
+        "properties": {
+          "cohort_code": {
+            "title": "Cohort Code",
+            "type": "string"
+          },
+          "course_code": {
+            "title": "Course Code",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "course_code",
+          "cohort_code",
+          "status"
+        ],
+        "title": "ResultUnsubmitted",
+        "type": "object"
+      },
+      "ResultsOverviewOut": {
+        "properties": {
+          "actions": {
+            "$ref": "#/components/schemas/ResultActions"
+          },
+          "approval_mode": {
+            "enum": [
+              "single",
+              "maker_checker"
+            ],
+            "title": "Approval Mode",
+            "type": "string"
+          },
+          "approvals": {
+            "items": {
+              "$ref": "#/components/schemas/ResultApprovalOut"
+            },
+            "title": "Approvals",
+            "type": "array"
+          },
+          "exam_id": {
+            "format": "uuid",
+            "title": "Exam Id",
+            "type": "string"
+          },
+          "exam_name": {
+            "title": "Exam Name",
+            "type": "string"
+          },
+          "exam_status": {
+            "title": "Exam Status",
+            "type": "string"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/ResultRunBrief"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "unsubmitted": {
+            "items": {
+              "$ref": "#/components/schemas/ResultUnsubmitted"
+            },
+            "title": "Unsubmitted",
+            "type": "array"
+          }
+        },
+        "required": [
+          "exam_id",
+          "exam_name",
+          "exam_status",
+          "approval_mode",
+          "run",
+          "runs",
+          "approvals",
+          "unsubmitted",
+          "actions"
+        ],
+        "title": "ResultsOverviewOut",
+        "type": "object"
+      },
       "ReturnIn": {
         "additionalProperties": false,
         "properties": {
@@ -8552,6 +9386,530 @@
         "summary": "Set Assignments",
         "tags": [
           "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results": {
+      "get": {
+        "operationId": "results_overview_api_v1_admin_exams__exam_id__results_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Results Overview",
+        "tags": [
+          "results"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results/approve": {
+      "post": {
+        "operationId": "approve_results_api_v1_admin_exams__exam_id__results_approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultApproveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Results",
+        "tags": [
+          "results"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results/discard": {
+      "post": {
+        "operationId": "discard_results_api_v1_admin_exams__exam_id__results_discard_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Discard Results",
+        "tags": [
+          "results"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results/process": {
+      "post": {
+        "operationId": "process_results_api_v1_admin_exams__exam_id__results_process_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultProcessIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Process Results",
+        "tags": [
+          "results"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results/reject": {
+      "post": {
+        "operationId": "reject_results_api_v1_admin_exams__exam_id__results_reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultRejectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Results",
+        "tags": [
+          "results"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results/revoke": {
+      "post": {
+        "operationId": "revoke_approval_api_v1_admin_exams__exam_id__results_revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultsOverviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Approval",
+        "tags": [
+          "results"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results/students": {
+      "get": {
+        "operationId": "result_students_api_v1_admin_exams__exam_id__results_students_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Run Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "absent",
+                    "withheld",
+                    "incomplete"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Outcome"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cohort_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cohort Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultStudentsPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Result Students",
+        "tags": [
+          "results"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/results/students/{student_id}": {
+      "get": {
+        "operationId": "result_student_api_v1_admin_exams__exam_id__results_students__student_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "student_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Student Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "run_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResultStudentOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Result Student",
+        "tags": [
+          "results"
         ]
       }
     },

@@ -477,6 +477,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/exams/{exam_id}/results": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Results Overview */
+        get: operations["results_overview_api_v1_admin_exams__exam_id__results_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/results/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve Results */
+        post: operations["approve_results_api_v1_admin_exams__exam_id__results_approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/results/discard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Discard Results */
+        post: operations["discard_results_api_v1_admin_exams__exam_id__results_discard_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/results/process": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Process Results */
+        post: operations["process_results_api_v1_admin_exams__exam_id__results_process_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/results/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Results */
+        post: operations["reject_results_api_v1_admin_exams__exam_id__results_reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/results/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke Approval */
+        post: operations["revoke_approval_api_v1_admin_exams__exam_id__results_revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/results/students": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Result Students */
+        get: operations["result_students_api_v1_admin_exams__exam_id__results_students_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/results/students/{student_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Result Student */
+        get: operations["result_student_api_v1_admin_exams__exam_id__results_students__student_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/exams/{exam_id}/transitions": {
         parameters: {
             query?: never;
@@ -3153,6 +3289,268 @@ export interface components {
             /** Token */
             token: string;
         };
+        /** ResultActions */
+        ResultActions: {
+            /** Approve Blocked Reason */
+            approve_blocked_reason: string | null;
+            /** Can Approve */
+            can_approve: boolean;
+            /** Can Discard */
+            can_discard: boolean;
+            /** Can Process */
+            can_process: boolean;
+            /** Can Reject */
+            can_reject: boolean;
+            /** Can Revoke */
+            can_revoke: boolean;
+        };
+        /** ResultApprovalOut */
+        ResultApprovalOut: {
+            /** Comment */
+            comment: string | null;
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decided By Name */
+            decided_by_name: string | null;
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "approved" | "rejected" | "revoked";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Revision */
+            revision: number | null;
+        };
+        /** ResultApproveIn */
+        ResultApproveIn: {
+            /** Comment */
+            comment?: string | null;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+        };
+        /** ResultPaperOut */
+        ResultPaperOut: {
+            /** Attendance */
+            attendance: string | null;
+            /** Components */
+            components: {
+                [key: string]: unknown;
+            };
+            /** Credits */
+            credits: string | null;
+            /**
+             * Exam Paper Id
+             * Format: uuid
+             */
+            exam_paper_id: string;
+            /** Failed Components */
+            failed_components: string[];
+            /** Grade */
+            grade: string | null;
+            /** Grade Point */
+            grade_point: string | null;
+            /** Max Total */
+            max_total: string;
+            /** Missing Components */
+            missing_components: string[];
+            /** Outcome */
+            outcome: string;
+            /** Percentage */
+            percentage: string | null;
+            /** Total */
+            total: string | null;
+        };
+        /** ResultProcessIn */
+        ResultProcessIn: {
+            /** Override Reason */
+            override_reason?: string | null;
+        };
+        /** ResultReasonIn */
+        ResultReasonIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** ResultRejectIn */
+        ResultRejectIn: {
+            /** Reason */
+            reason: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+        };
+        /** ResultRunBrief */
+        ResultRunBrief: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Revision */
+            revision: number;
+            /** Started By Name */
+            started_by_name: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "completed" | "failed" | "stale" | "approved" | "published";
+        };
+        /** ResultRunOut */
+        ResultRunOut: {
+            /** Anomalies */
+            anomalies: {
+                [key: string]: unknown;
+            }[];
+            /** Content Hash */
+            content_hash: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Error Detail */
+            error_detail: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Input Hash */
+            input_hash: string | null;
+            /** Override Reason */
+            override_reason: string | null;
+            /** Revision */
+            revision: number;
+            scheme: components["schemas"]["ResultSchemeRef"] | null;
+            /** Started By Name */
+            started_by_name: string | null;
+            /** Stats */
+            stats: {
+                [key: string]: unknown;
+            };
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "completed" | "failed" | "stale" | "approved" | "published";
+            /** Students */
+            students: number;
+        };
+        /** ResultSchemeRef */
+        ResultSchemeRef: {
+            /** Name */
+            name: string;
+            /** Version */
+            version: number;
+        };
+        /** ResultStudentOut */
+        ResultStudentOut: {
+            /** Cohort Code */
+            cohort_code: string;
+            /** Credits Attempted */
+            credits_attempted: string | null;
+            /** Credits Earned */
+            credits_earned: string | null;
+            /** Enrollment No */
+            enrollment_no: string;
+            /** Full Name */
+            full_name: string;
+            /** Grade */
+            grade: string | null;
+            /** Grade Point */
+            grade_point: string | null;
+            /** Max Total */
+            max_total: string | null;
+            /** Notes */
+            notes: string[];
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "pass" | "fail" | "absent" | "withheld" | "incomplete";
+            /** Papers */
+            papers: components["schemas"]["ResultPaperOut"][];
+            /** Percentage */
+            percentage: string | null;
+            /** Rank */
+            rank: number | null;
+            /** Sgpa */
+            sgpa: string | null;
+            /**
+             * Student Id
+             * Format: uuid
+             */
+            student_id: string;
+            /** Total */
+            total: string | null;
+        };
+        /** ResultStudentsPage */
+        ResultStudentsPage: {
+            /** Items */
+            items: components["schemas"]["ResultStudentOut"][];
+            /** Next After */
+            next_after: string | null;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+        };
+        /** ResultUnsubmitted */
+        ResultUnsubmitted: {
+            /** Cohort Code */
+            cohort_code: string;
+            /** Course Code */
+            course_code: string;
+            /** Status */
+            status: string;
+        };
+        /** ResultsOverviewOut */
+        ResultsOverviewOut: {
+            actions: components["schemas"]["ResultActions"];
+            /**
+             * Approval Mode
+             * @enum {string}
+             */
+            approval_mode: "single" | "maker_checker";
+            /** Approvals */
+            approvals: components["schemas"]["ResultApprovalOut"][];
+            /**
+             * Exam Id
+             * Format: uuid
+             */
+            exam_id: string;
+            /** Exam Name */
+            exam_name: string;
+            /** Exam Status */
+            exam_status: string;
+            run: components["schemas"]["ResultRunOut"] | null;
+            /** Runs */
+            runs: components["schemas"]["ResultRunBrief"][];
+            /** Unsubmitted */
+            unsubmitted: components["schemas"]["ResultUnsubmitted"][];
+        };
         /** ReturnIn */
         ReturnIn: {
             /** Reason */
@@ -5151,6 +5549,284 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    results_overview_api_v1_admin_exams__exam_id__results_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_results_api_v1_admin_exams__exam_id__results_approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResultApproveIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    discard_results_api_v1_admin_exams__exam_id__results_discard_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResultReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    process_results_api_v1_admin_exams__exam_id__results_process_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResultProcessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_results_api_v1_admin_exams__exam_id__results_reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResultRejectIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_approval_api_v1_admin_exams__exam_id__results_revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResultReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultsOverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    result_students_api_v1_admin_exams__exam_id__results_students_get: {
+        parameters: {
+            query?: {
+                run_id?: string | null;
+                q?: string | null;
+                outcome?: ("pass" | "fail" | "absent" | "withheld" | "incomplete") | null;
+                cohort_id?: string | null;
+                after?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultStudentsPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    result_student_api_v1_admin_exams__exam_id__results_students__student_id__get: {
+        parameters: {
+            query?: {
+                run_id?: string | null;
+            };
+            header?: never;
+            path: {
+                exam_id: string;
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResultStudentOut"];
                 };
             };
             /** @description Validation Error */
