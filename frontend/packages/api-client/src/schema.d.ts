@@ -1914,19 +1914,23 @@ export interface components {
         };
         /** Body_upload_import_api_v1_admin_imports_post */
         Body_upload_import_api_v1_admin_imports_post: {
+            /** Exam Id */
+            exam_id?: string | null;
             /** File */
             file: string;
             /**
              * Kind
-             * @constant
+             * @enum {string}
              */
-            kind: "students";
+            kind: "students" | "marks";
             /**
              * Mode
              * @default upsert
              * @enum {string}
              */
             mode: "upsert" | "create_only";
+            /** Paper Id */
+            paper_id?: string | null;
             /** Session Id */
             session_id?: string | null;
             /** Supersedes Id */
@@ -2593,9 +2597,9 @@ export interface components {
             id: string;
             /**
              * Kind
-             * @constant
+             * @enum {string}
              */
-            kind: "students";
+            kind: "students" | "marks";
             /** Rows Error */
             rows_error: number;
             /** Rows Total */
@@ -2644,9 +2648,9 @@ export interface components {
             id: string;
             /**
              * Kind
-             * @constant
+             * @enum {string}
              */
-            kind: "students";
+            kind: "students" | "marks";
             /** Mapping */
             mapping: {
                 [key: string]: number;
@@ -5482,7 +5486,8 @@ export interface operations {
     list_imports_api_v1_admin_imports_get: {
         parameters: {
             query?: {
-                kind?: "students" | null;
+                kind?: ("students" | "marks") | null;
+                exam_id?: string | null;
             };
             header?: never;
             path?: never;
@@ -5546,7 +5551,10 @@ export interface operations {
     download_template_api_v1_admin_imports_template_xlsx_get: {
         parameters: {
             query?: {
-                kind?: "students";
+                kind?: "students" | "marks";
+                exam_id?: string | null;
+                paper_id?: string | null;
+                cohort_id?: string | null;
             };
             header?: never;
             path?: never;

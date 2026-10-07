@@ -1,0 +1,155 @@
+{
+  "file_issues": [
+    "MISSING_STUDENTS: 1 student(s) in COE-2A have no marks for UHU005 in this file."
+  ],
+  "mapping": {
+    "attendance": "Attendance",
+    "c:EXT": "EXT",
+    "c:INT": "INT",
+    "c:T": "T",
+    "course": "Subject Code",
+    "enrollment_no": "Roll No",
+    "full_name": "Name",
+    "total": "Total"
+  },
+  "missing": [],
+  "rows": [
+    {
+      "issues": [
+        "OVERWRITES_EXISTING: UCS301: INT 30 → 32, EXT 40 → 45"
+      ],
+      "items": [
+        {
+          "action": "update",
+          "attendance": "present",
+          "components": {
+            "EXT": "45",
+            "INT": "32"
+          },
+          "course_code": "UCS301",
+          "version": 2
+        }
+      ],
+      "row": 2,
+      "status": "valid"
+    },
+    {
+      "issues": [
+        "MISSING_MARK: UCS301: no mark for External."
+      ],
+      "items": [
+        {
+          "action": "create",
+          "attendance": "present",
+          "components": {
+            "INT": "20"
+          },
+          "course_code": "UCS301",
+          "version": null
+        }
+      ],
+      "row": 3,
+      "status": "warning"
+    },
+    {
+      "issues": [],
+      "items": [
+        {
+          "action": "create",
+          "attendance": "absent",
+          "components": {},
+          "course_code": "UCS301",
+          "version": null
+        }
+      ],
+      "row": 4,
+      "status": "valid"
+    },
+    {
+      "issues": [
+        "DUPLICATE_IN_FILE: A002 / UCS301 is also on row 3."
+      ],
+      "items": [],
+      "row": 5,
+      "status": "error"
+    },
+    {
+      "issues": [
+        "UNKNOWN_STUDENT: Enrollment no. A0O2 not found. Did you mean A002?"
+      ],
+      "items": [],
+      "row": 6,
+      "status": "error"
+    },
+    {
+      "issues": [
+        "NAME_MISMATCH: The file says “Zed Person” but A001 is Asha Rao. Check the rows aren't shifted.",
+        "PAPER_NOT_IN_EXAM: “UCS999” isn't a paper in this exam."
+      ],
+      "items": [],
+      "row": 7,
+      "status": "error"
+    },
+    {
+      "issues": [
+        "STUDENT_NOT_IN_EXAM: B999 (Not Sitting) isn't in a cohort sitting this exam."
+      ],
+      "items": [],
+      "row": 8,
+      "status": "error"
+    },
+    {
+      "issues": [
+        "TOTAL_MISMATCH: UHU005: the file's total 90 ≠ the mark 95."
+      ],
+      "items": [
+        {
+          "action": "create",
+          "attendance": "present",
+          "components": {
+            "T": "95"
+          },
+          "course_code": "UHU005",
+          "version": null
+        }
+      ],
+      "row": 9,
+      "status": "warning"
+    },
+    {
+      "issues": [
+        "PAPER_LOCKED: UHU005 for this cohort is locked; its marks can't change."
+      ],
+      "items": [],
+      "row": 10,
+      "status": "error"
+    },
+    {
+      "issues": [
+        "NOT_A_NUMBER: UHU005 Total: “abc” isn't a number."
+      ],
+      "items": [],
+      "row": 11,
+      "status": "error"
+    },
+    {
+      "issues": [
+        "ABSENT_WITH_MARKS: UHU005: marked absent but has marks. Clear the marks or the code."
+      ],
+      "items": [],
+      "row": 12,
+      "status": "error"
+    }
+  ],
+  "summary": {
+    "blank_rows": 0,
+    "create": 3,
+    "papers": [
+      "UCS301",
+      "UHU005"
+    ],
+    "shape": "long",
+    "unchanged": 0,
+    "update": 1
+  }
+}

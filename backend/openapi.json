@@ -469,13 +469,28 @@
       },
       "Body_upload_import_api_v1_admin_imports_post": {
         "properties": {
+          "exam_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exam Id"
+          },
           "file": {
             "contentMediaType": "application/octet-stream",
             "title": "File",
             "type": "string"
           },
           "kind": {
-            "const": "students",
+            "enum": [
+              "students",
+              "marks"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -487,6 +502,18 @@
             ],
             "title": "Mode",
             "type": "string"
+          },
+          "paper_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paper Id"
           },
           "session_id": {
             "anyOf": [
@@ -2506,7 +2533,10 @@
             "type": "string"
           },
           "kind": {
-            "const": "students",
+            "enum": [
+              "students",
+              "marks"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -2665,7 +2695,10 @@
             "type": "string"
           },
           "kind": {
-            "const": "students",
+            "enum": [
+              "students",
+              "marks"
+            ],
             "title": "Kind",
             "type": "string"
           },
@@ -8982,7 +9015,10 @@
             "schema": {
               "anyOf": [
                 {
-                  "const": "students",
+                  "enum": [
+                    "students",
+                    "marks"
+                  ],
                   "type": "string"
                 },
                 {
@@ -8990,6 +9026,23 @@
                 }
               ],
               "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exam_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Exam Id"
             }
           }
         ],
@@ -9073,10 +9126,64 @@
             "name": "kind",
             "required": false,
             "schema": {
-              "const": "students",
               "default": "students",
+              "enum": [
+                "students",
+                "marks"
+              ],
               "title": "Kind",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "exam_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Exam Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "paper_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Paper Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cohort_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cohort Id"
             }
           }
         ],

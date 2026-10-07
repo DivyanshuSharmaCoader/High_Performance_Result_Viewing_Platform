@@ -158,6 +158,33 @@ def require(*permissions: str) -> Any:
     return Depends(dependency)
 
 
+def require_any(*permissions: str) -> Any:
+    """Tenant-realm route open to holders of *any one* of ``permissions`` (e.g. administrators importing
+    anything, faculty importing marks for their own papers); the service then applies the finer rules."""
+    if len(permissions) < 2:
+        raise ValueError("require_any needs at least two permissions; use require()")
+
+    async def dependency(request: Request) -> Principal:
+        if getattr(request.state, "tenant", None) is None:
+            raise NotFound()
+        principal = await get_principal(request)
+        if principal.kind != "user":
+            raise NotAuthenticated()
+        if not any(principal.has(p) for p in permissions):
+            raise PermissionDenied()
+        infra = get_infra(request)
+        bucket = Bucket.per_minute(
+            API_PER_SESSION.name,
+            infra.settings.api_session_per_minute,
+            burst=infra.settings.api_session_burst,
+        )
+        await infra.limiter.hit(bucket, principal.session_hash.hex())
+        return principal
+
+    _mark(dependency, "tenant:" + "|".join(permissions))
+    return Depends(dependency)
+
+
 def require_platform(*permissions: str) -> Any:
     async def dependency(request: Request) -> Principal:
         host: HostInfo | None = getattr(request.state, "host_info", None)

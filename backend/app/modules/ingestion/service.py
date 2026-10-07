@@ -35,14 +35,14 @@ from app.modules.files.service import SPREADSHEET_TYPES, XLSX, FileService, vali
 from app.modules.identity.models import User
 from app.modules.identity.permissions import P
 from app.modules.ingestion.engine import Analysis, ImportProfile, analyse, pick_sheet
+from app.modules.ingestion.marks import MarksProfile, paper_refs
 from app.modules.ingestion.models import ImportJob, ImportRow
 from app.modules.ingestion.parsers import FileUnreadable, Limits, parse_workbook
 from app.modules.ingestion.report import error_report, template
 from app.modules.ingestion.students import StudentsProfile
 
-PROFILES: dict[str, type[StudentsProfile]] = {"students": StudentsProfile}
-KIND_PERMISSION = {"students": P.STUDENTS_MANAGE}
-KIND_LABEL = {"students": "Students"}
+KINDS = ("students", "marks")
+KIND_LABEL = {"students": "Students", "marks": "Marks"}
 OPEN_STATES = ("uploaded", "parsing", "needs_mapping", "validating", "validated", "failed")
 BUSY_STATES = ("uploaded", "parsing", "validating", "committing")
 MESSAGES = {
@@ -61,17 +61,42 @@ class ImportService:
     def __init__(self, infra: Infra) -> None:
         self.infra = infra
 
-    def profile(self, kind: str) -> ImportProfile:
-        try:
-            return PROFILES[kind](self.infra)
-        except KeyError:
-            raise ValidationFailed("Unknown import type.", field="kind") from None
+    async def profile(
+        self, uow: UnitOfWork, kind: str, params: dict[str, Any] | None = None
+    ) -> ImportProfile:
+        """The rules for an import. Marks profiles are built per exam (their columns are its papers)."""
+        if kind == "students":
+            return StudentsProfile(self.infra)
+        if kind == "marks":
+            exam_id = (params or {}).get("exam_id")
+            if not exam_id:
+                raise ValidationFailed("Choose the exam these marks belong to.", field="exam_id")
+            papers = await paper_refs(uow, uuid.UUID(str(exam_id)))
+            paper_id = (params or {}).get("paper_id")
+            single = next((p for p in papers if str(p.id) == str(paper_id)), None) if paper_id else None
+            return MarksProfile(self.infra, papers, single)
+        raise ValidationFailed("Unknown import type.", field="kind")
 
     @staticmethod
     def check_kind_permission(principal: Principal, kind: str) -> None:
-        needed = KIND_PERMISSION.get(kind)
-        if needed and not principal.has(needed):
+        """Students: administrators. Marks: administrators, or faculty for their own papers (checked per row)."""
+        if kind == "students":
+            ok = principal.has(P.IMPORTS_MANAGE) and principal.has(P.STUDENTS_MANAGE)
+        elif kind == "marks":
+            ok = principal.has(P.IMPORTS_MANAGE) or principal.has(P.IMPORTS_MARKS_ASSIGNED)
+        else:
+            ok = False
+        if not ok:
             raise PermissionDenied()
+
+    async def get_visible(
+        self, uow: UnitOfWork, principal: Principal, import_id: uuid.UUID, *, lock: bool = False
+    ) -> ImportJob:
+        """Administrators see every import; faculty only the ones they uploaded."""
+        job = await self.get(uow, import_id, lock=lock)
+        if not principal.has(P.IMPORTS_MANAGE) and job.created_by != principal.user_id:
+            raise NotFound("Import not found")
+        return job
 
     # ---- reads ----------------------------------------------------------------------------------
     async def get(self, uow: UnitOfWork, import_id: uuid.UUID, *, lock: bool = False) -> ImportJob:
@@ -83,10 +108,22 @@ class ImportService:
             raise NotFound("Import not found")
         return job
 
-    async def recent(self, uow: UnitOfWork, kind: str | None, limit: int = 20) -> list[ImportJob]:
+    async def recent(
+        self,
+        uow: UnitOfWork,
+        principal: Principal,
+        kind: str | None,
+        *,
+        exam_id: uuid.UUID | None = None,
+        limit: int = 20,
+    ) -> list[ImportJob]:
         stmt = select(ImportJob).order_by(ImportJob.created_at.desc(), ImportJob.id.desc()).limit(limit)
         if kind:
             stmt = stmt.where(ImportJob.kind == kind)
+        if exam_id:
+            stmt = stmt.where(ImportJob.target_exam_id == exam_id)
+        if not principal.has(P.IMPORTS_MANAGE):
+            stmt = stmt.where(ImportJob.created_by == principal.user_id)
         return list((await uow.session.scalars(stmt)).all())
 
     async def user_names(self, uow: UnitOfWork, ids: set[uuid.UUID | None]) -> dict[uuid.UUID, str]:
@@ -99,13 +136,14 @@ class ImportService:
     async def rows(
         self,
         uow: UnitOfWork,
+        principal: Principal,
         import_id: uuid.UUID,
         *,
         status: str | None,
         after: int | None,
         limit: int | None,
     ) -> tuple[list[ImportRow], int | None]:
-        await self.get(uow, import_id)
+        await self.get_visible(uow, principal, import_id)
         n = clamp_limit(limit)
         stmt = (
             select(ImportRow)
@@ -138,17 +176,19 @@ class ImportService:
         params: dict[str, Any],
         supersedes_id: uuid.UUID | None = None,
     ) -> UploadResult:
-        self.profile(kind)
+        if kind not in KINDS:
+            raise ValidationFailed("Unknown import type.", field="kind")
         self.check_kind_permission(principal, kind)
         file_type = validate_upload(data, SPREADSHEET_TYPES, self.infra.settings.max_upload_bytes)
-        clean_params = await self._clean_params(uow, kind, params)
+        clean_params = await self._clean_params(uow, principal, kind, params)
+        target_exam = uuid.UUID(clean_params["exam_id"]) if kind == "marks" else None
         sha = hashlib.sha256(data).digest()
 
         same = (
             await uow.session.scalars(
                 select(ImportJob).where(
                     ImportJob.kind == kind,
-                    ImportJob.target_exam_id.is_(None),
+                    ImportJob.target_exam_id.is_not_distinct_from(target_exam),
                     ImportJob.file_sha256 == sha,
                     ImportJob.status.notin_(("cancelled", "failed")),
                 )
@@ -167,7 +207,7 @@ class ImportService:
 
         previous = None
         if supersedes_id is not None:
-            previous = await self.get(uow, supersedes_id, lock=True)
+            previous = await self.get_visible(uow, principal, supersedes_id, lock=True)
             if previous.kind != kind:
                 raise ValidationFailed("That import is of a different type.", field="supersedes_id")
             if previous.status in OPEN_STATES and previous.status not in BUSY_STATES:
@@ -192,6 +232,7 @@ class ImportService:
             file_sha256=sha,
             params={**clean_params, "format": "xlsx" if file_type == XLSX else "csv"},
             supersedes_id=previous.id if previous else None,
+            target_exam_id=target_exam,
             created_by=principal.user_id,
         )
         uow.session.add(job)
@@ -210,8 +251,37 @@ class ImportService:
         )
         return UploadResult(job, resumed=False)
 
-    async def _clean_params(self, uow: UnitOfWork, kind: str, params: dict[str, Any]) -> dict[str, Any]:
+    async def _clean_params(
+        self, uow: UnitOfWork, principal: Principal, kind: str, params: dict[str, Any]
+    ) -> dict[str, Any]:
         out: dict[str, Any] = {}
+        if kind == "marks":
+            from app.modules.examinations.models import Examination, ExamPaper
+
+            exam_id = params.get("exam_id")
+            if not exam_id:
+                raise ValidationFailed("Choose the exam these marks belong to.", field="exam_id")
+            exam = (
+                await uow.session.scalars(select(Examination).where(Examination.id == exam_id))
+            ).one_or_none()
+            if exam is None:
+                raise ValidationFailed("That exam doesn't exist.", field="exam_id")
+            out["exam_id"] = str(exam.id)
+            if params.get("paper_id"):
+                paper = (
+                    await uow.session.scalars(
+                        select(ExamPaper.id).where(
+                            ExamPaper.id == params["paper_id"], ExamPaper.exam_id == exam.id
+                        )
+                    )
+                ).one_or_none()
+                if paper is None:
+                    raise ValidationFailed("That paper isn't part of the exam.", field="paper_id")
+                out["paper_id"] = str(paper)
+            # Faculty imports are limited to their assigned papers × cohorts (rule NOT_ASSIGNED).
+            out["scope"] = "all" if principal.has(P.IMPORTS_MANAGE) else "assigned"
+            out["actor_id"] = str(principal.user_id)
+            return out
         if kind == "students":
             mode = params.get("mode") or "upsert"
             if mode not in ("upsert", "create_only"):
@@ -240,11 +310,11 @@ class ImportService:
         header_row: int | None,
         sheet_name: str | None,
     ) -> ImportJob:
-        job = await self.get(uow, import_id, lock=True)
+        job = await self.get_visible(uow, principal, import_id, lock=True)
         self.check_kind_permission(principal, job.kind)
         if job.status not in ("needs_mapping", "validated"):
             raise InvalidState("This import can't be changed now.")
-        known = {f.key for f in self.profile(job.kind).fields}
+        known = {f.key for f in (await self.profile(uow, job.kind, job.params)).fields}
         unknown = sorted(k for k in mapping if k not in known)
         if unknown:
             raise ValidationFailed(f"Unknown field: {unknown[0]}.", field="mapping")
@@ -266,7 +336,7 @@ class ImportService:
         return job
 
     async def revalidate(self, uow: UnitOfWork, principal: Principal, import_id: uuid.UUID) -> ImportJob:
-        job = await self.get(uow, import_id, lock=True)
+        job = await self.get_visible(uow, principal, import_id, lock=True)
         self.check_kind_permission(principal, job.kind)
         if job.status not in ("needs_mapping", "validated"):
             raise InvalidState("This import can't be re-checked now.")
@@ -280,7 +350,7 @@ class ImportService:
     async def request_commit(
         self, uow: UnitOfWork, principal: Principal, import_id: uuid.UUID, *, skip_errors: bool
     ) -> ImportJob:
-        job = await self.get(uow, import_id, lock=True)
+        job = await self.get_visible(uow, principal, import_id, lock=True)
         self.check_kind_permission(principal, job.kind)
         if job.status in ("committing", "committed"):
             return job  # repeated click / retried request: the commit is already under way or done
@@ -309,7 +379,7 @@ class ImportService:
         return job
 
     async def cancel(self, uow: UnitOfWork, principal: Principal, import_id: uuid.UUID) -> ImportJob:
-        job = await self.get(uow, import_id, lock=True)
+        job = await self.get_visible(uow, principal, import_id, lock=True)
         self.check_kind_permission(principal, job.kind)
         if job.status == "cancelled":
             return job
@@ -326,8 +396,10 @@ class ImportService:
         await uow.session.execute(delete(ImportRow).where(ImportRow.import_job_id == job.id))
 
     # ---- generated files ------------------------------------------------------------------------
-    async def error_report(self, uow: UnitOfWork, import_id: uuid.UUID) -> tuple[bytes, str]:
-        job = await self.get(uow, import_id)
+    async def error_report(
+        self, uow: UnitOfWork, principal: Principal, import_id: uuid.UUID
+    ) -> tuple[bytes, str]:
+        job = await self.get_visible(uow, principal, import_id)
         if job.status not in ("validated", "committing", "committed"):
             raise InvalidState("The report is available once the file has been checked.")
         rows = (
@@ -349,14 +421,114 @@ class ImportService:
         stem = (job.file_name or "import").rsplit(".", 1)[0][:80]
         return data, f"{stem} - checked.xlsx"
 
-    async def template(self, uow: UnitOfWork, kind: str) -> tuple[bytes, str]:
-        profile = self.profile(kind)
+    async def template(
+        self,
+        uow: UnitOfWork,
+        principal: Principal,
+        kind: str,
+        *,
+        exam_id: uuid.UUID | None = None,
+        paper_id: uuid.UUID | None = None,
+        cohort_id: uuid.UUID | None = None,
+    ) -> tuple[bytes, str]:
+        self.check_kind_permission(principal, kind)
+        if kind == "marks":
+            return await self._marks_template(uow, principal, exam_id, paper_id, cohort_id)
+        profile = await self.profile(uow, kind)
         choices: dict[str, list[str]] = {}
         if kind == "students":
             ctx = await profile.load_context(uow, {})
             choices["cohort"] = sorted(c.code for c in ctx.cohorts.values() if not c.archived)
         data = template(profile.fields, title=f"{KIND_LABEL[kind]} import template", choices=choices)
         return data, f"{kind}-import-template.xlsx"
+
+    async def _marks_template(
+        self,
+        uow: UnitOfWork,
+        principal: Principal,
+        exam_id: uuid.UUID | None,
+        paper_id: uuid.UUID | None,
+        cohort_id: uuid.UUID | None,
+    ) -> tuple[bytes, str]:
+        from app.modules.academics.models import Cohort
+        from app.modules.directory.models import CohortMembership, Student
+        from app.modules.examinations.models import ExamCohort, Examination, PaperAssignment
+        from app.modules.ingestion.report import marks_template
+        from app.modules.tenancy.models import TenantSettings
+
+        if exam_id is None:
+            raise ValidationFailed("Choose the exam.", field="exam_id")
+        exam = (await uow.session.scalars(select(Examination).where(Examination.id == exam_id))).one_or_none()
+        if exam is None:
+            raise NotFound("Exam not found")
+        papers = await paper_refs(uow, exam.id)
+        if paper_id is not None:
+            papers = [p for p in papers if p.id == paper_id]
+            if not papers:
+                raise NotFound("Paper not found")
+        cohorts = list(
+            (
+                await uow.session.execute(
+                    select(Cohort.id, Cohort.code)
+                    .join(ExamCohort, ExamCohort.cohort_id == Cohort.id)
+                    .where(ExamCohort.exam_id == exam.id)
+                )
+            ).all()
+        )
+        if cohort_id is not None:
+            cohorts = [c for c in cohorts if c[0] == cohort_id]
+            if not cohorts:
+                raise NotFound("That cohort doesn't sit this exam")
+        if not principal.has(P.IMPORTS_MANAGE):  # faculty: only what they're assigned
+            assignment_rows = await uow.session.execute(
+                select(PaperAssignment.exam_paper_id, PaperAssignment.cohort_id).where(
+                    PaperAssignment.exam_id == exam.id, PaperAssignment.user_id == principal.user_id
+                )
+            )
+            assigned = {(pid, cid) for pid, cid in assignment_rows.all()}
+            papers = [p for p in papers if any((p.id, c[0]) in assigned for c in cohorts)]
+            cohorts = [c for c in cohorts if any((p.id, c[0]) in assigned for p in papers)]
+            if not papers:
+                raise NotFound("Paper not found")
+        codes = list(((await uow.session.scalars(select(TenantSettings))).one().special_codes or {}).keys())
+        single = paper_id is not None  # must match how the file is uploaded (with or without a paper)
+        columns = [
+            (
+                (c["label"] if single else f"{p.course_code}_{c['code']}"),
+                c["max"],
+                f"{p.course_code} {c['label']}",
+            )
+            for p in papers
+            for c in p.components
+        ]
+        cohort_code = dict(cohorts)
+        students = [
+            (s.enrollment_no, s.full_name, cohort_code[cid])
+            for s, cid in (
+                await uow.session.execute(
+                    select(Student, CohortMembership.cohort_id)
+                    .join(CohortMembership, CohortMembership.student_id == Student.id)
+                    .where(
+                        CohortMembership.cohort_id.in_(list(cohort_code)),
+                        Student.status.in_(("active", "graduated")),
+                    )
+                    .order_by(CohortMembership.cohort_id, Student.enrollment_no)
+                )
+            ).all()
+        ]
+        students.sort(key=lambda r: (r[2], r[0]))
+        label = papers[0].course_code if single else "all papers"
+        data = await anyio.to_thread.run_sync(
+            lambda: marks_template(
+                title=f"Marks — {exam.name}, {label}",
+                columns=columns,
+                students=students,
+                codes=[c.upper() for c in codes],
+                show_cohort=len(cohorts) > 1,
+            )
+        )
+        name = f"marks-{exam.name}-{label}".replace("/", "-")[:80]
+        return data, f"{name}.xlsx"
 
     # ---- background work ------------------------------------------------------------------------
     async def run_analysis(
@@ -383,7 +555,7 @@ class ImportService:
                 job = await self.get(uow, import_id, lock=True)
                 if job.status not in ("parsing", "validating"):
                     return {"skipped": job.status}
-                profile = self.profile(job.kind)
+                profile = await self.profile(uow, job.kind, job.params)
                 sheet = pick_sheet(workbook, profile.fields, job.sheet_name)
                 ctx = await profile.load_context(uow, job.params)
                 mapping = job.mapping if job.params.get("mapping_locked") else None
@@ -480,7 +652,8 @@ class ImportService:
                     ).all()
                 ]
                 actor = Actor("user", job.committed_by, actor_label)
-                outcome = await self.profile(job.kind).commit(uow, actor, job.id, job.params, rows)
+                profile = await self.profile(uow, job.kind, job.params)
+                outcome = await profile.commit(uow, actor, job.id, job.params, rows)
                 job.status = "committed"
                 job.committed_at = utcnow()
                 job.summary = {**(job.summary or {}), "result": outcome}

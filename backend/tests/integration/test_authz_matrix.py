@@ -20,6 +20,10 @@ pytestmark = pytest.mark.integration
 ROLES = ("institution_owner", "institution_admin", "faculty", "student", "anonymous")
 # Routes whose success has side effects on the caller's own session; exercised elsewhere.
 SKIP = {("POST", "/api/v1/auth/logout-all")}
+# Routes whose permission depends on a parameter, so "allowed by the route" isn't the whole answer:
+# import templates need students.manage for ?kind=students but only an assignment for ?kind=marks.
+# Their per-kind rules are asserted in test_imports.py and test_marks_import.py.
+PARAMETER_SCOPED = {("GET", "/api/v1/admin/imports/template.xlsx")}
 
 
 @pytest.mark.parametrize("role", ROLES)
@@ -42,7 +46,9 @@ async def test_authorization_matrix(app, infra, role: str) -> None:
                 r = await getattr(c, route.method.lower())(url, json=body)
             if role == "anonymous":
                 expected_ok = r.status_code == 401
-            elif route.permissions <= granted:
+            elif route.allows(granted) and (route.method, route.path) in PARAMETER_SCOPED:
+                expected_ok = r.status_code != 401
+            elif route.allows(granted):
                 expected_ok = r.status_code not in (401, 403)
             else:
                 expected_ok = r.status_code == 403

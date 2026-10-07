@@ -26,8 +26,15 @@ class RouteInfo:
 
     @property
     def permissions(self) -> frozenset[str]:
+        """All-of permissions (``tenant:a,b``); for any-of routes (``tenant:a|b``) see ``allows``."""
         _, _, rest = self.policy.partition(":")
         return frozenset(p for p in rest.split(",") if p) if self.realm == "tenant" else frozenset()
+
+    def allows(self, granted: frozenset[str]) -> bool:
+        _, _, rest = self.policy.partition(":")
+        if "|" in rest:
+            return any(p in granted for p in rest.split("|"))
+        return self.permissions <= granted
 
     def url(self, values: dict[str, Any]) -> str:
         return PARAM_RE.sub(lambda m: str(values[m.group(1)]), self.path)

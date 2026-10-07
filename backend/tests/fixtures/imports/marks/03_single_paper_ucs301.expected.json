@@ -1,0 +1,59 @@
+{
+  "file_issues": [],
+  "mapping": {
+    "c:EXT": "External",
+    "c:INT": "Internal",
+    "enrollment_no": "Roll No",
+    "full_name": "Name"
+  },
+  "missing": [],
+  "rows": [
+    {
+      "issues": [
+        "MISSING_MARK: UCS301: no mark for External."
+      ],
+      "items": [
+        {
+          "action": "create",
+          "attendance": "present",
+          "components": {
+            "INT": "18"
+          },
+          "course_code": "UCS301",
+          "version": null
+        }
+      ],
+      "row": 2,
+      "status": "warning"
+    },
+    {
+      "issues": [
+        "OVERWRITES_EXISTING: UCS301: INT 30 → 35.5, EXT 40 → 50"
+      ],
+      "items": [
+        {
+          "action": "update",
+          "attendance": "present",
+          "components": {
+            "EXT": "50",
+            "INT": "35.5"
+          },
+          "course_code": "UCS301",
+          "version": 2
+        }
+      ],
+      "row": 3,
+      "status": "valid"
+    }
+  ],
+  "summary": {
+    "blank_rows": 0,
+    "create": 1,
+    "papers": [
+      "UCS301"
+    ],
+    "shape": "single",
+    "unchanged": 0,
+    "update": 1
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "file_issues": [
+    "MISSING_STUDENTS: 1 student(s) in COE-2A have no marks for UCS301 in this file.",
+    "MISSING_STUDENTS: 1 student(s) in COE-2A have no marks for UHU005 in this file."
+  ],
+  "mapping": {
+    "enrollment_no": "Enrollment Number",
+    "full_name": "Student Name",
+    "w:UCS301:EXT": "UCS301_EXT",
+    "w:UCS301:INT": "UCS301_INT",
+    "w:UHU005:T": "UHU005"
+  },
+  "missing": [],
+  "rows": [
+    {
+      "issues": [],
+      "items": [
+        {
+          "action": "unchanged",
+          "attendance": "present",
+          "components": {
+            "EXT": "40",
+            "INT": "30"
+          },
+          "course_code": "UCS301",
+          "version": 2
+        },
+        {
+          "action": "create",
+          "attendance": "present",
+          "components": {
+            "T": "88"
+          },
+          "course_code": "UHU005",
+          "version": null
+        }
+      ],
+      "row": 2,
+      "status": "valid"
+    },
+    {
+      "issues": [
+        "OUT_OF_RANGE: UCS301 Internal: 41 is outside 0–40.",
+        "INVALID_PRECISION: UCS301 External: use at most two decimals."
+      ],
+      "items": [],
+      "row": 3,
+      "status": "error"
+    },
+    {
+      "issues": [
+        "PAPER_LOCKED: UHU005 for this cohort is locked; its marks can't change."
+      ],
+      "items": [
+        {
+          "action": "create",
+          "attendance": "exempt",
+          "components": {},
+          "course_code": "UCS301",
+          "version": null
+        }
+      ],
+      "row": 4,
+      "status": "error"
+    }
+  ],
+  "summary": {
+    "blank_rows": 0,
+    "create": 1,
+    "papers": [
+      "UCS301",
+      "UHU005"
+    ],
+    "shape": "wide",
+    "unchanged": 1,
+    "update": 0
+  }
+}

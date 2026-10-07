@@ -9,7 +9,7 @@ from fastapi import APIRouter, File, Form, Query, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.http import InfraDep, Principal, UoW, require
+from app.core.http import InfraDep, Principal, UoW, require_any
 from app.modules.files.service import XLSX
 from app.modules.identity.permissions import P
 from app.modules.ingestion.models import ImportJob, ImportRow
@@ -17,7 +17,13 @@ from app.modules.ingestion.service import ImportService
 
 router = APIRouter(prefix="/api/v1/admin/imports", tags=["imports"])
 
-ImportKind = Literal["students"]
+
+def _importers() -> Any:
+    # Administrators import anything; faculty import marks for their own papers (rules check each row).
+    return require_any(P.IMPORTS_MANAGE, P.IMPORTS_MARKS_ASSIGNED)
+
+
+ImportKind = Literal["students", "marks"]
 ImportStatus = Literal[
     "uploaded",
     "parsing",
@@ -111,7 +117,7 @@ class CommitIn(BaseModel):
     skip_errors: bool = False
 
 
-SAFE_PARAMS = ("mode", "session_id", "skip_errors")
+SAFE_PARAMS = ("mode", "session_id", "skip_errors", "exam_id", "paper_id", "scope")
 
 
 async def _out(uow: Any, service: ImportService, job: ImportJob, *, resumed: bool = False) -> ImportOut:
@@ -137,7 +143,7 @@ async def _out(uow: Any, service: ImportService, job: ImportJob, *, resumed: boo
         mapping=job.mapping or {},
         fields=[
             FieldOut(key=f.key, label=f.label, required=f.required, help=f.help)
-            for f in service.profile(job.kind).fields
+            for f in (await service.profile(uow, job.kind, job.params)).fields
         ],
         file_issues=[IssueOut(**i) for i in job.file_issues or []],
         rows_total=job.rows_total,
@@ -172,8 +178,10 @@ async def upload_import(
     kind: ImportKind = Form(...),
     mode: Literal["upsert", "create_only"] = Form("upsert"),
     session_id: uuid.UUID | None = Form(None),
+    exam_id: uuid.UUID | None = Form(None),
+    paper_id: uuid.UUID | None = Form(None),
     supersedes_id: uuid.UUID | None = Form(None),
-    principal: Principal = require(P.IMPORTS_MANAGE),
+    principal: Principal = _importers(),
 ) -> ImportOut:
     data = await file.read(infra.settings.max_upload_bytes + 1)
     service = ImportService(infra)
@@ -183,7 +191,7 @@ async def upload_import(
         kind=kind,
         data=data,
         filename=file.filename,
-        params={"mode": mode, "session_id": session_id},
+        params={"mode": mode, "session_id": session_id, "exam_id": exam_id, "paper_id": paper_id},
         supersedes_id=supersedes_id,
     )
     return await _out(uow, service, result.job, resumed=result.resumed)
@@ -194,10 +202,11 @@ async def list_imports(
     uow: UoW,
     infra: InfraDep,
     kind: ImportKind | None = None,
-    _: Principal = require(P.IMPORTS_MANAGE),
+    exam_id: uuid.UUID | None = None,
+    principal: Principal = _importers(),
 ) -> list[ImportListItem]:
     service = ImportService(infra)
-    jobs = await service.recent(uow, kind)
+    jobs = await service.recent(uow, principal, kind, exam_id=exam_id)
     names = await service.user_names(uow, {j.created_by for j in jobs})
     return [
         ImportListItem(
@@ -217,18 +226,26 @@ async def list_imports(
 
 @router.get("/template.xlsx")
 async def download_template(
-    uow: UoW, infra: InfraDep, kind: ImportKind = "students", _: Principal = require(P.IMPORTS_MANAGE)
+    uow: UoW,
+    infra: InfraDep,
+    kind: ImportKind = "students",
+    exam_id: uuid.UUID | None = None,
+    paper_id: uuid.UUID | None = None,
+    cohort_id: uuid.UUID | None = None,
+    principal: Principal = _importers(),
 ) -> Response:
-    data, name = await ImportService(infra).template(uow, kind)
+    data, name = await ImportService(infra).template(
+        uow, principal, kind, exam_id=exam_id, paper_id=paper_id, cohort_id=cohort_id
+    )
     return _xlsx(data, name)
 
 
 @router.get("/{import_id}")
 async def get_import(
-    import_id: uuid.UUID, uow: UoW, infra: InfraDep, _: Principal = require(P.IMPORTS_MANAGE)
+    import_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = _importers()
 ) -> ImportOut:
     service = ImportService(infra)
-    return await _out(uow, service, await service.get(uow, import_id))
+    return await _out(uow, service, await service.get_visible(uow, principal, import_id))
 
 
 @router.get("/{import_id}/rows")
@@ -239,10 +256,10 @@ async def list_import_rows(
     status: Literal["valid", "warning", "error", "skipped", "problems"] | None = None,
     after: int | None = Query(default=None, ge=0),
     limit: int | None = Query(default=None, ge=1, le=200),
-    _: Principal = require(P.IMPORTS_MANAGE),
+    principal: Principal = _importers(),
 ) -> RowsPage:
     rows, next_after = await ImportService(infra).rows(
-        uow, import_id, status=status, after=after, limit=limit
+        uow, principal, import_id, status=status, after=after, limit=limit
     )
     return RowsPage(items=[_row(r) for r in rows], next_after=next_after)
 
@@ -263,7 +280,7 @@ async def set_mapping(
     body: MappingIn,
     uow: UoW,
     infra: InfraDep,
-    principal: Principal = require(P.IMPORTS_MANAGE),
+    principal: Principal = _importers(),
 ) -> ImportOut:
     service = ImportService(infra)
     job = await service.set_mapping(
@@ -279,7 +296,7 @@ async def set_mapping(
 
 @router.post("/{import_id}/revalidate", status_code=202)
 async def revalidate(
-    import_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = require(P.IMPORTS_MANAGE)
+    import_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = _importers()
 ) -> ImportOut:
     service = ImportService(infra)
     return await _out(uow, service, await service.revalidate(uow, principal, import_id))
@@ -291,7 +308,7 @@ async def commit_import(
     body: CommitIn,
     uow: UoW,
     infra: InfraDep,
-    principal: Principal = require(P.IMPORTS_MANAGE),
+    principal: Principal = _importers(),
 ) -> ImportOut:
     service = ImportService(infra)
     job = await service.request_commit(uow, principal, import_id, skip_errors=body.skip_errors)
@@ -300,7 +317,7 @@ async def commit_import(
 
 @router.post("/{import_id}/cancel")
 async def cancel_import(
-    import_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = require(P.IMPORTS_MANAGE)
+    import_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = _importers()
 ) -> ImportOut:
     service = ImportService(infra)
     return await _out(uow, service, await service.cancel(uow, principal, import_id))
@@ -308,7 +325,7 @@ async def cancel_import(
 
 @router.get("/{import_id}/report.xlsx")
 async def download_report(
-    import_id: uuid.UUID, uow: UoW, infra: InfraDep, _: Principal = require(P.IMPORTS_MANAGE)
+    import_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = _importers()
 ) -> Response:
-    data, name = await ImportService(infra).error_report(uow, import_id)
+    data, name = await ImportService(infra).error_report(uow, principal, import_id)
     return _xlsx(data, name)

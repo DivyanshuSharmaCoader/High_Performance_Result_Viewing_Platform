@@ -97,7 +97,10 @@ class Analysis:
 
 class ImportProfile(Protocol):
     kind: ClassVar[str]
-    fields: ClassVar[tuple[FieldSpec, ...]]
+
+    # Fixed per kind (students) or built per import (marks: the exam's papers and components).
+    @property
+    def fields(self) -> tuple[FieldSpec, ...]: ...
 
     def missing_fields(self, mapping: dict[str, int]) -> list[str]: ...
 

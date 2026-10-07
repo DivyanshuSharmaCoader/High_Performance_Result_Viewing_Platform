@@ -150,3 +150,64 @@ def template(
         for c in row:
             c.alignment = Alignment(wrap_text=True, vertical="top")
     return _bytes(wb)
+
+
+def marks_template(
+    *,
+    title: str,
+    columns: Sequence[tuple[str, Any, str]],  # (header, max, label) per mark column
+    students: Sequence[tuple[str, str, str]],  # (enrollment no., name, cohort code)
+    codes: Sequence[str],
+    show_cohort: bool,
+) -> bytes:
+    """Pre-filled marks sheet: the roster is already there, so marks can't land on the wrong student, and each
+    mark cell only accepts 0–max or an attendance code (Excel data validation)."""
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    assert ws is not None
+    ws.title = "Marks"
+    head = ["Enrollment no.", "Name", *(["Cohort"] if show_cohort else []), *(h for h, _m, _l in columns)]
+    ws.append(head)
+    for cell in ws[1]:
+        cell.font = BOLD
+        cell.fill = HEADER_FILL
+    first_mark = 4 if show_cohort else 3
+    for enrollment, name, cohort in students:
+        row = [enrollment, name, *([cohort] if show_cohort else [])]
+        ws.append(row)
+        ws.cell(row=ws.max_row, column=1).number_format = "@"
+    last = max(2, len(students) + 1)
+    codes_or = ",".join(f'{{c}}="{code}"' for code in codes)
+    for i, (_header, maximum, label) in enumerate(columns):
+        col = get_column_letter(first_mark + i)
+        ref = f"{col}2"
+        rule = f"AND(ISNUMBER({ref}),{ref}>=0,{ref}<={maximum})"
+        if codes:
+            rule = f"OR({rule},{codes_or.format(c=ref)})"
+        dv = DataValidation(type="custom", formula1=rule, allow_blank=True)
+        dv.error = f"{label}: enter 0–{maximum}" + (f" or {', '.join(codes)}" if codes else "") + "."
+        dv.errorTitle = "Not a valid mark"
+        ws.add_data_validation(dv)
+        dv.add(f"{col}2:{col}{last}")
+        ws.column_dimensions[col].width = max(12, len(_header) + 2)
+    ws.column_dimensions["A"].width = 16
+    ws.column_dimensions["B"].width = 28
+    ws.freeze_panes = f"{get_column_letter(first_mark)}2"
+
+    info = wb.create_sheet("How to fill")
+    info.column_dimensions["A"].width = 90
+    for line in (
+        title,
+        "",
+        "Type each student's marks in the coloured header columns. Leave a cell empty if you don't have it yet.",
+        f"Use {', '.join(codes)} for absent, exempt, malpractice or withheld (applies to the whole paper)."
+        if codes
+        else "",
+        "Don't change enrollment numbers or reorder students; the file is matched by enrollment number.",
+        "Upload the file under Imports → Marks. Nothing is saved until you review and confirm.",
+    ):
+        info.append([line])
+    info["A1"].font = Font(bold=True, size=13)
+    return _bytes(wb)
