@@ -37,6 +37,7 @@ const schema = z.object({
       .regex(/^[0-9+()\-\s]{6,32}$/, "Enter a valid phone number"),
   ]),
   password: z.string().min(12, "Use at least 12 characters"),
+  website: z.string().optional(), // the honeypot: people never see it, form-filling bots fill it
 });
 type Values = z.input<typeof schema>;
 
@@ -121,13 +122,18 @@ export default function SignupPage() {
       email: "",
       phone: "",
       password: "",
+      website: "",
     },
   });
   const slug = useWatch({ control: form.control, name: "slug" });
   const password = useWatch({ control: form.control, name: "password" });
   const signup = useMutation({
     mutationFn: (v: z.output<typeof schema>) =>
-      api.post<{ email: string }>("/api/v1/signup", { ...v, phone: v.phone || null }),
+      api.post<{ email: string }>("/api/v1/signup", {
+        ...v,
+        phone: v.phone || null,
+        website: v.website || null,
+      }),
     onSuccess: (data) => setSentTo(data.email),
     onError: (e) => {
       if (e instanceof ApiError && e.status === 429) {
@@ -250,6 +256,13 @@ export default function SignupPage() {
           <PasswordInput autoComplete="new-password" {...form.register("password")} />
         </Field>
         <PasswordStrength value={password} minLength={12} />
+        {/* Not for people: off-screen, out of the tab order, hidden from screen readers (docs/10 §7). */}
+        <div aria-hidden="true" className="absolute -left-[10000px] top-auto size-px overflow-hidden">
+          <label>
+            Website
+            <input type="text" tabIndex={-1} autoComplete="off" {...form.register("website")} />
+          </label>
+        </div>
         <Button type="submit" size="lg" loading={signup.isPending}>
           Create portal
         </Button>

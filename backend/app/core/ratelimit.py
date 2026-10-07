@@ -36,7 +36,11 @@ class Bucket:
 
 
 # Defaults from docs/10 §7 — tune after load tests (docs/11).
-LOGIN_PER_IP = Bucket.per_minute("login_ip", 20, burst=10)
+# Sign-in per network address. A whole school lab, or thousands of phones behind one mobile carrier's NAT,
+# share an address on result day, so *every* attempt only meets a flood ceiling; *failed* attempts have
+# their own, much tighter bucket (credential stuffing), and each account its own limit and lockout.
+LOGIN_PER_IP = Bucket.per_minute("login_ip", 600, burst=300)
+LOGIN_FAILURES_PER_IP = Bucket.per_minute("login_fail_ip", 60, burst=60)
 LOGIN_PER_ACCOUNT = Bucket.per_minute("login_account", 10, burst=10)
 PASSWORD_RESET = Bucket.per_hour("password_reset", 3, burst=3)
 ACTIVATION = Bucket.per_hour("activation", 5, burst=5)  # per enrollment no. (docs/10 §7)
@@ -54,6 +58,7 @@ local key = KEYS[1]
 local rate = tonumber(ARGV[1])
 local burst = tonumber(ARGV[2])
 local cost = tonumber(ARGV[3])
+local peek = tonumber(ARGV[4] or '0')
 local t = redis.call('TIME')
 local now = tonumber(t[1]) + tonumber(t[2]) / 1000000
 local data = redis.call('HMGET', key, 'tokens', 'ts')
@@ -65,13 +70,15 @@ tokens = math.min(burst, tokens + math.max(0, now - ts) * rate)
 local allowed = 0
 local retry = 0
 if tokens >= cost then
-  tokens = tokens - cost
+  if peek == 0 then tokens = tokens - cost end
   allowed = 1
 else
   retry = (cost - tokens) / rate
 end
-redis.call('HSET', key, 'tokens', tostring(tokens), 'ts', tostring(now))
-redis.call('EXPIRE', key, math.ceil(burst / rate) + 5)
+if peek == 0 then
+  redis.call('HSET', key, 'tokens', tostring(tokens), 'ts', tostring(now))
+  redis.call('EXPIRE', key, math.ceil(burst / rate) + 5)
+end
 return {allowed, tostring(retry)}
 """
 
@@ -79,6 +86,14 @@ return {allowed, tostring(retry)}
 def login_ip_bucket(settings: Any) -> Bucket:
     return Bucket.per_minute(
         LOGIN_PER_IP.name, settings.rate_login_ip_per_minute, burst=settings.rate_login_ip_burst
+    )
+
+
+def login_failure_bucket(settings: Any) -> Bucket:
+    return Bucket.per_minute(
+        LOGIN_FAILURES_PER_IP.name,
+        settings.rate_login_failures_ip_per_minute,
+        burst=settings.rate_login_failures_ip_burst,
     )
 
 
@@ -110,21 +125,31 @@ class RateLimiter:
             RATE_LIMITED.labels(bucket=bucket.name).inc()
             raise RateLimited(retry_after_s=int(retry_after) + 1)
 
-    async def peek_allowed(self, bucket: Bucket, identity: str) -> bool:
+    async def check(self, bucket: Bucket, identity: str, cost: int = 1) -> None:
+        """Raise ``RateLimited`` if a ``hit`` would fail now, without consuming anything."""
         key = f"rl:{bucket.name}:{identity}"
-        tokens, _ = self._local_state(key, bucket)
-        return tokens >= 1
+        allowed, retry_after = await self._take(key, bucket, cost, peek=True)
+        if not allowed:
+            RATE_LIMITED.labels(bucket=bucket.name).inc()
+            raise RateLimited(retry_after_s=int(retry_after) + 1)
 
-    async def _take(self, key: str, bucket: Bucket, cost: int) -> tuple[bool, float]:
+    async def consume(self, bucket: Bucket, identity: str, cost: int = 1) -> bool:
+        """Take ``cost`` tokens if there are enough; report whether there were (never raises)."""
+        allowed, _ = await self._take(f"rl:{bucket.name}:{identity}", bucket, cost)
+        return allowed
+
+    async def _take(self, key: str, bucket: Bucket, cost: int, *, peek: bool = False) -> tuple[bool, float]:
         if self._script is not None and self.cache.redis_available:
             try:
-                allowed, retry = await self._script(keys=[key], args=[bucket.rate_per_s, bucket.burst, cost])
+                allowed, retry = await self._script(
+                    keys=[key], args=[bucket.rate_per_s, bucket.burst, cost, 1 if peek else 0]
+                )
                 self.cache.breaker.record_success()
                 return bool(int(allowed)), float(retry)
             except (RedisError, OSError, TimeoutError) as exc:
                 self.cache.breaker.record_failure()
                 log.warning("ratelimit_redis_unavailable", error_code=type(exc).__name__)
-        return self._take_local(key, bucket, cost)
+        return self._take_local(key, bucket, cost, peek=peek)
 
     def _local_state(self, key: str, bucket: Bucket) -> tuple[float, float]:
         now = time.monotonic()
@@ -132,8 +157,10 @@ class RateLimiter:
         tokens = min(float(bucket.burst), tokens + max(0.0, now - ts) * bucket.rate_per_s)
         return tokens, now
 
-    def _take_local(self, key: str, bucket: Bucket, cost: int) -> tuple[bool, float]:
+    def _take_local(self, key: str, bucket: Bucket, cost: int, *, peek: bool = False) -> tuple[bool, float]:
         tokens, now = self._local_state(key, bucket)
+        if peek:
+            return (True, 0.0) if tokens >= cost else (False, (cost - tokens) / bucket.rate_per_s)
         if tokens >= cost:
             self._local[key] = (tokens - cost, now)
             self._evict()

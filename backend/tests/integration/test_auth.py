@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from sqlalchemy import select, text
 
 from app.modules.identity.models import User
-from tests.helpers import DEFAULT_PASSWORD, Client, make_tenant, totp_now
+from tests.helpers import DEFAULT_PASSWORD, Client, make_tenant, make_user, totp_now
 
 pytestmark = pytest.mark.integration
 
@@ -124,17 +126,35 @@ async def test_expired_and_revoked_sessions_are_rejected(app, infra) -> None:
         assert (await c.get("/api/v1/me")).status_code == 401
 
 
-async def test_rate_limit_on_login_returns_429_with_retry_after(app, infra) -> None:
+async def test_failed_sign_ins_from_one_address_are_rate_limited_with_retry_after(app, infra) -> None:
     t = await make_tenant(infra)
-    async with Client(app, t.host, ip="198.51.100.77") as c:
+    ip = f"198.51.100.{uuid.uuid4().int % 200 + 20}"
+    async with Client(app, t.host, ip=ip) as c:
         responses = [
             await c.post("/api/v1/auth/login", json={"login_id": f"user{i}@x.com", "password": "nope"})
-            for i in range(14)
+            for i in range(65)  # failures have a 60-attempt burst per address
         ]
-    limited = [r for r in responses if r.status_code == 429]
-    assert limited, [r.status_code for r in responses]
-    assert int(limited[0].headers["retry-after"]) >= 1
-    assert limited[0].json()["code"] == "rate-limited"
+        limited = [r for r in responses if r.status_code == 429]
+        assert limited, [r.status_code for r in responses]
+        assert int(limited[0].headers["retry-after"]) >= 1
+        assert limited[0].json()["code"] == "rate-limited"
+        # Once an address has failed this often, even a correct password waits.
+        r = await c.post("/api/v1/auth/login", json={"login_id": t.owner_email, "password": DEFAULT_PASSWORD})
+        assert r.status_code == 429
+
+
+async def test_a_whole_class_signing_in_from_one_address_is_not_rate_limited(app, infra) -> None:
+    """Result day: a school lab, or thousands of phones behind one mobile carrier's NAT, share an address.
+    Successful sign-ins must not be throttled the way failures are."""
+    t = await make_tenant(infra)
+    logins = [(await make_user(infra, t, "student"))[1] for _ in range(80)]
+    ip = f"198.51.100.{uuid.uuid4().int % 200 + 20}"
+    codes = []
+    for login in logins:
+        async with Client(app, t.host, ip=ip) as c:
+            r = await c.post("/api/v1/auth/login", json={"login_id": login, "password": DEFAULT_PASSWORD})
+            codes.append(r.status_code)
+    assert codes == [200] * 80
 
 
 async def test_unknown_host_and_suspended_tenant(app, infra) -> None:

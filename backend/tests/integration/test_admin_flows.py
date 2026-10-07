@@ -3,6 +3,8 @@ console (P3.8, P4.4, P4.7, P6.3)."""
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from sqlalchemy import text
 
@@ -321,6 +323,39 @@ async def test_signup_validation(app, infra) -> None:
             "/api/v1/signup", json={**base, "email": "ok@school.example.com", "password": "password123"}
         )
         assert r.status_code == 422 and r.json()["field"] == "password"
+
+
+async def test_signup_bots_that_fill_the_hidden_field_get_a_normal_answer_and_nothing_else(
+    app, infra
+) -> None:
+    from sqlalchemy import func, select, text
+
+    from app.modules.identity.models import SignupRequest
+
+    slug = unique_slug("bot")
+    email = f"bot-{uuid.uuid4().hex[:8]}@school.example.com"
+    async with Client(app, "localhost", ip="203.0.113.202") as site:
+        r = await site.post(
+            "/api/v1/signup",
+            json={
+                "email": email,
+                "full_name": "Bot Person",
+                "institution_name": "Bot School",
+                "institution_type": "school",
+                "slug": slug,
+                "password": NEW_PASSWORD,
+                "website": "http://spam.example",
+            },
+        )
+        assert r.status_code == 202 and r.json() == {"email": email}  # indistinguishable from a real one
+    async with infra.db.platform_uow() as uow:
+        stored = await uow.session.scalar(
+            select(func.count()).select_from(SignupRequest).where(SignupRequest.slug == slug)
+        )
+        mails = await uow.session.scalar(
+            text("SELECT count(*) FROM jobs WHERE payload->'params'->>'to' = :to"), {"to": email}
+        )
+    assert (stored, mails) == (0, 0)
 
 
 # ---- platform console ---------------------------------------------------------------------------

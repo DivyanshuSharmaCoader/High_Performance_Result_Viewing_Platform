@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.device import remember_device
 from app.core.http import InfraDep, TenantDep, client_ip, public
+from app.core.metrics import SIGNUP_TRAPPED
 from app.core.ratelimit import Bucket
 from app.core.tenant import Realm
 from app.modules.identity.router import SessionOut, set_session_cookie
@@ -45,6 +46,9 @@ class SignupIn(BaseModel):
     institution_type: Literal["school", "college", "university", "coaching", "other"]
     slug: str = Field(min_length=3, max_length=40)
     password: str = Field(min_length=1, max_length=256)
+    # A field people never see (the form hides it from sight, keyboard and screen readers). Form-filling
+    # bots fill everything; when it isn't empty we answer exactly as for a real sign-up and do nothing.
+    website: str | None = Field(default=None, max_length=200)
 
 
 class SignupStartedOut(BaseModel):
@@ -54,6 +58,9 @@ class SignupStartedOut(BaseModel):
 @router.post("/signup", status_code=202, dependencies=[public(Realm.SITE)])
 async def signup(body: SignupIn, request: Request, response: Response, infra: InfraDep) -> SignupStartedOut:
     remember_device(request, response, infra.settings)  # one of the trial signals later (docs/12 §6)
+    if body.website:
+        SIGNUP_TRAPPED.inc()
+        return SignupStartedOut(email=str(body.email).lower())
     await SignupService(infra).start(
         SignupInput(
             email=str(body.email),

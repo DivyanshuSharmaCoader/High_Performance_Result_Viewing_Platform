@@ -99,7 +99,8 @@ allowed = role_has_permission(principal.roles, "marks.enter")         # RBAC
 ## 7. Rate limiting & abuse prevention
 | Bucket | Example limit (tune after load tests) |
 |---|---|
-| Login per IP | 20/min, burst 10 |
+| Login per IP, every attempt | 600/min, burst 300: a flood ceiling only. A school lab, or thousands of phones behind one mobile carrier's NAT, share an address on result day (`SCORECODE_RATE_LOGIN_IP_PER_MINUTE`) |
+| Login per IP, **failed** attempts | 60/min, burst 60 (credential stuffing); once exhausted, that address waits even with a correct password (`SCORECODE_RATE_LOGIN_FAILURES_IP_PER_MINUTE`). Each account also has its own limit and progressive lockout |
 | Login per account | 5 failures → exponential backoff |
 | Password reset per account/IP | 3/hour |
 | Activation attempts per enrollment no. | 5/hour |
@@ -107,7 +108,8 @@ allowed = role_has_permission(principal.roles, "marks.enter")         # RBAC
 | Verification lookups per IP | 60/min |
 | Authenticated API per session | 300/min |
 | Imports per tenant | 10/hour |
-| Sign-ups per IP | 5/hour |
+| Sign-ups per IP | 5/hour, plus a hidden honeypot field: bots that fill it get the normal "check your email" answer and nothing is created or sent (counted in `scorecode_signup_honeypot_total`) |
+| Free-trial starts per IP | 5/hour; one trial per institution, enforced with hashed identity signals (docs/12 §6) |
 Implemented as token buckets in Redis (Lua, atomic) with in-process fallback; edge (Cloudflare) rules as an outer layer. Responses: `429` + `Retry-After`.
 
 ## 8. Secrets & keys

@@ -31,6 +31,9 @@ JOB_DURATION = Histogram(
     buckets=(0.05, 0.1, 0.5, 1, 2, 5, 10, 30, 60, 120, 300),
 )
 RATE_LIMITED = Counter("scorecode_rate_limited_total", "Requests rejected by rate limiting", ["bucket"])
+SIGNUP_TRAPPED = Counter(
+    "scorecode_signup_honeypot_total", "Sign-ups dropped because the hidden form field was filled"
+)
 WORKER_ACTIVE = Gauge("scorecode_worker_active_jobs", "Jobs currently executing in this worker")
 
 

@@ -24,6 +24,8 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_SECRET_KEY` | dev value | ≥ 32 chars; derives the field-encryption key (TOTP secrets) |
 | `SCORECODE_ABUSE_SIGNAL_KEY` | dev value | ≥ 32 chars, required outside development. Keys the hashes of trial identity signals (docs/12 §6). **Never rotate it**: a new key forgets every trial already taken. |
 | `SCORECODE_RATE_TRIAL_START_PER_HOUR` | 5 | Trial start attempts per client IP |
+| `SCORECODE_RATE_LOGIN_IP_PER_MINUTE` / `_BURST` | 600 / 300 | Every sign-in attempt per IP: a flood ceiling, because whole classes share an address |
+| `SCORECODE_RATE_LOGIN_FAILURES_IP_PER_MINUTE` / `_BURST` | 60 / 60 | Failed sign-ins per IP (credential stuffing) |
 | `SCORECODE_COOKIE_SECURE` | `false` | `true` outside development → `__Host-` prefixed, Secure cookies |
 | `SCORECODE_TRUST_PROXY_HEADERS` | `false` | Use `X-Forwarded-For` for client IP — only behind our own proxy |
 | `SCORECODE_ARGON2_TIME_COST` / `_MEMORY_KIB` / `_PARALLELISM` / `_MAX_CONCURRENCY` | `2` / `19456` / `1` / `4` | Password hashing cost and per-process concurrency (measured: benchmarks/results) |

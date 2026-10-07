@@ -26,6 +26,7 @@ from app.core.ratelimit import (
     PASSWORD_RESET,
     PLATFORM_LOGIN_PER_IP,
     activation_ip_bucket,
+    login_failure_bucket,
     login_ip_bucket,
 )
 from app.core.security import hash_token, new_token, normalise_human_code, password_problems
@@ -87,6 +88,7 @@ class AuthService:
         self, tenant: TenantContext, login_id: str, password: str, *, ip: str, user_agent: str | None
     ) -> LoginResult:
         await self.infra.limiter.hit(login_ip_bucket(self.settings), f"{ip}")
+        await self.infra.limiter.check(login_failure_bucket(self.settings), f"{ip}")
         normalised = normalise_login_id(login_id)
         await self.infra.limiter.hit(LOGIN_PER_ACCOUNT, f"{tenant.tenant_id}:{normalised}")
         now = utcnow()
@@ -98,6 +100,7 @@ class AuthService:
             locked = bool(user and user.locked_until and user.locked_until > now)
             if not usable or locked:
                 await self.infra.passwords.burn(password)
+                await self.infra.limiter.consume(login_failure_bucket(self.settings), f"{ip}")
                 LOGINS.labels("tenant", "rejected").inc()
                 raise InvalidCredentials(LOCKED_HINT)
             assert user is not None and user.password_hash is not None
@@ -139,6 +142,7 @@ class AuthService:
                         entity_id=user.id,
                     )
         if failed:
+            await self.infra.limiter.consume(login_failure_bucket(self.settings), f"{ip}")
             LOGINS.labels("tenant", "failed").inc()
             raise InvalidCredentials(LOCKED_HINT)
         LOGINS.labels("tenant", "success").inc()
