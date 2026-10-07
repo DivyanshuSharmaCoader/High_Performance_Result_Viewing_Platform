@@ -38,9 +38,10 @@ async def make_tenant(
     name: str | None = None,
     type: str = "school",
     slug: str | None = None,
+    owner_email: str | None = None,
 ) -> TenantFixture:
     slug = slug or unique_slug()
-    email = f"owner@{slug}.example.com"
+    email = owner_email or f"owner@{slug}.example.com"
     async with infra.db.uow() as uow:
         tenant = await provision_tenant(
             uow,

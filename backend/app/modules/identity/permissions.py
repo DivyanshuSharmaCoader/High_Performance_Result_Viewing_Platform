@@ -12,6 +12,7 @@ class P:
     SETTINGS_MANAGE = "settings.manage"
     BRANDING_MANAGE = "branding.manage"
     SUBSCRIPTION_VIEW = "subscription.view"
+    SUBSCRIPTION_MANAGE = "subscription.manage"  # start the trial; owner only
     OWNER_TRANSFER = "owner.transfer"
     STAFF_VIEW = "staff.view"
     STAFF_MANAGE = "staff.manage"
@@ -81,7 +82,7 @@ _ADMIN = frozenset(
 )
 
 ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
-    "institution_owner": _ADMIN | {P.OWNER_TRANSFER},
+    "institution_owner": _ADMIN | {P.OWNER_TRANSFER, P.SUBSCRIPTION_MANAGE},
     "institution_admin": _ADMIN,
     "faculty": frozenset(
         {

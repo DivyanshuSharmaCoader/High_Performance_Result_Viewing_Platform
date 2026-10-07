@@ -33,6 +33,7 @@ def test_production_accepts_safe_configuration() -> None:
     s = Settings(
         env=Environment.PRODUCTION,
         secret_key="x" * 48,
+        abuse_signal_key="y" * 48,
         cookie_secure=True,
         public_scheme="https",
         s3_secret_key="prod-secret-value",

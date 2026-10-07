@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy import select
 
+from app.core.device import remember_device
 from app.core.errors import Conflict
-from app.core.http import InfraDep, Principal, TenantDep, UoW, require
+from app.core.http import InfraDep, Principal, TenantDep, UoW, client_ip, require
+from app.core.ratelimit import Bucket
 from app.modules.audit.service import Actor, diff, record
 from app.modules.branding.service import BrandingService
 from app.modules.entitlements.catalogue import FEATURES, LIMIT_TO_USAGE_METRIC, F
 from app.modules.entitlements.service import EntitlementService
+from app.modules.entitlements.trial import TrialService
 from app.modules.identity.permissions import P
 from app.modules.tenancy import onboarding
 from app.modules.tenancy.models import TenantSettings
@@ -121,6 +125,16 @@ class LimitUsage(BaseModel):
     used: int
 
 
+class TrialOut(BaseModel):
+    state: Literal["available", "active", "ended", "converted", "revoked", "ineligible"]
+    days: int
+    plan_name: str
+    started_at: datetime | None
+    ends_at: datetime | None
+    days_left: int | None
+    can_start: bool  # available, and this user is the owner
+
+
 class SubscriptionOut(BaseModel):
     plan_code: str
     plan_name: str
@@ -129,15 +143,51 @@ class SubscriptionOut(BaseModel):
     limits: list[LimitUsage]
     features: dict[str, Any]
     overrides: list[str]
+    trial: TrialOut
 
 
 @router.get("/subscription")
 async def subscription(
-    uow: UoW, infra: InfraDep, _: Principal = require(P.SUBSCRIPTION_VIEW)
+    request: Request,
+    response: Response,
+    uow: UoW,
+    infra: InfraDep,
+    principal: Principal = require(P.SUBSCRIPTION_VIEW),
 ) -> SubscriptionOut:
+    remember_device(request, response, infra.settings)  # so a later trial start carries the device signal
+    return await _subscription(uow, infra, principal)
+
+
+TRIAL_START = "trial_start"
+
+
+@router.post("/subscription/trial")
+async def start_trial(
+    request: Request,
+    response: Response,
+    uow: UoW,
+    infra: InfraDep,
+    tenant: TenantDep,
+    principal: Principal = require(P.SUBSCRIPTION_MANAGE),
+) -> SubscriptionOut:
+    """Start the one free trial this institution will ever have (docs/12 §6)."""
+    ip = client_ip(request)
+    await infra.limiter.hit(Bucket.per_hour(TRIAL_START, infra.settings.rate_trial_start_per_hour), ip)
+    await TrialService(infra).start(
+        tenant_id=tenant.tenant_id,
+        user_id=principal.user_id,
+        user_label=principal.display_name,
+        device_id=remember_device(request, response, infra.settings),
+        ip=ip,
+    )
+    return await _subscription(uow, infra, principal)
+
+
+async def _subscription(uow: Any, infra: Any, principal: Principal) -> SubscriptionOut:
     svc = EntitlementService(infra)
     ent = await svc.effective(uow, fresh=True)
     usage = await svc.usage(uow)
+    trial = await TrialService(infra).view(uow)
     limits = []
     for f in FEATURES:
         if f.kind != "limit":
@@ -155,6 +205,15 @@ async def subscription(
         limits=limits,
         features={f.key: ent.values.get(f.key) for f in FEATURES if f.kind != "limit"},
         overrides=ent.overrides,
+        trial=TrialOut(
+            state=trial.state,
+            days=trial.days,
+            plan_name=trial.plan_name,
+            started_at=trial.started_at,
+            ends_at=trial.ends_at,
+            days_left=trial.days_left,
+            can_start=trial.state == "available" and principal.has(P.SUBSCRIPTION_MANAGE),
+        ),
     )
 
 

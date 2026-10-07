@@ -5,6 +5,7 @@ from typing import Literal
 from fastapi import APIRouter, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.core.device import remember_device
 from app.core.http import InfraDep, TenantDep, client_ip, public
 from app.core.ratelimit import Bucket
 from app.core.tenant import Realm
@@ -51,7 +52,8 @@ class SignupStartedOut(BaseModel):
 
 
 @router.post("/signup", status_code=202, dependencies=[public(Realm.SITE)])
-async def signup(body: SignupIn, request: Request, infra: InfraDep) -> SignupStartedOut:
+async def signup(body: SignupIn, request: Request, response: Response, infra: InfraDep) -> SignupStartedOut:
+    remember_device(request, response, infra.settings)  # one of the trial signals later (docs/12 §6)
     await SignupService(infra).start(
         SignupInput(
             email=str(body.email),

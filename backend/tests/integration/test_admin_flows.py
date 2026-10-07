@@ -97,7 +97,7 @@ async def test_faculty_cannot_manage_staff(app, infra) -> None:
 
 
 async def test_admin_seat_limit_and_release_on_disable(app, infra) -> None:
-    # Free plan: max_admins = 1 (the owner), max_staff = 3.
+    # Free plan: max_admins = 2 (the owner + one), max_staff = 5.
     t = await make_tenant(infra, plan="free")
     async with Client(app, t.host) as owner:
         await owner.login(t.owner_email)
@@ -109,11 +109,20 @@ async def test_admin_seat_limit_and_release_on_disable(app, infra) -> None:
                 "role": "institution_admin",
             },
         )
+        assert r.status_code == 201, r.text
+        r = await owner.post(
+            "/api/v1/admin/staff",
+            json={
+                "email": f"b@{t.slug}.example.com",
+                "full_name": "Third Admin",
+                "role": "institution_admin",
+            },
+        )
         assert r.status_code == 402
         body = r.json()
-        assert body["code"] == "limit-exceeded" and body["limit"] == "max_admins" and body["max"] == 1
+        assert body["code"] == "limit-exceeded" and body["limit"] == "max_admins" and body["max"] == 2
         ids = []
-        for i in range(2):
+        for i in range(3):
             r = await owner.post(
                 "/api/v1/admin/staff",
                 json={"email": f"f{i}@{t.slug}.example.com", "full_name": f"Faculty {i}", "role": "faculty"},
@@ -138,8 +147,8 @@ async def test_admin_seat_limit_and_release_on_disable(app, infra) -> None:
         assert staff_limit == {
             "key": "max_staff",
             "description": staff_limit["description"],
-            "limit": 3,
-            "used": 3,
+            "limit": 5,
+            "used": 5,
         }
 
 

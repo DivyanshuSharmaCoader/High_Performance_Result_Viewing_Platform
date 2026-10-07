@@ -27,8 +27,10 @@ from app.modules.entitlements.models import (
     PlanFeature,
     TenantFeatureOverride,
     TenantSubscription,
+    TenantTrial,
     TenantUsageCounter,
 )
+from app.modules.entitlements.trial import TrialService
 from app.modules.identity.models import Session, User
 from app.modules.tenancy.models import Tenant, TenantSettings
 
@@ -170,6 +172,9 @@ class PlatformService:
             await uow.session.execute(select(func.max(Session.last_seen_at)).where(Session.tenant_id == t.id))
         ).scalar_one()
         current = next((s for s, _ in subs if s.status in ("active", "trialing", "past_due")), None)
+        trial = (
+            await uow.session.scalars(select(TenantTrial).where(TenantTrial.tenant_id == t.id))
+        ).one_or_none()
         return {
             "id": t.id,
             "slug": t.slug,
@@ -206,6 +211,20 @@ class PlatformService:
                 for o in overrides
             ],
             "usage": usage,
+            "trial": (
+                {
+                    "status": trial.status,
+                    "started_at": trial.started_at,
+                    "ends_at": trial.ends_at,
+                    "ended_at": trial.ended_at,
+                    "end_reason": trial.end_reason,
+                    "risk_score": trial.risk_score,
+                    "flags": trial.flags,
+                    "granted": trial.granted_by_platform_user is not None,
+                }
+                if trial
+                else None
+            ),
             "users": {
                 "staff": int(user_counts.get("staff", 0)),
                 "students": int(user_counts.get("student", 0)),
@@ -320,6 +339,7 @@ class PlatformService:
                 changed_by_platform_user=principal.user_id,
             )
         )
+        await TrialService.close_for_plan_change(uow, t.id, new_plan_code=plan.code)
         await self._invalidate_tenant(uow, t)
         actor = Actor.from_principal(principal)
         after = {"plan": plan.code, "status": status, "period_end": period_end}

@@ -25,6 +25,7 @@
   "staff.view",
   "students.manage",
   "students.view",
+  "subscription.manage",
   "subscription.view"
  ],
  "institution_admin": [

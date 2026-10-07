@@ -10,9 +10,14 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import and_, or_, select
 
+from app.core.errors import InvalidState
 from app.core.http import InfraDep, PlatformUoW, Principal, require_platform
 from app.core.pagination import Page, clamp_limit, decode_cursor, encode_cursor
 from app.modules.audit.models import PlatformAuditLog
+from app.modules.audit.service import Actor, record_platform
+from app.modules.entitlements.models import TenantTrial
+from app.modules.entitlements.service import EntitlementService
+from app.modules.entitlements.trial import TrialService
 from app.modules.identity.permissions import PlatformP
 from app.modules.platform.service import PlatformService
 
@@ -116,6 +121,38 @@ async def change_plan(
         billing_ref=body.billing_ref,
         reason=body.reason,
     )
+    return OkOut()
+
+
+@router.post("/tenants/{tenant_id}/trial")
+async def grant_trial(
+    tenant_id: uuid.UUID, body: ReasonIn, uow: PlatformUoW, infra: InfraDep, principal: ManageTenants
+) -> OkOut:
+    """Start the trial by hand (e.g. after the automatic check asked for a review). Once per tenant."""
+    await TrialService(infra).grant(uow, Actor.from_principal(principal), tenant_id, body.reason)
+    await EntitlementService(infra).invalidate(tenant_id)
+    return OkOut()
+
+
+@router.post("/tenants/{tenant_id}/trial/revoke")
+async def revoke_trial(
+    tenant_id: uuid.UUID, body: ReasonIn, uow: PlatformUoW, infra: InfraDep, principal: ManageTenants
+) -> OkOut:
+    trial = (
+        await uow.session.scalars(select(TenantTrial).where(TenantTrial.tenant_id == tenant_id))
+    ).one_or_none()
+    if trial is None or trial.status != "active":
+        raise InvalidState("This institution has no running trial.")
+    await record_platform(
+        uow,
+        Actor.from_principal(principal),
+        "trial.revoked",
+        target_tenant_id=tenant_id,
+        entity_type="tenant",
+        entity_id=tenant_id,
+        reason=body.reason,
+    )
+    await TrialService(infra).end(tenant_id, trial.id, reason="revoked")
     return OkOut()
 
 

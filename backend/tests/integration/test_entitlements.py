@@ -26,7 +26,7 @@ async def test_catalogue_sync_is_idempotent(infra) -> None:
     async with infra.db.platform_uow() as uow:
         codes = (await uow.session.scalars(select(Plan.code).order_by(Plan.sort_order))).all()
         n_values = (await uow.session.execute(text("SELECT count(*) FROM plan_features"))).scalar_one()
-    assert list(codes) == ["free", "starter", "growth", "pro", "enterprise"]
+    assert list(codes) == ["free", "starter", "growth", "trial", "pro", "enterprise"]
     assert n_values == len(codes) * len(FEATURES)
 
 

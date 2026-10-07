@@ -30,9 +30,9 @@ Pricing unit: **per institution per academic year, banded by active students**, 
 | Active students included | 150 | 600 | 2,000 | 5,000 | Custom |
 | Effective ₹/student/year at cap | — | ~₹13 | ~₹10 | ~₹9 | Negotiated |
 | Overage | Hard cap | ₹15/student | ₹12/student | ₹10/student | Contract |
-| Staff accounts (admin + faculty) | 3 | 15 | 60 | 200 | Custom |
-| Admin seats within staff | 1 | 2 | 5 | 15 | Custom |
-| Published exams / year | 4 | Unlimited | Unlimited | Unlimited | Unlimited |
+| Staff accounts (admin + faculty) | 5 | 15 | 60 | 200 | Custom |
+| Admin seats within staff | 2 | 2 | 5 | 15 | Custom |
+| Published exams / year | 6 | Unlimited | Unlimited | Unlimited | Unlimited |
 | Online history retained | 1 academic year | 3 years | 7 years | Unlimited | Unlimited + migration |
 | CSV/Excel import | ✓ | ✓ | ✓ | ✓ | ✓ |
 | PDF marksheet + QR verification | ScoreCode-branded | Logo on template | Branded templates (choose from library) | Custom template (1 included) | Fully custom formats |
@@ -58,6 +58,28 @@ Pricing unit: **per institution per academic year, banded by active students**, 
 **Validate before launch:** run 15–20 discovery calls; ask "what did you pay for your last software purchase of this kind?" and "who approves it?" rather than "would you pay ₹X?".
 
 ---
+
+### 2.1 Free tier and trial against the market (researched 2026-10-08)
+
+We read the vendors' own pricing pages on 2026-10-08. Prices and limits change often, so treat this as a dated snapshot, not a claim about today.
+
+| Vendor | Free tier (as published) | Trial of paid plans |
+|---|---|---|
+| ScholaBook (school ERP, India) | Free forever, **up to 100 students** | not stated |
+| OurSchoolSoftware (school ERP) | Free forever, **up to 100 students**, single campus | 3 days |
+| Zoho Classes | Free for teachers, **up to 100 students** | length not stated |
+| ReportCards.ai (report cards) | Free: 3 subjects, 4 classes, 3 report cards per class | 7 days |
+| ThinkWave (gradebook/SIS) | Free gradebook that doesn't expire (no cap stated on the page) | 30 days |
+| Fedena (school ERP) | none | 14 days |
+| Classe365 (SIS) | none | 15 days |
+| iVake (education ERP) | none | 30 days, no card |
+| eSkooly, OpenEduCat Community | Advertised as free with no limits (eSkooly's page refused automated access; OpenEduCat is self-hosted open source) | — |
+
+Sources: [ScholaBook](https://scholabook.com/pricing), [OurSchoolSoftware](https://ourschoolsoftware.com/), [Zoho Classes](https://www.zoho.com/classes/pricing.html), [ReportCards.ai](https://www.reportcards.ai/), [ThinkWave](https://www.thinkwave.com/), [Fedena](https://fedena.com/pricing-and-plans), [Classe365](https://www.classe365.com/pricing), [iVake](https://www.ivake.com/erp-software-published-pricing).
+
+**What we chose.** Free stays at **150 students**: 50% more than the 100-student cap that every capped hosted free tier we found uses. It also gets **5 staff, 2 admin seats and 6 exam publications a year**, so a school can publish two unit tests, mid-terms and finals each year. Every workflow is included; growth is gated by scale. We don't try to beat "unlimited free". Those offers are self-hosted open source or ad-supported, and a hosted results service that has to stay up on result day can't fund that.
+
+The **trial is 30 days of Pro** (docs/12 §6). That matches the longest trials we found, and it needs no card. It is capped at 1,000 students. Custom domain and API access are held back during an unpaid month: the first needs DNS work and certificates, and the second invites bulk scraping. Each institution gets one trial, ever.
 
 ## 3. Revenue streams — what exists in V1
 

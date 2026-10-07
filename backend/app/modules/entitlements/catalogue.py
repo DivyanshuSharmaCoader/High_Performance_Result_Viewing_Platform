@@ -66,6 +66,8 @@ FEATURES: tuple[FeatureDef, ...] = (
 )
 
 UNLIMITED = None
+TRIAL_PLAN_CODE = "trial"
+TRIAL_DAYS = 30
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,6 +82,8 @@ class PlanDef:
 
 
 PLANS: tuple[PlanDef, ...] = (
+    # Free: 50% more students than the hosted free tiers we found (100 students; docs/02 §1.1), every
+    # workflow included; growth is gated by scale, not by features.
     PlanDef(
         "free",
         "Free",
@@ -89,11 +93,11 @@ PLANS: tuple[PlanDef, ...] = (
         True,
         {
             F.MAX_STUDENTS: 150,
-            F.MAX_STAFF: 3,
-            F.MAX_ADMINS: 1,
+            F.MAX_STAFF: 5,
+            F.MAX_ADMINS: 2,
             F.MAX_STORAGE_MB: 1024,
             F.HISTORY_YEARS: 1,
-            F.MAX_PUBLISHED_EXAMS_PER_YEAR: 4,
+            F.MAX_PUBLISHED_EXAMS_PER_YEAR: 6,
             F.MAX_IMPORT_ROWS: 5000,
         },
     ),
@@ -161,6 +165,33 @@ PLANS: tuple[PlanDef, ...] = (
             F.SCHEDULED_PUBLICATION: True,
             F.ADVANCED_ANALYTICS: True,
             F.API_ACCESS: True,
+            F.VERIFICATION_CHALLENGE: True,
+            F.MARKSHEET_TEMPLATES: ["standard", "classic"],
+        },
+    ),
+    # The 30-day trial (docs/12 §6): Pro, except the two features that need setup or invite abuse during an
+    # unpaid month (custom domain → DNS and certificates; API keys → bulk scraping), at trial capacity.
+    PlanDef(
+        TRIAL_PLAN_CODE,
+        "Pro trial",
+        "Everything in Pro for 30 days, up to 1,000 students.",
+        None,
+        35,
+        False,
+        {
+            F.MAX_STUDENTS: 1000,
+            F.MAX_STAFF: 40,
+            F.MAX_ADMINS: 5,
+            F.MAX_STORAGE_MB: 5 * 1024,
+            F.HISTORY_YEARS: UNLIMITED,
+            F.MAX_PUBLISHED_EXAMS_PER_YEAR: UNLIMITED,
+            F.MAX_IMPORT_ROWS: 20_000,
+            F.CUSTOM_BRANDING: True,
+            F.REMOVE_POWERED_BY: True,
+            F.MULTIPLE_DEPARTMENTS: True,
+            F.MAKER_CHECKER_APPROVAL: True,
+            F.SCHEDULED_PUBLICATION: True,
+            F.ADVANCED_ANALYTICS: True,
             F.VERIFICATION_CHALLENGE: True,
             F.MARKSHEET_TEMPLATES: ["standard", "classic"],
         },

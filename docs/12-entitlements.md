@@ -48,7 +48,7 @@ effective(tenant, key) =
 Subscription status modifies the result:
 | Status | Effect |
 |---|---|
-| `active`, `trialing` | plan values |
+| `active`, `trialing` | plan values (the trial plan while `trialing`, §6) |
 | `past_due` (grace, e.g. 14 days) | plan values + banner |
 | `expired`/`cancelled` | fall back to **Free** values; nothing deleted (see downgrade rules) |
 | tenant `suspended` | all tenant API access blocked except billing & export for owner |
@@ -118,7 +118,33 @@ COMMIT;
 
 The entitlement system is independent of the payment provider — billing only writes subscription rows.
 
-## 6. Testing
+## 6. Free trial (30 days of Pro, once per institution)
+
+**Offer.** The owner of an institution on the Free plan that has never had a paid plan can start one 30-day trial from *Plan & usage*. The trial plan (`trial`, not public) has every Pro feature except custom domain and API access, up to 1,000 students, 40 staff and 5 GB. No card is needed. The trial's subscription row is `trialing` with `period_end` = start + 30 days. When it ends, a `trials.end` job moves the tenant back to Free. If that job is late, entitlement resolution already treats a past `period_end` as expired. Nothing is deleted: over-limit data stays readable and exportable, but nothing more can be added until the institution upgrades (§4). The owner gets emails when the trial starts, 7 days and 1 day before it ends, and when it has ended.
+
+**Once means once.** `tenant_trials` is unique per tenant and its rows are never deleted. Across tenants, the trial records *identity signals* in `trial_claims`: a global table with no tenant and no RLS, which the app role cannot read or write at all. Each signal is normalised, then hashed with HMAC-SHA256 under `SCORECODE_ABUSE_SIGNAL_KEY`, so the table holds digests only.
+
+| Signal | Normalisation | Kind | Effect when seen before |
+|---|---|---|---|
+| Owner's email (verified at sign-up) | lower-case; drop `+tag`; Gmail ignores dots; `googlemail.com` → `gmail.com` | hard | refused |
+| Owner's email domain, when it isn't a free mailbox provider | registrable part (`mail.school.edu.in` → `school.edu.in`) | hard | refused |
+| Device id: a random, server-issued cookie scoped to the base domain, so the sign-up site and every portal share it | — | hard | refused |
+| The tenant itself | — | hard | refused |
+| Phone (sign-up form, institution settings; *not verified*) | digits with country code (`098765 43210` → `919876543210`) | soft | +1 risk |
+| Institution name | ASCII, lower-case, punctuation dropped | soft | +1 risk |
+| Network (/24 IPv4, /48 IPv6; private ranges ignored) | — | soft | +1 at 2 trials in 90 days, +2 at 4 |
+
+- Hard signals can only be produced by their owner: the email is verified, the domain needs a mailbox there, the device id is set by our server. A match therefore refuses the trial.
+- Soft signals can be typed by anyone, so on their own they never refuse. A competitor entering a school's phone number can't lock that school out. A score of **2 or more** sends the trial to a person: the owner is asked to write to support, and staff can start it from the platform console after checking (`POST /platform/tenants/{id}/trial`; still once per tenant).
+- Concurrency: advisory locks on the hard digests serialise two attempts with the same identity, and a partial unique index on `(kind, digest)` for hard kinds is the last line of defence.
+- Rate limits: trial starts per client IP (`SCORECODE_RATE_TRIAL_START_PER_HOUR`, default 5), on top of the existing sign-up limits.
+- Every refusal is written to the platform audit log with the *kinds* of signal that matched, never the values. Every start is written to both audit logs, with its risk score and flags.
+
+**Limits of this design.** Without a payment card, nobody can make free trials impossible to repeat. A person with several real mailboxes on different domains, fresh browsers, different networks and different institution names can still get another trial. The signals make that slow and visible, and the 1,000-student cap limits what a repeat trial is worth. Card verification and a phone OTP, once billing exists, are the next steps.
+
+**Plan changes.** When staff move a tenant to a paid plan during the trial, the trial becomes `converted`; moving it back to Free makes it `revoked`. The end job then does nothing.
+
+## 7. Testing
 - Table-driven tests: (plan, overrides, status) → effective values.
 - Concurrency test: two parallel imports racing for the last 10 seats → exactly one succeeds.
 - Contract test: every `features.key` referenced in code exists in the catalogue (and vice versa, unused features flagged).

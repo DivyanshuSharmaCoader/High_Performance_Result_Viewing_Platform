@@ -78,6 +78,37 @@ TEMPLATES: dict[str, Template] = {
         "This link expires in 30 minutes.",
         action_label="Confirm and create portal",
     ),
+    "trial_started": Template(
+        subject="Your {{ plan_name }} is on — 30 days to try everything",
+        heading="Your 30-day {{ plan_name }} has started",
+        body="{{ institution }} now has every Pro feature: your own colours and login page, scheduled "
+        "publication, two-person approval, departments and advanced analytics. The trial runs until "
+        "{{ ends_on }}. Afterwards you're back on Free automatically — nothing is deleted and nothing is "
+        "charged.",
+        action_label="See what's included",
+        footer="You're receiving this because you started a trial for {{ institution }} on ScoreCode.",
+        sensitive=False,
+    ),
+    "trial_ending": Template(
+        subject="Your ScoreCode trial ends in {{ days }} day{{ 's' if days != 1 else '' }}",
+        heading="{{ days }} day{{ 's' if days != 1 else '' }} left in your trial",
+        body="The trial for {{ institution }} ends on {{ ends_on }}. To keep Pro features, write to "
+        "sales@scorecode.in or reply to this email. If you do nothing, you'll move to the Free plan: your "
+        "students, marks and published results all stay.",
+        action_label="Review your plan",
+        footer="You're receiving this because you started a trial for {{ institution }} on ScoreCode.",
+        sensitive=False,
+    ),
+    "trial_ended": Template(
+        subject="Your ScoreCode trial has ended",
+        heading="You're on the Free plan now",
+        body="The trial for {{ institution }} has ended. Everything you created is still there. Over the "
+        "Free plan's limits, you can view and export as before but not add more until you upgrade. Write "
+        "to sales@scorecode.in to keep Pro.",
+        action_label="See your plan",
+        footer="You're receiving this because you had a trial for {{ institution }} on ScoreCode.",
+        sensitive=False,
+    ),
     "result_published": Template(
         subject="{{ exam_name }} results are available",
         heading="Your {{ exam_name }} results are available",

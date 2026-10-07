@@ -1272,6 +1272,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/subscription/trial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Trial
+         * @description Start the one free trial this institution will ever have (docs/12 §6).
+         */
+        post: operations["start_trial_api_v1_admin_subscription_trial_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/terms/{term_id}": {
         parameters: {
             query?: never;
@@ -1687,6 +1707,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plan Catalogue
+         * @description Values as stored (a platform admin may have changed them), not as written in code.
+         */
+        get: operations["plan_catalogue_api_v1_plans_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/audit-logs": {
         parameters: {
             query?: never;
@@ -1903,6 +1943,43 @@ export interface paths {
         put?: never;
         /** Suspend Tenant */
         post: operations["suspend_tenant_api_v1_platform_tenants__tenant_id__suspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/trial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant Trial
+         * @description Start the trial by hand (e.g. after the automatic check asked for a review). Once per tenant.
+         */
+        post: operations["grant_trial_api_v1_platform_tenants__tenant_id__trial_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/trial/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke Trial */
+        post: operations["revoke_trial_api_v1_platform_tenants__tenant_id__trial_revoke_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3267,6 +3344,14 @@ export interface components {
             /** Total */
             total: string | null;
         };
+        /** PlanCatalogue */
+        PlanCatalogue: {
+            /** Plans */
+            plans: components["schemas"]["PublicPlan"][];
+            trial: components["schemas"]["PublicPlan"];
+            /** Trial Days */
+            trial_days: number;
+        };
         /** PlanChangeIn */
         PlanChangeIn: {
             /** Billing Ref */
@@ -3442,6 +3527,25 @@ export interface components {
             level: string | null;
             /** Name */
             name: string;
+        };
+        /** PublicPlan */
+        PublicPlan: {
+            /** Code */
+            code: string;
+            /** Description */
+            description: string;
+            /** Features */
+            features: {
+                [key: string]: unknown;
+            };
+            /** Limits */
+            limits: {
+                [key: string]: number | null;
+            };
+            /** Name */
+            name: string;
+            /** Price Paise Yearly */
+            price_paise_yearly: number | null;
         };
         /** PublicationOut */
         PublicationOut: {
@@ -4447,6 +4551,7 @@ export interface components {
             plan_name: string;
             /** Status */
             status: string;
+            trial: components["schemas"]["TrialOut"];
         };
         /** TemplateOut */
         TemplateOut: {
@@ -4554,6 +4659,26 @@ export interface components {
             session_id: string;
             /** Starts On */
             starts_on: string | null;
+        };
+        /** TrialOut */
+        TrialOut: {
+            /** Can Start */
+            can_start: boolean;
+            /** Days */
+            days: number;
+            /** Days Left */
+            days_left: number | null;
+            /** Ends At */
+            ends_at: string | null;
+            /** Plan Name */
+            plan_name: string;
+            /** Started At */
+            started_at: string | null;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "available" | "active" | "ended" | "converted" | "revoked" | "ineligible";
         };
         /** ValidationError */
         ValidationError: {
@@ -7710,6 +7835,26 @@ export interface operations {
             };
         };
     };
+    start_trial_api_v1_admin_subscription_trial_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionOut"];
+                };
+            };
+        };
+    };
     update_term_api_v1_admin_terms__term_id__put: {
         parameters: {
             query?: never;
@@ -8433,6 +8578,26 @@ export interface operations {
             };
         };
     };
+    plan_catalogue_api_v1_plans_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanCatalogue"];
+                };
+            };
+        };
+    };
     platform_audit_api_v1_platform_audit_logs_get: {
         parameters: {
             query?: {
@@ -8815,6 +8980,76 @@ export interface operations {
         };
     };
     suspend_tenant_api_v1_platform_tenants__tenant_id__suspend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    grant_trial_api_v1_platform_tenants__tenant_id__trial_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_trial_api_v1_platform_tenants__tenant_id__trial_revoke_post: {
         parameters: {
             query?: never;
             header?: never;

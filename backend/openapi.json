@@ -3792,6 +3792,31 @@
         "title": "PaperResultOut",
         "type": "object"
       },
+      "PlanCatalogue": {
+        "properties": {
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/PublicPlan"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
+          "trial": {
+            "$ref": "#/components/schemas/PublicPlan"
+          },
+          "trial_days": {
+            "title": "Trial Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "plans",
+          "trial",
+          "trial_days"
+        ],
+        "title": "PlanCatalogue",
+        "type": "object"
+      },
       "PlanChangeIn": {
         "additionalProperties": false,
         "properties": {
@@ -4450,6 +4475,62 @@
           "archived_at"
         ],
         "title": "ProgramOut",
+        "type": "object"
+      },
+      "PublicPlan": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "features": {
+            "additionalProperties": true,
+            "title": "Features",
+            "type": "object"
+          },
+          "limits": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Limits",
+            "type": "object"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "price_paise_yearly": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Paise Yearly"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "description",
+          "price_paise_yearly",
+          "limits",
+          "features"
+        ],
+        "title": "PublicPlan",
         "type": "object"
       },
       "PublicationOut": {
@@ -7576,6 +7657,9 @@
           "status": {
             "title": "Status",
             "type": "string"
+          },
+          "trial": {
+            "$ref": "#/components/schemas/TrialOut"
           }
         },
         "required": [
@@ -7585,7 +7669,8 @@
           "period_end",
           "limits",
           "features",
-          "overrides"
+          "overrides",
+          "trial"
         ],
         "title": "SubscriptionOut",
         "type": "object"
@@ -7879,6 +7964,80 @@
           "ends_on"
         ],
         "title": "TermOut",
+        "type": "object"
+      },
+      "TrialOut": {
+        "properties": {
+          "can_start": {
+            "title": "Can Start",
+            "type": "boolean"
+          },
+          "days": {
+            "title": "Days",
+            "type": "integer"
+          },
+          "days_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Left"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "plan_name": {
+            "title": "Plan Name",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "state": {
+            "enum": [
+              "available",
+              "active",
+              "ended",
+              "converted",
+              "revoked",
+              "ineligible"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "days",
+          "plan_name",
+          "started_at",
+          "ends_at",
+          "days_left",
+          "can_start"
+        ],
+        "title": "TrialOut",
         "type": "object"
       },
       "ValidationError": {
@@ -13069,6 +13228,28 @@
         ]
       }
     },
+    "/api/v1/admin/subscription/trial": {
+      "post": {
+        "description": "Start the one free trial this institution will ever have (docs/12 \u00a76).",
+        "operationId": "start_trial_api_v1_admin_subscription_trial_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubscriptionOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Start Trial",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
     "/api/v1/admin/terms/{term_id}": {
       "put": {
         "operationId": "update_term_api_v1_admin_terms__term_id__put",
@@ -14085,6 +14266,28 @@
         ]
       }
     },
+    "/api/v1/plans": {
+      "get": {
+        "description": "Values as stored (a platform admin may have changed them), not as written in code.",
+        "operationId": "plan_catalogue_api_v1_plans_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanCatalogue"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Plan Catalogue",
+        "tags": [
+          "plans"
+        ]
+      }
+    },
     "/api/v1/platform/audit-logs": {
       "get": {
         "operationId": "platform_audit_api_v1_platform_audit_logs_get",
@@ -14771,6 +14974,113 @@
           }
         },
         "summary": "Suspend Tenant",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/api/v1/platform/tenants/{tenant_id}/trial": {
+      "post": {
+        "description": "Start the trial by hand (e.g. after the automatic check asked for a review). Once per tenant.",
+        "operationId": "grant_trial_api_v1_platform_tenants__tenant_id__trial_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Grant Trial",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/api/v1/platform/tenants/{tenant_id}/trial/revoke": {
+      "post": {
+        "operationId": "revoke_trial_api_v1_platform_tenants__tenant_id__trial_revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Trial",
         "tags": [
           "platform"
         ]

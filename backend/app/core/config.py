@@ -78,6 +78,10 @@ class Settings(BaseSettings):
     # --- Security ---------------------------------------------------------------------------------
     trust_proxy_headers: bool = False  # true only behind our own proxy (Caddy), which sets X-Forwarded-For
     secret_key: SecretStr = SecretStr(DEV_SECRET)
+    # Keys the hashes of trial identity signals (docs/12 §6). Never rotate it: a new key forgets every
+    # trial already taken, so the same institution could take another.
+    abuse_signal_key: SecretStr = SecretStr(DEV_SECRET)
+    rate_trial_start_per_hour: int = 5  # trial attempts per client IP
     cookie_secure: bool = False  # True in staging/prod → __Host- prefixed cookies
     argon2_time_cost: int = 2
     argon2_memory_kib: int = 19_456  # OWASP 2023 baseline for Argon2id (m=19 MiB, t=2, p=1)
@@ -132,6 +136,11 @@ class Settings(BaseSettings):
                 or len(self.secret_key.get_secret_value()) < 32
             ):
                 problems.append("SCORECODE_SECRET_KEY must be set to a random value of >= 32 chars")
+            if (
+                self.abuse_signal_key.get_secret_value() == DEV_SECRET
+                or len(self.abuse_signal_key.get_secret_value()) < 32
+            ):
+                problems.append("SCORECODE_ABUSE_SIGNAL_KEY must be set to a random value of >= 32 chars")
             if not self.cookie_secure:
                 problems.append("SCORECODE_COOKIE_SECURE must be true outside development")
             if self.public_scheme != "https":
