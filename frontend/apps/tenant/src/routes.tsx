@@ -135,6 +135,11 @@ export const router = createBrowserRouter([
                 ],
               },
               {
+                // Faculty review their own marks imports here; administrators use /admin/imports.
+                element: <RequirePermission permission="imports.marks_assigned" />,
+                children: [{ path: "/marking/imports/:importId", element: <ImportJob /> }],
+              },
+              {
                 path: "/admin",
                 children: [
                   {

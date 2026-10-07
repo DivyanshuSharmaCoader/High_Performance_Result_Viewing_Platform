@@ -16,7 +16,7 @@ export const useExams = (status: ExamStatus | "") =>
   });
 
 export const useExam = (id: string) =>
-  useQuery({ queryKey: examKeys.one(id), queryFn: () => api.get<Exam>(`${E}/${id}`) });
+  useQuery({ queryKey: examKeys.one(id), queryFn: () => api.get<Exam>(`${E}/${id}`), enabled: Boolean(id) });
 
 export function useSetExam() {
   const qc = useQueryClient();

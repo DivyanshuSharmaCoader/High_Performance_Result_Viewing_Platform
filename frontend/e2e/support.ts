@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Browser, type Page } from "@playwright/test";
 
 export const BASE = process.env.E2E_BASE_DOMAIN ?? "localhost";
 export const PORT = process.env.E2E_PORT ?? "8080";
@@ -147,4 +147,89 @@ export async function apiAs<T = unknown>(
   );
   if (!result.ok) throw new Error(`${method} ${path} → ${result.status}: ${result.text}`);
   return (result.text ? JSON.parse(result.text) : undefined) as T;
+}
+
+/** A fresh unit-test exam on Thapar's UCS310 paper (INT /40, EXT /60) for one cohort, with marks entry open.
+ *  The signed-in page must be an administrator. */
+export async function openMarksExam(
+  page: Page,
+  cohortCode = "COE-2B",
+): Promise<{ sheet: string; examId: string; paperId: string; cohortId: string }> {
+  const sessions = await apiAs<{ id: string; is_current: boolean }[]>(
+    page,
+    "GET",
+    "/api/v1/admin/academic-sessions",
+  );
+  const session = sessions.find((s) => s.is_current)!;
+  const terms = await apiAs<{ id: string }[]>(
+    page,
+    "GET",
+    `/api/v1/admin/academic-sessions/${session.id}/terms`,
+  );
+  const cohorts = await apiAs<{ id: string; code: string }[]>(
+    page,
+    "GET",
+    `/api/v1/admin/cohorts?session_id=${session.id}`,
+  );
+  const cohort = cohorts.find((c) => c.code === cohortCode)!;
+  const courses = await apiAs<{ items: { id: string; code: string }[] }>(
+    page,
+    "GET",
+    "/api/v1/admin/courses?q=UCS310",
+  );
+  const exam = await apiAs<{ id: string }>(page, "POST", "/api/v1/admin/exams", {
+    name: `Quiz ${uniq("")}`,
+    kind: "unit_test",
+    term_id: terms[0]!.id,
+    cohort_ids: [cohort.id],
+  });
+  const withPaper = await apiAs<{ papers: { id: string }[] }>(
+    page,
+    "POST",
+    `/api/v1/admin/exams/${exam.id}/papers`,
+    {
+      course_id: courses.items.find((c) => c.code === "UCS310")!.id,
+      components: [
+        { code: "INT", label: "Internal", max: "40" },
+        { code: "EXT", label: "External", max: "60" },
+      ],
+    },
+  );
+  await apiAs(page, "POST", `/api/v1/admin/exams/${exam.id}/transitions`, { action: "open_entry" });
+  const paperId = withPaper.papers[0]!.id;
+  return {
+    sheet: `/marking/${exam.id}/${paperId}/${cohort.id}`,
+    examId: exam.id,
+    paperId,
+    cohortId: cohort.id,
+  };
+}
+
+/** Invite a faculty member through the real email flow; returns their signed-in page (own context). */
+export async function inviteFaculty(
+  admin: Page,
+  browser: Browser,
+  slug: string,
+): Promise<{ page: Page; id: string; close: () => Promise<void> }> {
+  const email = `${uniq("faculty")}@${slug}.example.com`;
+  await apiAs(admin, "POST", "/api/v1/admin/staff", {
+    email,
+    full_name: "E2E Faculty",
+    role: "faculty",
+  });
+  const mail = await latestEmail(email);
+  const link = linkFrom(mail.text, /http:\/\/\S+\/accept-invite\?token=[\w-]+/);
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto(link);
+  await page.getByLabel("Password", { exact: true }).fill("an-e2e-staff-passphrase");
+  await page.getByLabel("Confirm password").fill("an-e2e-staff-passphrase");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(url(slug, "/marking"));
+  const staff = await apiAs<{ id: string; email: string }[]>(
+    admin,
+    "GET",
+    `/api/v1/admin/staff?q=${encodeURIComponent(email)}`,
+  );
+  return { page, id: staff.find((s) => s.email === email)!.id, close: () => context.close() };
 }

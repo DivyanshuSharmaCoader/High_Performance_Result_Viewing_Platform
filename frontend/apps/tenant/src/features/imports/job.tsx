@@ -8,7 +8,6 @@ import {
   DialogContent,
   EmptyState,
   Field,
-  FileDropzone,
   Input,
   LoadMore,
   PageHeader,
@@ -32,11 +31,12 @@ import {
   pluralize,
   toast,
 } from "@scorecode/ui";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   AlertTriangle,
   CheckCircle2,
+  ClipboardList,
   Columns3,
   FileDown,
   FileUp,
@@ -45,12 +45,22 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { toastError } from "../../lib/forms";
-import { I, isBusy, uploadImport, useImport, useImportRows, useRefreshImport } from "./api";
+import { I, isBusy, useImport, useImportRows, useImportsHome, useRefreshImport } from "./api";
 import { ImportStatusBadge } from "./hub";
+import { UploadZone, useUploadImport } from "./upload";
+
+/** Where "back" goes: the hub tab for administrators, the marking list for faculty. */
+function useListPath(job: ImportJob): string {
+  const { admin } = useImportsHome();
+  if (!admin) return "/marking";
+  return job.kind === "marks" ? "/admin/imports?kind=marks" : "/admin/imports";
+}
+
+const str = (v: unknown): string | undefined => (typeof v === "string" && v ? v : undefined);
 
 const STEPS = [{ label: "Upload" }, { label: "Check" }, { label: "Review" }, { label: "Import" }];
 
@@ -242,12 +252,20 @@ function Issues({ issues }: { issues: ImportIssue[] }) {
   );
 }
 
-function rowLabel(r: ImportRow): { id: string; name: string } {
+function rowLabel(r: ImportRow, kind: ImportJob["kind"]): { id: string; name: string } {
   const n = r.normalized ?? {};
-  return {
-    id: typeof n.enrollment_no === "string" && n.enrollment_no ? n.enrollment_no : (r.raw[0] ?? ""),
-    name: typeof n.full_name === "string" ? n.full_name : r.raw.slice(1, 3).join(" "),
-  };
+  const id = typeof n.enrollment_no === "string" && n.enrollment_no ? n.enrollment_no : (r.raw[0] ?? "");
+  if (kind === "marks") {
+    const items = Array.isArray(n.items) ? (n.items as { course_code?: string }[]) : [];
+    return {
+      id,
+      name: items
+        .map((i) => i.course_code)
+        .filter(Boolean)
+        .join(", "),
+    };
+  }
+  return { id, name: typeof n.full_name === "string" ? n.full_name : r.raw.slice(1, 3).join(" ") };
 }
 
 function RowsTable({ job, actions }: { job: ImportJob; actions?: ReactNode }) {
@@ -279,7 +297,7 @@ function RowsTable({ job, actions }: { job: ImportJob; actions?: ReactNode }) {
               <li key={i} className="h-20 animate-pulse rounded-lg bg-surface-2" />
             ))
           : items.map((r) => {
-              const label = rowLabel(r);
+              const label = rowLabel(r, job.kind);
               return (
                 <li key={r.row_no} className="rounded-lg border border-border p-3 text-[13px]">
                   <p className="mb-1.5 text-fg-subtle">
@@ -319,7 +337,7 @@ function RowsTable({ job, actions }: { job: ImportJob; actions?: ReactNode }) {
               </tr>
             ) : (
               items.map((r) => {
-                const label = rowLabel(r);
+                const label = rowLabel(r, job.kind);
                 return (
                   <tr key={r.row_no} className="align-top">
                     <Td className="tabular text-fg-subtle">{r.row_no}</Td>
@@ -347,49 +365,71 @@ function RowsTable({ job, actions }: { job: ImportJob; actions?: ReactNode }) {
 }
 
 function ReuploadDialog({ job, onClose }: { job: ImportJob; onClose: () => void }) {
-  const navigate = useNavigate();
-  const upload = useMutation({
-    mutationFn: (file: File) =>
-      uploadImport(file, {
-        kind: job.kind,
-        mode: typeof job.params.mode === "string" ? job.params.mode : undefined,
-        session_id: typeof job.params.session_id === "string" ? job.params.session_id : undefined,
-        supersedes_id: job.id,
-      }),
-    onSuccess: (j) => {
-      onClose();
-      void navigate(`/admin/imports/${j.id}`);
-    },
-    onError: (e) => toastError(e),
-  });
+  const upload = useUploadImport(onClose);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         title="Upload the fixed file"
         description="This check is replaced by the new file. If the columns are the same, your mapping is kept."
       >
-        {upload.isPending ? (
-          <div className="flex items-center justify-center gap-3 py-10 text-sm text-fg-muted">
-            <Spinner className="size-5" label="" /> Uploading…
-          </div>
-        ) : (
-          <FileDropzone accept=".xlsx,.csv" maxBytes={10 * 1024 * 1024} onFile={(f) => upload.mutate(f)} />
-        )}
+        <UploadZone
+          uploading={upload.isPending ? (upload.variables?.file.name ?? "") : null}
+          onFile={(file) =>
+            upload.mutate({
+              file,
+              fields: {
+                kind: job.kind,
+                mode: str(job.params.mode),
+                session_id: str(job.params.session_id),
+                exam_id: str(job.params.exam_id),
+                paper_id: str(job.params.paper_id),
+                supersedes_id: job.id,
+              },
+            })
+          }
+        />
       </DialogContent>
     </Dialog>
   );
 }
 
+/** What committing will do, as one sentence in the words of the kind being imported (null: nothing). */
+export function outcomeOf(job: ImportJob): string | null {
+  const s = job.summary as Record<string, unknown>;
+  const creates = Number(s.create ?? 0);
+  const updates = Number(s.update ?? 0);
+  if (creates + updates === 0) return null;
+  if (job.kind === "marks") {
+    // One "entry" is a student's marks for one paper; a single-paper file has one per student.
+    const papers = Array.isArray(s.papers) ? (s.papers as string[]) : [];
+    const n = creates + updates;
+    const what = s.shape === "single" ? noun(n, "student") : noun(n, "student paper");
+    const split = [
+      creates > 0 && `${formatNumber(creates)} new`,
+      updates > 0 && `${formatNumber(updates)} changed`,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const across = papers.length > 1 ? ` across ${papers.join(", ")}` : "";
+    return `Saves marks for ${formatNumber(n)} ${what}${across}: ${split}.`;
+  }
+  const parts = [
+    creates > 0 && `${formatNumber(creates)} new ${noun(creates, "student")} will be added`,
+    updates > 0 && `${formatNumber(updates)} existing ${noun(updates, "student")} will be updated`,
+  ].filter(Boolean);
+  return `${parts.join(" and ")}.`;
+}
+
 function Review({ job }: { job: ImportJob }) {
   const navigate = useNavigate();
+  const listPath = useListPath(job);
+  const marks = job.kind === "marks";
   const refresh = useRefreshImport(job.id);
   const [remap, setRemap] = useState(false);
   const [reupload, setReupload] = useState(false);
   const [confirm, setConfirm] = useState<null | { skipErrors: boolean }>(null);
   const [cancelling, setCancelling] = useState(false);
   const s = job.summary as Record<string, number | string | boolean | null>;
-  const creates = Number(s.create ?? 0);
-  const updates = Number(s.update ?? 0);
   const ready = job.rows_valid + job.rows_warning;
   const blocking = job.file_issues.filter((i) => i.severity === "error");
   const commit = useMutation({
@@ -410,7 +450,7 @@ function Review({ job }: { job: ImportJob }) {
       refresh(j);
       setCancelling(false);
       toast.success("Import cancelled");
-      void navigate("/admin/imports");
+      void navigate(listPath);
     },
     onError: (e) => toastError(e),
   });
@@ -422,10 +462,7 @@ function Review({ job }: { job: ImportJob }) {
 
   if (remap) return <MappingPanel job={job} onDone={() => setRemap(false)} />;
 
-  const outcome = [
-    creates > 0 && `${formatNumber(creates)} new ${noun(creates, "student")} will be added`,
-    updates > 0 && `${formatNumber(updates)} existing ${noun(updates, "student")} will be updated`,
-  ].filter(Boolean);
+  const sentence = outcomeOf(job);
   return (
     <div className="flex flex-col gap-5">
       {job.error_detail && (
@@ -500,9 +537,7 @@ function Review({ job }: { job: ImportJob }) {
             ? "Fix the problem above before importing."
             : ready === 0
               ? "No rows can be imported yet."
-              : outcome.length
-                ? `${outcome.join(" and ")}.`
-                : "Everything in this file is already up to date."}
+              : (sentence ?? "Everything in this file is already up to date.")}
           {job.rows_error > 0 && ready > 0 && blocking.length === 0 && (
             <> {pluralize(job.rows_error, "row")} with errors can be skipped.</>
           )}
@@ -535,17 +570,19 @@ function Review({ job }: { job: ImportJob }) {
         <ConfirmDialog
           open
           onOpenChange={(o) => !o && setConfirm(null)}
-          title="Import these students?"
+          title={marks ? "Save these marks?" : "Import these students?"}
           description={
             <>
-              {outcome.length ? `${outcome.join(" and ")}.` : "No student details change."}{" "}
+              {sentence ?? (marks ? "No marks change." : "No student details change.")}{" "}
               {Boolean(s.cohort_column) &&
                 "Students with a cohort in the file are placed in it (moving them out of a sibling cohort). "}
               {confirm.skipErrors && `${pluralize(job.rows_error, "row")} with errors will be skipped. `}
+              {marks &&
+                "If anyone changed one of these marks in the grid since the check, nothing is saved and you'll be asked to check the file again. "}
               Everything happens in one step: if anything fails, nothing changes.
             </>
           }
-          confirmLabel="Import"
+          confirmLabel={marks ? "Save marks" : "Import"}
           loading={commit.isPending}
           onConfirm={() => commit.mutate(confirm.skipErrors)}
         />
@@ -565,6 +602,66 @@ function Review({ job }: { job: ImportJob }) {
       )}
       {reupload && <ReuploadDialog job={job} onClose={() => setReupload(false)} />}
     </div>
+  );
+}
+
+function MarksDone({ job }: { job: ImportJob }) {
+  const { admin } = useImportsHome();
+  const qc = useQueryClient();
+  useEffect(() => {
+    void qc.invalidateQueries({ queryKey: ["marking"] }); // progress on the work list changed
+  }, [qc]);
+  const r = (job.summary.result ?? {}) as {
+    created?: number;
+    updated?: number;
+    unchanged?: number;
+    papers?: Record<string, number>;
+  };
+  const parts = [
+    r.created && `${formatNumber(r.created)} new`,
+    r.updated && `${formatNumber(r.updated)} changed`,
+    r.unchanged && `${formatNumber(r.unchanged)} already up to date`,
+  ].filter(Boolean);
+  const papers = Object.entries(r.papers ?? {});
+  const examId = str(job.params.exam_id);
+  return (
+    <Section>
+      <div className="flex flex-col items-center gap-3 py-6 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-success-soft text-success">
+          <CheckCircle2 className="size-6" aria-hidden />
+        </span>
+        <h2 className="text-lg font-semibold text-fg">Marks saved</h2>
+        <p className="text-sm text-fg-muted">{parts.join(" · ") || "Nothing needed to change."}</p>
+        {papers.length > 0 && (
+          <p className="text-[13px] text-fg-subtle">
+            {papers.map(([code, n]) => `${code}: ${formatNumber(n)}`).join(" · ")}
+          </p>
+        )}
+        <p className="text-[13px] text-fg-subtle">
+          {job.committed_by_name ? `By ${job.committed_by_name}, ` : ""}
+          {formatRelative(job.committed_at)}
+        </p>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          <Button asChild>
+            <Link to="/marking">
+              <ClipboardList aria-hidden /> Open marks entry
+            </Link>
+          </Button>
+          {admin && examId && (
+            <Button variant="secondary" asChild>
+              <Link to={`/admin/exams/${examId}`}>Back to the exam</Link>
+            </Button>
+          )}
+          {admin && (
+            <Button variant="ghost" asChild>
+              <Link to={`/admin/imports?kind=marks${examId ? `&exam=${examId}` : ""}`}>
+                Import another file
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+    </Section>
   );
 }
 
@@ -616,6 +713,7 @@ function Done({ job }: { job: ImportJob }) {
 export default function ImportJobPage() {
   const { importId = "" } = useParams();
   const q = useImport(importId);
+  const { admin } = useImportsHome();
   const [reupload, setReupload] = useState(false);
   if (q.isPending) {
     return (
@@ -635,16 +733,24 @@ export default function ImportJobPage() {
     );
   }
   const job = q.data;
+  const marks = job.kind === "marks";
+  const papers = Array.isArray(job.summary.papers) ? (job.summary.papers as string[]) : [];
+  const back = admin ? (
+    <Link to={marks ? "/admin/imports?kind=marks" : "/admin/imports"}>Imports</Link>
+  ) : (
+    <Link to="/marking">Marks entry</Link>
+  );
   return (
     <>
       <PageHeader
-        breadcrumb={<Link to="/admin/imports">Imports</Link>}
+        breadcrumb={back}
         title={job.file_name ?? "Import"}
         meta={
           <>
             <ImportStatusBadge status={job.status} />
             <span className="text-[13px] text-fg-subtle">
-              Student import · uploaded {formatRelative(job.created_at)}
+              {marks ? `Marks import${papers.length ? ` · ${papers.join(", ")}` : ""}` : "Student import"} ·
+              uploaded {formatRelative(job.created_at)}
               {job.created_by_name && <> by {job.created_by_name}</>}
             </span>
           </>
@@ -656,7 +762,7 @@ export default function ImportJobPage() {
       {isBusy(job.status) && <Busy job={job} />}
       {job.status === "needs_mapping" && <MappingPanel job={job} />}
       {job.status === "validated" && <Review job={job} />}
-      {job.status === "committed" && <Done job={job} />}
+      {job.status === "committed" && (marks ? <MarksDone job={job} /> : <Done job={job} />)}
       {job.status === "failed" && (
         <Callout
           tone="danger"
@@ -673,8 +779,11 @@ export default function ImportJobPage() {
       {job.status === "cancelled" && (
         <Callout tone="info" title="This import was cancelled">
           Nothing from this file was imported.{" "}
-          <Link to="/admin/imports" className="font-medium underline">
-            Start a new import
+          <Link
+            to={admin ? (marks ? "/admin/imports?kind=marks" : "/admin/imports") : "/marking"}
+            className="font-medium underline"
+          >
+            {admin ? "Start a new import" : "Back to marks entry"}
           </Link>
           .
         </Callout>

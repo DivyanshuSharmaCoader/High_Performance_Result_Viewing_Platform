@@ -11,11 +11,13 @@ import {
   toast,
 } from "@scorecode/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Check, CloudUpload, Loader2, Send, Undo2 } from "lucide-react";
+import { AlertTriangle, Check, CloudUpload, FileUp, Loader2, Send, Undo2 } from "lucide-react";
 import { useEffect, useReducer, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { Link, useParams } from "react-router";
 
 import { toastError } from "../../lib/forms";
+import { useCan } from "../../lib/session";
+import { MarksImportDialog } from "../imports/upload";
 import {
   CODES,
   attendanceOf,
@@ -160,6 +162,10 @@ function Grid({ sheet, onRefetch }: { sheet: MarkSheet; onRefetch: () => Promise
   const [rows, dispatch] = useReducer(reducer, sheet, init);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [returning, setReturning] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const adminImports = useCan("imports.manage");
+  const ownImports = useCan("imports.marks_assigned");
+  const canImport = adminImports || ownImports;
   const table = useRef<HTMLTableElement>(null);
   const url = `/api/v1/exams/${sheet.exam_id}/papers/${sheet.paper_id}/cohorts/${sheet.cohort_id}/marks`;
   const readOnly = !sheet.can_edit;
@@ -297,7 +303,18 @@ function Grid({ sheet, onRefetch }: { sheet: MarkSheet; onRefetch: () => Promise
             className="mt-2"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {canImport && !readOnly && (
+            <Button
+              variant="secondary"
+              leadingIcon={<FileUp />}
+              disabled={busy || pending.length > 0}
+              title={pending.length > 0 ? "Wait for your changes to save" : undefined}
+              onClick={() => setImporting(true)}
+            >
+              Import from Excel
+            </Button>
+          )}
           {sheet.can_return && (
             <Button variant="secondary" leadingIcon={<Undo2 />} onClick={() => setReturning(true)}>
               Return to faculty
@@ -413,6 +430,15 @@ function Grid({ sheet, onRefetch }: { sheet: MarkSheet; onRefetch: () => Promise
           </tbody>
         </table>
       </div>
+      {importing && (
+        <MarksImportDialog
+          examId={sheet.exam_id}
+          paperId={sheet.paper_id}
+          cohortId={sheet.cohort_id}
+          title={`Import ${sheet.course_code} marks for ${sheet.cohort_code}`}
+          onClose={() => setImporting(false)}
+        />
+      )}
       <ConfirmDialog
         open={confirmSubmit}
         onOpenChange={setConfirmSubmit}
@@ -451,10 +477,13 @@ export default function MarkSheetPage() {
     queryKey: ["marks", "sheet", url],
     queryFn: () => api.get<MarkSheet>(url),
     staleTime: Infinity,
+    refetchOnMount: "always",
   });
-  if (q.isPending) return <Skeleton className="h-96 w-full" />;
   if (q.error)
     return <Callout tone="danger">This mark sheet couldn't be loaded, or it isn't assigned to you.</Callout>;
+  // The grid starts from the sheet it mounts with, so never start it from a cached copy (marks may have been
+  // saved or imported since): wait for this visit's fetch.
+  if (q.isPending || !q.isFetchedAfterMount) return <Skeleton className="h-96 w-full" />;
   const s = q.data;
   const sub = SUBMISSION[s.submission_status];
   return (

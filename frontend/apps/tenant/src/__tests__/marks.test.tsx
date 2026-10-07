@@ -228,4 +228,28 @@ describe("mark sheet", () => {
     expect(screen.getByText(/Faculty Person submitted these marks/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Submit paper" })).not.toBeInTheDocument();
   });
+
+  it("never starts the grid from a cached copy: marks saved or imported since are shown", async () => {
+    const fresh = sheet();
+    fresh.students[1]!.entry = {
+      components: { INT: "22", EXT: "33" },
+      attendance: "present",
+      total: "55.00",
+      version: 1,
+      complete: true,
+      updated_at: "2026-10-07T11:00:00Z",
+      updated_by_name: "An import",
+    };
+    mockApi({ [`GET ${url}`]: () => ({ status: 200, body: fresh }) });
+    renderRoutes(
+      [{ path: "/marking/:examId/:paperId/:cohortId", element: <MarkSheetPage /> }],
+      path,
+      (qc) => {
+        qc.setQueryData(meKey, faculty);
+        qc.setQueryData(["marks", "sheet", url], sheet()); // from an earlier visit, before the import
+      },
+    );
+    expect(await screen.findByRole("textbox", { name: "A002 Internal" })).toHaveValue("22");
+    expect(screen.getByRole("textbox", { name: "A002 External" })).toHaveValue("33");
+  });
 });

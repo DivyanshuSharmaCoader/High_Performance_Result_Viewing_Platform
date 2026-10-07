@@ -1,60 +1,15 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-import { DEMO_TENANTS, apiAs, signIn, uniq, url } from "./support";
+import { DEMO_TENANTS, openMarksExam, signIn, url } from "./support";
 
 const THAPAR = DEMO_TENANTS.thapar;
-
-async function openExam(page: Page): Promise<string> {
-  const sessions = await apiAs<{ id: string; is_current: boolean }[]>(
-    page,
-    "GET",
-    "/api/v1/admin/academic-sessions",
-  );
-  const session = sessions.find((s) => s.is_current)!;
-  const terms = await apiAs<{ id: string }[]>(
-    page,
-    "GET",
-    `/api/v1/admin/academic-sessions/${session.id}/terms`,
-  );
-  const cohorts = await apiAs<{ id: string; code: string }[]>(
-    page,
-    "GET",
-    `/api/v1/admin/cohorts?session_id=${session.id}`,
-  );
-  const cohort = cohorts.find((c) => c.code === "COE-2B")!;
-  const courses = await apiAs<{ items: { id: string; code: string }[] }>(
-    page,
-    "GET",
-    "/api/v1/admin/courses?q=UCS310",
-  );
-  const exam = await apiAs<{ id: string }>(page, "POST", "/api/v1/admin/exams", {
-    name: `Quiz ${uniq("")}`,
-    kind: "unit_test",
-    term_id: terms[0]!.id,
-    cohort_ids: [cohort.id],
-  });
-  const withPaper = await apiAs<{ papers: { id: string }[] }>(
-    page,
-    "POST",
-    `/api/v1/admin/exams/${exam.id}/papers`,
-    {
-      course_id: courses.items.find((c) => c.code === "UCS310")!.id,
-      components: [
-        { code: "INT", label: "Internal", max: "40" },
-        { code: "EXT", label: "External", max: "60" },
-      ],
-    },
-  );
-  await apiAs(page, "POST", `/api/v1/admin/exams/${exam.id}/transitions`, { action: "open_entry" });
-  return `/marking/${exam.id}/${withPaper.papers[0]!.id}/${cohort.id}`;
-}
 
 test("P8.3: enter marks with the keyboard, paste a block from Excel, and see a conflict", async ({
   page,
   browser,
 }) => {
   await signIn(page, THAPAR.slug, THAPAR.owner);
-  const sheet = await openExam(page);
+  const { sheet } = await openMarksExam(page);
   await page.goto(url(THAPAR.slug, sheet));
   const grid = page.getByRole("table", { name: "Marks" });
   const status = page.getByRole("status");

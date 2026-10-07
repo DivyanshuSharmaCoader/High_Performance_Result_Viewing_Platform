@@ -21,7 +21,18 @@ import {
   toast,
 } from "@scorecode/ui";
 import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2, Circle, FileText, MoreHorizontal, Pencil, Plus, Trash2, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  FileDown,
+  FileText,
+  FileUp,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
@@ -29,12 +40,14 @@ import { toastError } from "../../lib/forms";
 import { useCan } from "../../lib/session";
 import { useCohorts } from "../academics/api";
 import { useSchemes } from "../grading/api";
+import { templateUrl } from "../imports/api";
 import { E, KIND_LABEL, SETUP_EDITABLE, trimNum, useExam, useSetExam } from "./api";
 import { ExamStatusBadge } from "./list";
 import { FacultyDialog, PaperDialog } from "./papers";
 
 function Lifecycle({ exam, canManage }: { exam: Exam; canManage: boolean }) {
   const setExam = useSetExam();
+  const canImport = useCan("imports.manage");
   const [pending, setPending] = useState<ExamAction | null>(null);
   const ready = exam.checks.every((c) => c.ok);
   const move = useMutation({
@@ -94,6 +107,20 @@ function Lifecycle({ exam, canManage }: { exam: Exam; canManage: boolean }) {
               ? "Marks entry is closed. Reopen it if marks need to change."
               : "This exam has moved past marks entry."}
         </p>
+      )}
+      {canImport && (exam.status === "marks_entry_open" || exam.status === "marks_entry_closed") && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" asChild>
+            <Link to={`/admin/imports?kind=marks&exam=${exam.id}`}>
+              <FileUp aria-hidden /> Import marks from Excel
+            </Link>
+          </Button>
+          <Button size="sm" variant="ghost" asChild>
+            <a href={templateUrl("marks", { exam_id: exam.id })}>
+              <FileDown aria-hidden /> Template for all papers
+            </a>
+          </Button>
+        </div>
       )}
       {pending && (
         <ConfirmDialog
