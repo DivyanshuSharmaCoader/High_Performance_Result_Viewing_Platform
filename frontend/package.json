@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "e2e": "playwright test",
-    "budget": "node scripts/check-budget.mjs"
+    "budget": "node scripts/check-budget.mjs && node apps/tenant/scripts/check-bundle.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

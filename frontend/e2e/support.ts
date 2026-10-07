@@ -133,18 +133,24 @@ export async function apiAs<T = unknown>(
   method: string,
   path: string,
   body?: unknown,
+  headers: Record<string, string> = {},
 ): Promise<T> {
   const result = await page.evaluate(
-    async ({ method, path, body }) => {
+    async ({ method, path, body, headers }) => {
       const csrf = document.cookie.match(/(?:^|; )(?:__Host-)?sc_csrf=([^;]+)/)?.[1] ?? "";
       const res = await fetch(path, {
         method,
-        headers: { "X-CSRF-Token": csrf, "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "X-CSRF-Token": csrf,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          ...headers,
+        },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
       return { ok: res.ok, status: res.status, text: await res.text() };
     },
-    { method, path, body },
+    { method, path, body, headers },
   );
   if (!result.ok) throw new Error(`${method} ${path} → ${result.status}: ${result.text}`);
   return (result.text ? JSON.parse(result.text) : undefined) as T;

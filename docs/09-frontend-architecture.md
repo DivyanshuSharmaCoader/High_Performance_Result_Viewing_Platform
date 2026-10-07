@@ -153,7 +153,13 @@ Composites: `AppShell` (role-aware nav), `TenantLogo`, `ResultCard`, `ResultTabl
 ## 7. Routing & role guards
 - Route trees: `/` (role home redirect), `/results/*` (student), `/faculty/*`, `/admin/*`.
 - Guards are UX only; every API call is authorized server-side.
-- Lazy-loaded route modules per role: student initial JS budget **< 150 KB gzipped** (a target, checked in CI with a bundle-size check).
+- Lazy-loaded route modules per role: student initial JS budget **< 150 kB gzipped**, **enforced in CI** (`apps/tenant/scripts/check-bundle.mjs`). The check follows the Vite manifest and counts the entry, everything it imports statically, and the student home route. Measured at 139.9 kB on 2026-10-08, down from 185 kB. What got it there:
+  - the staff shell is lazy, so students never download admin navigation;
+  - the UI package is marked side-effect-free, so it tree-shakes per route;
+  - the re-auth dialog loads only when an action asks for a password;
+  - the toaster loads right after first paint;
+  - the student account menu is a small disclosure, not the positioning-engine menu.
+- The student portal (`/me`, `/me/results/{publication}`) renders the published snapshot through `StudentResultView`. The admin preview on the Results tab uses the same component with a snapshot-shaped payload built from the run (`features/results/preview.ts`), so what is approved is what students see.
 
 ## 8. Data fetching & caching rules
 - Query keys always include the resource identity; **tenant isolation on the client is provided by the origin** (each tenant is a separate origin, so caches/localStorage never mix).

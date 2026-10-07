@@ -17,6 +17,7 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: true,
+    manifest: true, // read by scripts/check-bundle.mjs (the student JS budget, P10.5)
     chunkSizeWarningLimit: 600,
   },
   test: {

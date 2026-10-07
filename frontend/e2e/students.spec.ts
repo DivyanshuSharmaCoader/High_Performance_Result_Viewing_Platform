@@ -94,7 +94,7 @@ test("P6.7: admin issues an activation code, the student activates, signs out an
   await expect(student.getByText("No results yet")).toBeVisible();
 
   await student.getByRole("button", { name: "Account menu" }).click();
-  await student.getByRole("menuitem", { name: "Sign out" }).click();
+  await student.getByRole("button", { name: "Sign out" }).click();
   await expect(student).toHaveURL(/\/login/);
   await signIn(student, COACHING.slug, enrollment, password);
   await expect(student).toHaveURL(/\/me$/);

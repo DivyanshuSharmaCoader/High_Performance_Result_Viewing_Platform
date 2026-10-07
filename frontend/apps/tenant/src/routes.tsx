@@ -2,13 +2,13 @@ import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from "re
 import { Navigate, Outlet, createBrowserRouter } from "react-router";
 
 import { ReauthProvider } from "./components/reauth";
-import { StaffShell } from "./components/staff-shell";
 import { StudentShell } from "./components/student-shell";
 import { BootSplash, NotFound, RouteError } from "./components/system-pages";
 import { RequireAuth, RequirePermission, homePathFor, useSession } from "./lib/session";
 import { TenantProvider } from "./lib/tenant";
 
-// Route-level code splitting: students never download admin code (docs/09 §7).
+// Route-level code splitting: students never download admin code (docs/09 §7) — not even the staff shell.
+const StaffShell = lazy(() => import("./components/staff-shell").then((m) => ({ default: m.StaffShell })));
 const page = (load: () => Promise<{ default: ComponentType }>) => lazy(load);
 const Login = page(() => import("./features/auth/login"));
 const Activate = page(() => import("./features/auth/activate"));
@@ -22,6 +22,7 @@ const Plan = page(() => import("./features/admin/plan"));
 const Audit = page(() => import("./features/admin/audit"));
 const Account = page(() => import("./features/account/account"));
 const StudentHome = page(() => import("./features/student/home"));
+const StudentResult = page(() => import("./features/student/result"));
 const Students = page(() => import("./features/students/list"));
 const StudentDetail = page(() => import("./features/students/detail"));
 const Activation = page(() => import("./features/students/activation"));
@@ -91,11 +92,13 @@ function Home() {
 
 function Shell() {
   return (
-    <StaffShell>
-      <Suspense fallback={<div className="h-96" aria-busy="true" />}>
-        <Outlet />
-      </Suspense>
-    </StaffShell>
+    <Suspense fallback={<BootSplash />}>
+      <StaffShell>
+        <Suspense fallback={<div className="h-96" aria-busy="true" />}>
+          <Outlet />
+        </Suspense>
+      </StaffShell>
+    </Suspense>
   );
 }
 
@@ -122,6 +125,7 @@ export const router = createBrowserRouter([
                 element: <StudentFrame />,
                 children: [
                   { index: true, element: <StudentHome /> },
+                  { path: "results/:publicationId", element: <StudentResult /> },
                   { path: "account", element: <Account /> },
                 ],
               },

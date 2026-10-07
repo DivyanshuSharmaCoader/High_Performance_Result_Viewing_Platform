@@ -2,6 +2,7 @@ import {
   api,
   ApiError,
   newIdempotencyKey,
+  type Exam,
   type ResultOutcome,
   type ResultsOverview,
 } from "@scorecode/api-client";
@@ -63,7 +64,10 @@ import {
   type Anomaly,
   type ResultStats,
 } from "./api";
-import { ResultCard, type PaperMeta } from "./card";
+import { StudentResultView } from "../student/result-view";
+import { useTenant } from "../../lib/tenant";
+import { previewPayload } from "./preview";
+import { PublishPanel } from "./publish";
 
 type Pending = "process" | "approve" | "reject" | "revoke" | "discard" | null;
 
@@ -614,19 +618,18 @@ function Students({ o, onOpen }: { o: ResultsOverview; onOpen: (studentId: strin
 }
 
 function StudentSheet({
-  examId,
-  runId,
+  o,
+  exam,
   studentId,
-  papers,
   onClose,
 }: {
-  examId: string;
-  runId: string;
+  o: ResultsOverview;
+  exam: Exam | undefined;
   studentId: string | null;
-  papers: Map<string, PaperMeta>;
   onClose: () => void;
 }) {
-  const q = useResultStudent(examId, runId, studentId);
+  const q = useResultStudent(o.exam_id, o.run?.id ?? "", studentId);
+  const { branding } = useTenant();
   return (
     <Sheet open={Boolean(studentId)} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
@@ -639,7 +642,7 @@ function StudentSheet({
         ) : q.error ? (
           <Callout tone="danger">This result couldn&apos;t be loaded.</Callout>
         ) : (
-          <ResultCard result={q.data} papers={papers} />
+          <StudentResultView payload={previewPayload(q.data, exam, o, branding.display_name)} />
         )}
       </SheetContent>
     </Sheet>
@@ -705,32 +708,18 @@ export default function ExamResultsPage() {
   const o = q.data;
   const stats = statsOf(o);
   const showResults = o.run && stats && o.run.status !== "running" && o.run.status !== "failed";
-  const papers = new Map<string, PaperMeta>(
-    (exam.data?.papers ?? []).map((p) => [
-      p.id,
-      {
-        id: p.id,
-        course_code: p.course_code,
-        course_name: p.course_name,
-        components: p.components.map((c) => ({ code: c.code, label: c.label, max: c.max })),
-      },
-    ]),
-  );
   return (
     <div className="flex flex-col gap-5">
       <RunPanel o={o} />
+      {["approved", "scheduled", "published", "withdrawn"].includes(o.exam_status) && (
+        <PublishPanel examId={o.exam_id} examStatus={o.exam_status} students={o.run?.students ?? 0} />
+      )}
       {showResults && (
         <>
           <Stats s={stats} />
           <Anomalies items={anomaliesOf(o)} onOpen={setStudentId} />
           <Students o={o} onOpen={setStudentId} />
-          <StudentSheet
-            examId={o.exam_id}
-            runId={o.run!.id}
-            studentId={studentId}
-            papers={papers}
-            onClose={() => setStudentId(null)}
-          />
+          <StudentSheet o={o} exam={exam.data} studentId={studentId} onClose={() => setStudentId(null)} />
         </>
       )}
       <History o={o} />

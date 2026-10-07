@@ -1,12 +1,18 @@
-import { api, ApiError } from "@scorecode/api-client";
-import { Button, Callout, Dialog, DialogContent, Field, PasswordInput } from "@scorecode/ui";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
-
-import { meKey } from "../lib/session";
+import { ApiError } from "@scorecode/api-client";
+import {
+  createContext,
+  lazy,
+  Suspense,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 type Run = <T>(action: () => Promise<T>) => Promise<T>;
 const ReauthContext = createContext<Run | null>(null);
+const ReauthDialog = lazy(() => import("./reauth-dialog"));
 
 /**
  * Sensitive actions (role changes, ownership transfer, publishing) need a recent password confirmation
@@ -15,19 +21,7 @@ const ReauthContext = createContext<Run | null>(null);
  */
 export function ReauthProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [password, setPassword] = useState("");
   const pending = useRef<{ resolve: () => void; reject: (e: unknown) => void } | null>(null);
-  const qc = useQueryClient();
-  const confirm = useMutation({
-    mutationFn: () => api.post("/api/v1/auth/reauth", { password }),
-    onSuccess: () => {
-      setOpen(false);
-      setPassword("");
-      void qc.invalidateQueries({ queryKey: meKey });
-      pending.current?.resolve();
-      pending.current = null;
-    },
-  });
 
   const run = useCallback<Run>(async (action) => {
     try {
@@ -42,58 +36,22 @@ export function ReauthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const finish = (confirmed: boolean) => {
+    setOpen(false);
+    if (confirmed) pending.current?.resolve();
+    else
+      pending.current?.reject(new ApiError(401, { code: "reauth-cancelled", detail: "Action cancelled." }));
+    pending.current = null;
+  };
+
   return (
     <ReauthContext.Provider value={run}>
       {children}
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          if (!next) {
-            pending.current?.reject(
-              new ApiError(401, { code: "reauth-cancelled", detail: "Action cancelled." }),
-            );
-            pending.current = null;
-            setPassword("");
-            confirm.reset();
-          }
-          setOpen(next);
-        }}
-      >
-        <DialogContent
-          title="Confirm it's you"
-          description="For your security, enter your password to continue with this action."
-          size="sm"
-          footer={
-            <>
-              <Button variant="secondary" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button form="reauth-form" type="submit" loading={confirm.isPending} disabled={!password}>
-                Confirm
-              </Button>
-            </>
-          }
-        >
-          <form
-            id="reauth-form"
-            className="flex flex-col gap-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              confirm.mutate();
-            }}
-          >
-            {confirm.error && <Callout tone="danger">That password isn't right.</Callout>}
-            <Field label="Password">
-              <PasswordInput
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                autoFocus
-              />
-            </Field>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {open && (
+        <Suspense fallback={null}>
+          <ReauthDialog onDone={() => finish(true)} onCancel={() => finish(false)} />
+        </Suspense>
+      )}
     </ReauthContext.Provider>
   );
 }

@@ -195,3 +195,12 @@ export type ResultStudent = Schemas["ResultStudentOut"];
 export type ResultPaper = Schemas["ResultPaperOut"];
 export type ResultStudentsPage = Schemas["ResultStudentsPage"];
 export type ResultOutcome = ResultStudent["outcome"];
+
+// ---- Student results (published snapshots) ----------------------------------------------------------
+export type ResultPayload = Schemas["ResultPayload"];
+export type SnapPaper = Schemas["SnapPaper"];
+export type SnapResult = Schemas["SnapResult"];
+export type MyResult = Schemas["MyResultOut"];
+export type MyResultItem = Schemas["MyResultItem"];
+export type MyStats = Schemas["MyStatsOut"];
+export type Publication = Schemas["PublicationOut"];

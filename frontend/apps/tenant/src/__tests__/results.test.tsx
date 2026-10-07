@@ -6,7 +6,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ReauthProvider } from "../components/reauth";
 import ExamResultsPage from "../features/results/page";
 import { meKey } from "../lib/session";
-import { mockApi, ownerMe, renderRoutes } from "./test-utils";
+import { TenantProvider, tenantConfigKey } from "../lib/tenant";
+import { mockApi, ownerMe, renderRoutes, tenantConfig } from "./test-utils";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -152,11 +153,14 @@ const student: ResultStudent = {
 
 const exam = {
   id: "e1",
+  kind: "semester",
+  term: { name: "Odd semester", session_code: "2025-26" },
   papers: [
     {
       id: "p1",
       course_code: "UCS301",
       course_name: "Data Structures",
+      credits: "4.0",
       components: [
         { code: "INT", label: "Internal", max: "40" },
         { code: "EXT", label: "External", max: "60" },
@@ -171,14 +175,19 @@ const render = () =>
       {
         path: "/admin/exams/:examId/results",
         element: (
-          <ReauthProvider>
-            <ExamResultsPage />
-          </ReauthProvider>
+          <TenantProvider>
+            <ReauthProvider>
+              <ExamResultsPage />
+            </ReauthProvider>
+          </TenantProvider>
         ),
       },
     ],
     "/admin/exams/e1/results",
-    (qc) => qc.setQueryData(meKey, admin),
+    (qc) => {
+      qc.setQueryData(meKey, admin);
+      qc.setQueryData(tenantConfigKey, tenantConfig);
+    },
   );
 
 describe("results page", () => {
@@ -261,10 +270,12 @@ describe("results page", () => {
     const card = within(sheet).getByRole("article", { name: "Result of Asha Rao" });
     expect(within(card).getByText("SGPA").nextSibling).toHaveTextContent("9");
     expect(within(card).getByText("Percentage").nextSibling).toHaveTextContent("85%");
-    const row = within(card).getByRole("row", { name: /UCS301/ });
-    expect(row).toHaveTextContent("Internal 35/40");
-    expect(row).toHaveTextContent("External 50/60");
-    expect(row).toHaveTextContent("A+");
+    // The preview is the student's own view: one card per paper, marks against each component's maximum.
+    const paper = within(card).getByText("Data Structures").closest("li")!;
+    expect(paper).toHaveTextContent("Internal35 / 40");
+    expect(paper).toHaveTextContent("External50 / 60");
+    expect(paper).toHaveTextContent("A+");
+    expect(within(card).getByText("Passed")).toBeInTheDocument();
   });
 
   it("approves after confirming the password", async () => {

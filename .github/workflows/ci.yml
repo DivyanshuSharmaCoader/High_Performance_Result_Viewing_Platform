@@ -102,7 +102,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
-      - name: Bundle budget (student entry < 150 KB gz is the P10.5 target; reported now)
+      - name: Bundle budget (student first load < 150 kB gz, enforced — P10.5)
         run: pnpm budget
 
   e2e:

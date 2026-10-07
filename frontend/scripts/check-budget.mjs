@@ -1,5 +1,6 @@
 // Reports gzipped JavaScript size per app entry (initial load = entry chunk + its static imports).
-// docs/09 §7: student initial JS budget < 150 KB gz — enforced from P10.5 (student portal); reported until then.
+// A per-app report. The student budget itself (< 150 kB gz for entry + student route) is enforced by
+// apps/tenant/scripts/check-bundle.mjs, which follows the Vite manifest rather than index.html preloads.
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
