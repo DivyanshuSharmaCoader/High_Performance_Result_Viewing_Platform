@@ -171,3 +171,13 @@ export type MarkEntry = Schemas["EntryOut"];
 export type SavedMark = Schemas["SavedEntryOut"];
 export type MarkingWork = Schemas["WorkItemOut"];
 export type Attendance = MarkEntry["attendance"];
+
+// ---- Results ----------------------------------------------------------------------------------------
+export type ResultsOverview = Schemas["ResultsOverviewOut"];
+export type ResultRun = Schemas["ResultRunOut"];
+export type ResultRunStatus = ResultRun["status"];
+export type ResultApproval = Schemas["ResultApprovalOut"];
+export type ResultStudent = Schemas["ResultStudentOut"];
+export type ResultPaper = Schemas["ResultPaperOut"];
+export type ResultStudentsPage = Schemas["ResultStudentsPage"];
+export type ResultOutcome = ResultStudent["outcome"];

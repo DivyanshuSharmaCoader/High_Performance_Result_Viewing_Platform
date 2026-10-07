@@ -175,3 +175,20 @@ async def test_prefilled_template_round_trips(app, infra) -> None:
         await fac.login(x.stranger_login)  # a faculty member assigned to nothing
         r = await fac.get(f"{IMPORTS}/template.xlsx", params={"kind": "marks", "exam_id": x.exam_id})
         assert r.status_code == 404
+
+
+async def test_an_exam_with_one_paper_needs_no_course_column(app, infra) -> None:
+    x = await _setup(app, infra)  # one paper
+    async with Client(app, x.t.host) as c:
+        await c.login(x.t.owner_email)
+        job = await _upload(c, b"Roll No,Internal,External\nA001,30,40\nA002,AB,\n", exam_id=x.exam_id)
+        job = await _checked(c, infra, job["id"])
+        assert job["status"] == "validated", job["file_issues"]
+        assert (job["rows_valid"], job["rows_error"]) == (2, 0)
+        assert job["summary"]["create"] == 2 and job["summary"]["papers"] == [x.s.course_code]
+        named = await _upload(c, b"Roll No,Course,INT\nA003,NOPE,5\n", exam_id=x.exam_id, name="named.csv")
+        named = await _checked(c, infra, named["id"])
+        rows = (await c.get(f"{IMPORTS}/{named['id']}/rows", params={"status": "error"})).json()["items"]
+        assert [i["code"] for i in rows[0]["issues"]] == [
+            "PAPER_NOT_IN_EXAM"
+        ]  # a named course is still checked

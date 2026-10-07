@@ -190,7 +190,8 @@ class MarksProfile:
             if first:
                 missing.append(first)
         elif long_cols and self.single is None and "course" not in mapping and not wide_cols:
-            missing.append("course")
+            if len(self.papers) != 1:  # with one paper in the exam, a course column adds nothing
+                missing.append("course")
         return missing
 
     # ---- validation (pure) ----------------------------------------------------------------------
@@ -291,7 +292,9 @@ class MarksProfile:
                 else:
                     course_raw = v.get("course", "").strip()
                     paper = ctx.papers.get(" ".join(course_raw.split()).upper())
-                    if not course_raw:
+                    if not course_raw and len(self.papers) == 1:
+                        paper = self.papers[0]  # the exam's only paper
+                    if paper is None and not course_raw:
                         issues.append(Issue("MISSING_VALUE", "error", "Course code is missing.", "course"))
                     elif paper is None:
                         hint = suggest(" ".join(course_raw.split()).upper(), sorted(ctx.papers))

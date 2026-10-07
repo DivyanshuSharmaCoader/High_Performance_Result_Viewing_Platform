@@ -21,7 +21,7 @@
 | | |
 |---|---|
 | Current phase | **Phase 9 — Result processing, preview, approval** (Phases 0–8 complete; Gates M1–M3 passed) |
-| Next step | **P9.1, P9.2, P9.4** backend written (tick after CI); P9.3 preview and approval UI with Playwright next, then P9.5 timing (8,000 × 6) |
+| Next step | **P9.3** preview and approval UI written (tick after CI), Gate M4 E2E passes locally; then P9.5 timing (8,000 × 6) and the Gate M4 tick |
 | Last updated | 2026-10-07 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -37,7 +37,7 @@
 | 6 | Directory & generic import framework | 8 | 8 |
 | 7 | Examinations & grading engine | 6 | 6 |
 | 8 | Marks entry & marks import | 7 | 7 |
-| 9 | Result processing, preview, approval | 5 | 0 |
+| 9 | Result processing, preview, approval | 5 | 3 |
 | 10 | Publication, read model, student portal | 6 | 0 |
 | 11 | Marksheet PDFs & verification | 5 | 0 |
 | 12 | Notifications | 3 | 0 |
@@ -150,10 +150,10 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 9 — Result processing, preview, approval
 
-- [ ] **P9.1** Results schema · Done when: Migrations
-- [ ] **P9.2** Processing job · Done when: Determinism test (run twice → identical)
+- [x] **P9.1** Results schema · Done when: Migrations
+- [x] **P9.2** Processing job · Done when: Determinism test (run twice → identical)
 - [ ] **P9.3** Preview & anomalies · Done when: Tests + Playwright
-- [ ] **P9.4** Approval · Done when: Tests incl. stale run cannot be approved
+- [x] **P9.4** Approval · Done when: Tests incl. stale run cannot be approved
 - [ ] **P9.5** Processing performance check · Done when: Result recorded
 - [ ] 🚩 **Gate M4 — Results pipeline** · Done when: Import students & marks with errors → fix → process → preview → approve, on Thapar seed
 
@@ -236,6 +236,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-07 | P9.1, P9.2, P9.4 ticked; P9.3 UI written | P9.1/P9.2/P9.4 verified by CI for 706319d (all 7 jobs). P9.3 UI: the exam workspace now has Setup and Results tabs. Results shows run status and actions (process with a reason when papers are unsubmitted, sent with an Idempotency-Key; approve with re-auth; reject, revoke, back to marks entry), pass rate and averages, a percentage histogram, grades (paper grades for credit schemes), per-paper figures, the anomaly list, and a filterable student list with a result-preview sheet (`ResultCard`, to be reused by the student portal). Five component tests. New E2E `results.spec.ts` covers the Gate M4 flow on the Thapar seed: marks file with an error → fixed file → close entry → process → preview → approve → marks read-only. Local E2E 24/24. Found by looking at screenshots, then fixed: credit schemes showed "This scheme doesn't give grades" (now paper grades); section header actions overflowed on phones (shared `Section` header now wraps); student names truncated on phones (Total column hidden below `sm`). Found by the E2E: a one-paper exam demanded a course column for the simplest file (now read as that paper; integration test). |
 | 2026-10-07 | P9.1, P9.2, P9.4 backend; P9.3 API | Migration 0008: `result_runs`, `student_exam_results`, `student_paper_results`, `approvals`, with RLS. Results and approvals are insert-only for the app (tested). Processing job: set-based loads, engine in a thread, bulk insert, input and content hashes, statistics and anomalies; the exam row is locked against mark writers for the whole run. Determinism is tested at three levels: unit, Hypothesis order-independence, and processing twice end to end. Staleness: an admin mark edit after processing sets results aside, and approval recomputes the input hash as a backstop. Approval needs re-auth and the latest run, records the content hash and locks papers; maker-checker; reject, revoke and discard. Mutation-checked: staleness hook, approval hash recheck, maker-checker rule, input-hash coverage, sort order. Caught on the way: `.capitalize()` lowercased grades in the change notes; a Result-prefixed name avoids an OpenAPI collision (`ReasonIn`, caught by the guard test). 418 backend tests locally. Not built: marksheet pre-render on approval (Phase 11). |
 | 2026-10-07 | P8.5, P8.6 ticked — Phase 8 complete | Verified by CI for 90d6199 (all 7 jobs, including the two new marks-import E2E tests). Next: Phase 9. |
 | 2026-10-07 | P8.7 ticked; P8.5/P8.6 UI written | P8.7 verified by CI for 00330db (all 7 jobs, including the array-binding fix from fd6f172). Marks import UI: Students/Marks tabs in Imports (exam and paper pickers, template link), kind-aware review and done pages, *Import from Excel* on the mark sheet with that cohort's template, and links in the exam workspace. Faculty review at `/marking/imports/{id}`. The new E2E caught a real bug: returning to a cached mark sheet after an import showed the old marks, because the grid starts from cached data and ignores the later refetch. Fixed generally: a sheet always fetches on open and waits for that fetch (component test, mutation-checked). Local E2E 23/23 (new: admin import with an error row plus template download; invited faculty import, return through the app, submit). |

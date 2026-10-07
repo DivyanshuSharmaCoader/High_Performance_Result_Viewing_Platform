@@ -3,11 +3,19 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import ExamWorkspacePage from "../features/exams/workspace";
+import ExamWorkspacePage, { ExamSetupPage } from "../features/exams/workspace";
 import { meKey } from "../lib/session";
 import { mockApi, ownerMe, renderRoutes } from "./test-utils";
 
 afterEach(() => vi.restoreAllMocks());
+
+const workspaceRoutes = [
+  {
+    path: "/admin/exams/:examId",
+    element: <ExamWorkspacePage />,
+    children: [{ index: true, element: <ExamSetupPage /> }],
+  },
+];
 
 const admin: Me = {
   ...ownerMe,
@@ -72,11 +80,7 @@ const common = {
 describe("exam workspace", () => {
   it("shows what's missing and won't open marks entry until ready", async () => {
     mockApi({ ...common, "GET /api/v1/admin/exams/e1": () => ({ status: 200, body: exam() }) });
-    renderRoutes(
-      [{ path: "/admin/exams/:examId", element: <ExamWorkspacePage /> }],
-      "/admin/exams/e1",
-      (qc) => qc.setQueryData(meKey, admin),
-    );
+    renderRoutes(workspaceRoutes, "/admin/exams/e1", (qc) => qc.setQueryData(meKey, admin));
     const checklist = await screen.findByRole("list", { name: "Readiness" });
     expect(within(checklist).getByText("Add at least one paper with its components.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open marks entry" })).toBeDisabled();
@@ -96,11 +100,7 @@ describe("exam workspace", () => {
         }),
       }),
     });
-    renderRoutes(
-      [{ path: "/admin/exams/:examId", element: <ExamWorkspacePage /> }],
-      "/admin/exams/e1",
-      (qc) => qc.setQueryData(meKey, admin),
-    );
+    renderRoutes(workspaceRoutes, "/admin/exams/e1", (qc) => qc.setQueryData(meKey, admin));
     const papers = await screen.findByRole("list", { name: "Papers" });
     expect(within(papers).getByText(/Mid-semester 25 \+ End-semester 45 \(min 18\)/)).toBeInTheDocument();
     expect(within(papers).getByText("COE-2A: admins only")).toBeInTheDocument();
@@ -125,11 +125,7 @@ describe("exam workspace", () => {
         }),
       }),
     });
-    renderRoutes(
-      [{ path: "/admin/exams/:examId", element: <ExamWorkspacePage /> }],
-      "/admin/exams/e1",
-      (qc) => qc.setQueryData(meKey, admin),
-    );
+    renderRoutes(workspaceRoutes, "/admin/exams/e1", (qc) => qc.setQueryData(meKey, admin));
     await userEvent.click(await screen.findByRole("button", { name: "Reopen marks entry" }));
     const dialog = await screen.findByRole("dialog");
     expect(within(dialog).getByRole("button", { name: "Reopen marks entry" })).toBeDisabled();

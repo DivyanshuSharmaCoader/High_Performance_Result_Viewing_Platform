@@ -34,7 +34,7 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, NavLink, Outlet, useNavigate, useOutletContext, useParams } from "react-router";
 
 import { toastError } from "../../lib/forms";
 import { useCan } from "../../lib/session";
@@ -440,10 +440,32 @@ function Papers({ exam, canManage }: { exam: Exam; canManage: boolean }) {
   );
 }
 
+interface ExamOutlet {
+  exam: Exam;
+  canManage: boolean;
+}
+
+/** The Setup tab: lifecycle, papers, cohorts and details. */
+export function ExamSetupPage() {
+  const { exam, canManage } = useOutletContext<ExamOutlet>();
+  return (
+    <div className="flex flex-col gap-5">
+      <Lifecycle exam={exam} canManage={canManage} />
+      <Papers exam={exam} canManage={canManage} />
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        <Cohorts key={exam.version + exam.cohorts.length} exam={exam} canManage={canManage} />
+        <Details key={exam.version} exam={exam} canManage={canManage} />
+      </div>
+    </div>
+  );
+}
+
+/** Exam header and tabs; the tab's page renders in the outlet. */
 export default function ExamWorkspacePage() {
   const { examId = "" } = useParams();
   const navigate = useNavigate();
   const canManage = useCan("exams.manage");
+  const canSeeResults = useCan("results.view");
   const q = useExam(examId);
   const [deleting, setDeleting] = useState(false);
   const del = useMutation({
@@ -481,21 +503,26 @@ export default function ExamWorkspacePage() {
         }
       />
       <nav aria-label="Exam sections" className="mb-5 flex gap-1 border-b border-border">
-        <span
-          aria-current="page"
-          className="-mb-px border-b-2 border-brand px-3 pb-2 text-sm font-semibold text-brand-ink"
-        >
-          Setup
-        </span>
+        {[
+          { to: `/admin/exams/${exam.id}`, label: "Setup", end: true, show: true },
+          { to: `/admin/exams/${exam.id}/results`, label: "Results", end: false, show: canSeeResults },
+        ]
+          .filter((t) => t.show)
+          .map((t) => (
+            <NavLink
+              key={t.to}
+              to={t.to}
+              end={t.end}
+              className={({ isActive }) =>
+                "-mb-px border-b-2 px-3 pb-2 text-sm font-semibold transition-colors " +
+                (isActive ? "border-brand text-brand-ink" : "border-transparent text-fg-subtle hover:text-fg")
+              }
+            >
+              {t.label}
+            </NavLink>
+          ))}
       </nav>
-      <div className="flex flex-col gap-5">
-        <Lifecycle exam={exam} canManage={canManage} />
-        <Papers exam={exam} canManage={canManage} />
-        <div className="grid items-start gap-5 lg:grid-cols-2">
-          <Cohorts key={exam.version + exam.cohorts.length} exam={exam} canManage={canManage} />
-          <Details key={exam.version} exam={exam} canManage={canManage} />
-        </div>
-      </div>
+      <Outlet context={{ exam, canManage } satisfies ExamOutlet} />
       <ConfirmDialog
         open={deleting}
         onOpenChange={setDeleting}

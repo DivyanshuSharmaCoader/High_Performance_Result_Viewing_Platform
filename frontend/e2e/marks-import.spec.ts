@@ -1,27 +1,19 @@
 import { readFile } from "node:fs/promises";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-import { DEMO_TENANTS, apiAs, inviteFaculty, openMarksExam, signIn, url } from "./support";
+import {
+  DEMO_TENANTS,
+  apiAs,
+  inviteFaculty,
+  marksCsv as csv,
+  openMarksExam,
+  rosterOf as roster,
+  signIn,
+  url,
+} from "./support";
 
 const THAPAR = DEMO_TENANTS.thapar;
-
-type Exam = Awaited<ReturnType<typeof openMarksExam>>;
-
-async function roster(admin: Page, exam: Exam): Promise<string[]> {
-  const sheet = await apiAs<{ students: { enrollment_no: string }[] }>(
-    admin,
-    "GET",
-    `/api/v1/exams/${exam.examId}/papers/${exam.paperId}/cohorts/${exam.cohortId}/marks`,
-  );
-  return sheet.students.map((s) => s.enrollment_no);
-}
-
-const csv = (lines: string[]) => ({
-  name: "ucs310-marks.csv",
-  mimeType: "text/csv",
-  buffer: Buffer.from(["Enrollment No,Internal,External", ...lines].join("\n")),
-});
 
 test("P8.5/P8.6: an administrator downloads the template, imports a file with an error, and the grid shows the rest", async ({
   page,

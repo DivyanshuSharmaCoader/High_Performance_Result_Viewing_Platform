@@ -142,6 +142,19 @@ def test_changes_since_the_previous_run_and_unsubmitted_papers_are_reported() ->
     assert found["UNSUBMITTED"]["items"] == [{"detail": "UCS301 · G1 (returned)"}]
 
 
+def test_credit_schemes_report_paper_grades() -> None:
+    s = statistics(compute(inputs("credit_10_point")), (P1, P2))
+    assert s["grades_basis"] == "paper"  # the exam itself gets an SGPA, not a grade
+    # Hand-worked: P1 100% O, 70% A, 25% F (EXT below 21); P2 100% O, 55% B, 50% B, 30% F.
+    assert s["grades"] == [
+        {"grade": "O", "count": 2},
+        {"grade": "A", "count": 1},
+        {"grade": "B", "count": 2},
+        {"grade": "F", "count": 2},
+    ]
+    assert statistics(compute(inputs()), (P1, P2))["grades_basis"] == "exam"
+
+
 def test_ranks_follow_the_scheme() -> None:
     c = compute(inputs("marks_with_ranks"))
     ranks = {o.student.enrollment_no: o.rank for o in c.outcomes}

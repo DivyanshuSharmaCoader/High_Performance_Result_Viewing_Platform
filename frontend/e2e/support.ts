@@ -233,3 +233,23 @@ export async function inviteFaculty(
   );
   return { page, id: staff.find((s) => s.email === email)!.id, close: () => context.close() };
 }
+
+/** Enrollment numbers of the cohort on an exam's mark sheet (admin page). */
+export async function rosterOf(
+  admin: Page,
+  exam: { examId: string; paperId: string; cohortId: string },
+): Promise<string[]> {
+  const sheet = await apiAs<{ students: { enrollment_no: string }[] }>(
+    admin,
+    "GET",
+    `/api/v1/exams/${exam.examId}/papers/${exam.paperId}/cohorts/${exam.cohortId}/marks`,
+  );
+  return sheet.students.map((s) => s.enrollment_no);
+}
+
+/** A marks CSV for Playwright's setInputFiles (Internal /40, External /60). */
+export const marksCsv = (lines: string[], name = "ucs310-marks.csv") => ({
+  name,
+  mimeType: "text/csv",
+  buffer: Buffer.from(["Enrollment No,Internal,External", ...lines].join("\n")),
+});

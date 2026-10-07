@@ -31,6 +31,10 @@ const Exams = page(() => import("./features/exams/list"));
 const Marking = page(() => import("./features/marks/list"));
 const MarkSheet = page(() => import("./features/marks/sheet"));
 const ExamWorkspace = page(() => import("./features/exams/workspace"));
+const ExamSetup = lazy(() =>
+  import("./features/exams/workspace").then((m) => ({ default: m.ExamSetupPage })),
+);
+const ExamResults = page(() => import("./features/results/page"));
 const GradingEditor = page(() => import("./features/grading/editor"));
 const ImportJob = page(() => import("./features/imports/job"));
 const AcademicsLayout = page(() => import("./features/academics/layout"));
@@ -165,7 +169,17 @@ export const router = createBrowserRouter([
                     element: <RequirePermission permission="exams.view" />,
                     children: [
                       { path: "exams", element: <Exams /> },
-                      { path: "exams/:examId", element: <ExamWorkspace /> },
+                      {
+                        path: "exams/:examId",
+                        element: <ExamWorkspace />,
+                        children: [
+                          { index: true, element: <ExamSetup /> },
+                          {
+                            element: <RequirePermission permission="results.view" />,
+                            children: [{ path: "results", element: <ExamResults /> }],
+                          },
+                        ],
+                      },
                     ],
                   },
                   {

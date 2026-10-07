@@ -400,10 +400,10 @@ export function outcomeOf(job: ImportJob): string | null {
   const updates = Number(s.update ?? 0);
   if (creates + updates === 0) return null;
   if (job.kind === "marks") {
-    // One "entry" is a student's marks for one paper; a single-paper file has one per student.
+    // One entry is a student's marks for one paper; with one paper in the file, that's one per student.
     const papers = Array.isArray(s.papers) ? (s.papers as string[]) : [];
     const n = creates + updates;
-    const what = s.shape === "single" ? noun(n, "student") : noun(n, "student paper");
+    const what = papers.length <= 1 ? noun(n, "student") : noun(n, "student paper");
     const split = [
       creates > 0 && `${formatNumber(creates)} new`,
       updates > 0 && `${formatNumber(updates)} changed`,

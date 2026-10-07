@@ -226,6 +226,13 @@ def statistics(c: Computed, papers: Iterable[Paper]) -> dict[str, Any]:
     for o in decided:
         if o.result.grade:
             by_grade[o.result.grade].append(o.result.percentage or Decimal(0))
+    basis = "exam"
+    if not by_grade:  # the scheme grades papers only (a credit scheme gives the exam an SGPA instead)
+        basis = "paper"
+        for o in c.outcomes:
+            for pr in o.result.papers:
+                if pr.outcome in (PaperOutcome.PASS, PaperOutcome.FAIL) and pr.grade:
+                    by_grade[pr.grade].append(pr.percentage or Decimal(0))
     grades = sorted(by_grade.items(), key=lambda kv: (-(_mean(kv[1]) or Decimal(0)), kv[0]))
     per_paper = []
     for paper in papers:
@@ -257,6 +264,7 @@ def statistics(c: Computed, papers: Iterable[Paper]) -> dict[str, Any]:
         "median_percentage": _r2(_median(pcts)),
         "histogram": [{"from": i * 10, "to": i * 10 + 10, "count": n} for i, n in enumerate(bins)],
         "grades": [{"grade": g, "count": len(v)} for g, v in grades],
+        "grades_basis": basis,
         "papers": per_paper,
     }
 
