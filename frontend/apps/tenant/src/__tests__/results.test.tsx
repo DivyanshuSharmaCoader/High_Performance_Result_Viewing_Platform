@@ -9,6 +9,9 @@ import { meKey } from "../lib/session";
 import { TenantProvider, tenantConfigKey } from "../lib/tenant";
 import { mockApi, ownerMe, renderRoutes, tenantConfig } from "./test-utils";
 
+vi.mock("../lib/navigate", () => ({ goTo: vi.fn() }));
+import { goTo } from "../lib/navigate";
+
 afterEach(() => vi.restoreAllMocks());
 
 const URL = "/api/v1/admin/exams/e1/results";
@@ -169,7 +172,7 @@ const exam = {
   ],
 } as unknown as Exam;
 
-const render = () =>
+const render = (me: Me = admin) =>
   renderRoutes(
     [
       {
@@ -185,7 +188,7 @@ const render = () =>
     ],
     "/admin/exams/e1/results",
     (qc) => {
-      qc.setQueryData(meKey, admin);
+      qc.setQueryData(meKey, me);
       qc.setQueryData(tenantConfigKey, tenantConfig);
     },
   );
@@ -276,6 +279,73 @@ describe("results page", () => {
     expect(paper).toHaveTextContent("External50 / 60");
     expect(paper).toHaveTextContent("A+");
     expect(within(card).getByText("Passed")).toBeInTheDocument();
+  });
+
+  it("lets administrators download a student's issued marksheet and revoke its verification", async () => {
+    document.cookie = "sc_csrf=x";
+    const pubs = "/api/v1/admin/exams/e1/publications";
+    const revoked: unknown[] = [];
+    let links = 0;
+    mockApi({
+      [`GET ${URL}`]: () => ({ status: 200, body: overview({ exam_status: "published" }) }),
+      "GET /api/v1/admin/exams/e1": () => ({ status: 200, body: exam }),
+      [`GET ${URL}/students`]: () => ({
+        status: 200,
+        body: { run_id: "r1", items: [student], next_after: null },
+      }),
+      [`GET ${URL}/students/s1`]: () => ({ status: 200, body: student }),
+      [`GET ${pubs}`]: () => ({
+        status: 200,
+        body: [
+          {
+            id: "pub1",
+            version: 1,
+            status: "published",
+            scheduled_at: null,
+            published_at: "2026-10-07T10:00:00Z",
+            withdrawn_at: null,
+            withdraw_reason: null,
+            students: 4,
+            content_hash: "c".repeat(64),
+            created_at: "2026-10-07T10:00:00Z",
+            marksheets: { total: 4, rendered: 4, pending: 0, failed: 0 },
+          },
+        ],
+      }),
+      [`GET ${pubs}/pub1/marksheets/s1`]: () => {
+        links += 1;
+        return {
+          status: 200,
+          body: {
+            status: "rendered",
+            url: `https://files.example/s1.pdf?sig=${links}`,
+            filename: "Marksheet-S1.pdf",
+            expires_in: 120,
+            verification: { code: "7KQ3-M9XD-PA2F-8RTC-WV6H-Q7MN-2B", url: "https://verify.example/v/7KQ3" },
+          },
+        };
+      },
+      [`POST ${pubs}/pub1/verification/s1/revoke`]: (_u, init) => {
+        revoked.push(JSON.parse(String(init.body)));
+        return { status: 200, body: { revoked: true } };
+      },
+    });
+    render({ ...admin, permissions: [...admin.permissions, "publications.manage"] });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Asha Rao" }));
+    const sheet = await screen.findByRole("dialog", { name: "Published result" });
+    const issued = await within(sheet).findByRole("region", { name: "Issued marksheet" });
+    expect(issued).toHaveTextContent("7KQ3-M9XD-PA2F-8RTC-WV6H-Q7MN-2B");
+    await user.click(within(issued).getByRole("button", { name: "Download PDF" }));
+    await waitFor(() => expect(goTo).toHaveBeenCalledWith("https://files.example/s1.pdf?sig=2"));
+
+    await user.click(within(issued).getByRole("button", { name: "Revoke verification…" }));
+    const confirm = await screen.findByRole("dialog", { name: "Revoke this marksheet's verification?" });
+    const button = within(confirm).getByRole("button", { name: "Revoke verification" });
+    expect(button).toBeDisabled();
+    await user.type(within(confirm).getByRole("textbox"), "Issued to the wrong person");
+    await user.click(button);
+    await waitFor(() => expect(revoked).toEqual([{ reason: "Issued to the wrong person" }]));
   });
 
   it("approves after confirming the password", async () => {

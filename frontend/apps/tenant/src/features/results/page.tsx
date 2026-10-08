@@ -67,6 +67,7 @@ import {
 import { StudentResultView } from "../student/result-view";
 import { useTenant } from "../../lib/tenant";
 import { previewPayload } from "./preview";
+import { IssuedMarksheet, useLivePublication } from "./issued";
 import { PublishPanel } from "./publish";
 
 type Pending = "process" | "approve" | "reject" | "revoke" | "discard" | null;
@@ -629,12 +630,17 @@ function StudentSheet({
   onClose: () => void;
 }) {
   const q = useResultStudent(o.exam_id, o.run?.id ?? "", studentId);
+  const live = useLivePublication(o.exam_id).data;
   const { branding } = useTenant();
   return (
     <Sheet open={Boolean(studentId)} onOpenChange={(v) => !v && onClose()}>
       <SheetContent
-        title="Result preview"
-        description="Exactly what the student will see once these results are published."
+        title={live ? "Published result" : "Result preview"}
+        description={
+          live
+            ? "Exactly what the student sees, and the marksheet issued to them."
+            : "Exactly what the student will see once these results are published."
+        }
         className="max-w-2xl"
       >
         {q.isPending ? (
@@ -642,7 +648,12 @@ function StudentSheet({
         ) : q.error ? (
           <Callout tone="danger">This result couldn&apos;t be loaded.</Callout>
         ) : (
-          <StudentResultView payload={previewPayload(q.data, exam, o, branding.display_name)} />
+          <>
+            <StudentResultView payload={previewPayload(q.data, exam, o, branding.display_name)} />
+            {live && studentId && (
+              <IssuedMarksheet examId={o.exam_id} publication={live} studentId={studentId} />
+            )}
+          </>
         )}
       </SheetContent>
     </Sheet>

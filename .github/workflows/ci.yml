@@ -86,6 +86,10 @@ jobs:
           SCORECODE_TEST_REQUIRE_SERVICES: "1"  # never silently skip integration tests in CI
           SCORECODE_TEST_REQUIRE_PDF: "1"  # nor the marksheet PDF tests
         run: uv run pytest -q --cov=app --cov-report=term-missing:skip-covered --cov-report=xml
+      - name: Marksheet render time per PDF (informational, P11.2)
+        working-directory: backend
+        continue-on-error: true
+        run: uv run python scripts/measure_marksheets.py --count 100 --papers 6
       - name: Container logs on failure
         if: failure()
         run: docker compose logs --tail 200
