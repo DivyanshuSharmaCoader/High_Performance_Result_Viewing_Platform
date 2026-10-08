@@ -8,5 +8,6 @@ def load_job_handlers() -> None:
     from app.modules.entitlements import trial as _trials  # noqa: F401
     from app.modules.ingestion import jobs as _imports  # noqa: F401
     from app.modules.notifications import emails  # noqa: F401
+    from app.modules.notifications import jobs as _notifications  # noqa: F401
     from app.modules.publishing import jobs as _publishing  # noqa: F401
     from app.modules.results import jobs as _results  # noqa: F401

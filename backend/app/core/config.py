@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     smtp_password: SecretStr | None = None
     smtp_starttls: bool = False
     mail_from: str = "ScoreCode <no-reply@scorecode.localhost>"
+    mail_rate_per_second: float = 10.0  # per worker job; stay under the provider's sending rate
 
     # --- Security ---------------------------------------------------------------------------------
     trust_proxy_headers: bool = False  # true only behind our own Caddy, which overwrites X-Real-IP

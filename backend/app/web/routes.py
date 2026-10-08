@@ -18,6 +18,7 @@ from app.modules.identity.router import router as identity_router
 from app.modules.identity.staff_router import router as staff_router
 from app.modules.ingestion.router import router as imports_router
 from app.modules.marks.router import router as marks_router
+from app.modules.notifications.router import router as notifications_router
 from app.modules.platform.router import router as platform_router
 from app.modules.publishing.router import admin_router as publications_router
 from app.modules.publishing.router import student_router as my_results_router
@@ -51,6 +52,7 @@ def include_routers(app: FastAPI) -> None:
         marksheets_admin_router,
         my_marksheets_router,
         plans_router,
+        notifications_router,
         verification_router,
     ):
         app.include_router(router)

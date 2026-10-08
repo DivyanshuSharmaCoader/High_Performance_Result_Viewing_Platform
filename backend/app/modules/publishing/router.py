@@ -12,6 +12,7 @@ from app.core.http import InfraDep, Principal, UoW, require
 from app.core.idempotency import idempotent
 from app.modules.documents.service import MarksheetService, Progress
 from app.modules.identity.permissions import P
+from app.modules.notifications.service import DeliveryCounts, Notifier
 from app.modules.publishing.models import Publication
 from app.modules.publishing.service import MyResult, PublishingService
 
@@ -31,6 +32,13 @@ class MarksheetProgressOut(BaseModel):
     failed: int
 
 
+class EmailCountsOut(BaseModel):
+    queued: int
+    sent: int
+    failed: int
+    skipped: int
+
+
 class PublicationOut(BaseModel):
     id: uuid.UUID
     version: int
@@ -43,6 +51,7 @@ class PublicationOut(BaseModel):
     content_hash: str
     created_at: datetime
     marksheets: MarksheetProgressOut | None = None
+    emails: EmailCountsOut | None = None
 
 
 class PublishIn(BaseModel):
@@ -160,7 +169,9 @@ class MyStatsOut(BaseModel):
     stats: dict[str, Any] | None = None
 
 
-def _pub(p: Publication, progress: Progress | None = None) -> PublicationOut:
+def _pub(
+    p: Publication, progress: Progress | None = None, emails: DeliveryCounts | None = None
+) -> PublicationOut:
     return PublicationOut(
         id=p.id,
         version=p.version,
@@ -173,6 +184,7 @@ def _pub(p: Publication, progress: Progress | None = None) -> PublicationOut:
         content_hash=p.content_hash,
         created_at=p.created_at,
         marksheets=MarksheetProgressOut(**asdict(progress)) if progress else None,
+        emails=EmailCountsOut(**asdict(emails)) if emails else None,
     )
 
 
@@ -195,8 +207,10 @@ async def list_publications(
     service = PublishingService(infra)
     await service.exam(uow, exam_id)
     pubs = await service.publications(uow, exam_id)
-    progress = await MarksheetService.progress(uow, [p.id for p in pubs])
-    return [_pub(p, progress.get(p.id)) for p in pubs]
+    ids = [p.id for p in pubs]
+    progress = await MarksheetService.progress(uow, ids)
+    emails = await Notifier.delivery_counts(uow, ids)
+    return [_pub(p, progress.get(p.id), emails.get(p.id)) for p in pubs]
 
 
 @admin_router.post("", status_code=201, response_model=PublicationOut)

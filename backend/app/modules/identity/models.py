@@ -54,6 +54,8 @@ class User(UUIDPrimaryKey, TenantScoped, Timestamps, Base):
     password_changed_at: Mapped[datetime | None]
     totp_secret_enc: Mapped[str | None] = mapped_column(Text)
     totp_enabled_at: Mapped[datetime | None]
+    # Non-essential email (e.g. "results are published"). Account email (resets, invites) always goes.
+    notify_email: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
 
 
 class UserRole(TenantScoped, Base):

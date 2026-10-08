@@ -35,6 +35,7 @@ from app.modules.examinations.models import Examination, ExamPaper
 from app.modules.examinations.states import ExamAction, ExamStatus, transition_for
 from app.modules.grading.models import GradingScheme, GradingSchemeVersion
 from app.modules.identity.service import AuthService
+from app.modules.notifications.service import Notifier
 from app.modules.publishing.models import ExamStatistics, Publication, PublishedResult
 from app.modules.publishing.snapshot import (
     ExamInfo,
@@ -211,6 +212,7 @@ class PublishingService:
         if at is None:
             self._move(exam, ExamAction.PUBLISH)
             run.status = "published"
+            await Notifier.schedule_publication(uow, pub.id)
         else:
             self._move(exam, ExamAction.SCHEDULE)
             await enqueue(
@@ -397,6 +399,7 @@ class PublishingService:
             await uow.session.execute(
                 update(ResultRun).where(ResultRun.id == pub.result_run_id).values(status="published")
             )
+            await Notifier.schedule_publication(uow, pub.id)
             await uow.flush()
             await record(
                 uow,

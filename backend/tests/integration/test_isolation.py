@@ -229,7 +229,19 @@ async def _publication(infra: Any, t: TenantFixture) -> uuid.UUID:
         return pub.id
 
 
+async def _notification(infra: Any, t: TenantFixture) -> uuid.UUID:
+    from app.modules.notifications.models import Notification
+
+    user_id, _ = await make_user(infra, t, "student")
+    async with infra.db.uow(t.id) as uow:
+        n = Notification(tenant_id=t.id, user_id=user_id, kind="result_published", title="x", body="x")
+        uow.session.add(n)
+        await uow.flush()
+        return n.id
+
+
 PROVIDERS: dict[str, Provider] = {
+    "notification_id": _notification,
     "user_id": _staff_user,
     "exam_id": _exam,
     "publication_id": _publication,
@@ -394,7 +406,9 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                     " || (SELECT coalesce(string_agg(code || coalesce(revoked_at::text, '') ||"
                     " verify_count::text, ',' ORDER BY code), '') FROM verification_records)"
                     " || (SELECT coalesce(string_agg(student_id::text || status, ',' ORDER BY student_id), '')"
-                    " FROM marksheet_documents) FROM result_runs"
+                    " FROM marksheet_documents)"
+                    " || (SELECT coalesce(string_agg(id::text || coalesce(read_at::text, ''), ',' ORDER BY id), '')"
+                    " FROM notifications) FROM result_runs"
                 )
             )
         ).scalar_one()
