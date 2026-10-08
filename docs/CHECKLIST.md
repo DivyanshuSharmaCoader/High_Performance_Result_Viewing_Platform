@@ -20,14 +20,15 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 14 — Performance engineering** (Phases 0–13 complete; Gates M1–M5 passed) |
-| Next step | **P14.1** full scenario runs on the GitHub runner (`perf.yml`), then bottleneck analysis |
-| Last updated | 2026-10-08 |
+| Current phase | **Phase 14 — Performance engineering** (Phases 0–13 and 15 complete; Gates M1–M5 passed) |
+| Next step | **P14.3–P14.5** close on the runner comparisons in progress (`perf.yml` `compare=ref:1e3b76b`, `compare=replicas`, `chaos=postgres`); then **P16.1** |
+| Last updated | 2026-10-09 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
 ## 📊 Phase progress
 | Phase | Name | Steps | Done |
 |---|---|---|---|
+| 2026-10-09 | P15.1–P15.5, P14.1, P14.2 ticked | **P15:** P15.1–P15.3 and P15.5 verified by CI for 3da50e8 and b0f6c4b (all 7 jobs). P15.4 verified by CI for 8510a27, where E2E ran the new `edge.spec.ts` (32/32 passed). The ZAP baseline (run 37741788953) found no High alerts ([dispositions](security/zap-baseline-2026-10-08.md)). The Medium, `style-src 'unsafe-inline'`, is fixed on the verify page (stylesheet pinned by hash) and accepted on the SPAs as R-CSP, because sonner and react-style-singleton insert `<style>` at run time. COOP, CORP and COEP were added. Two edge bugs were found while analysing it and fixed: the deferred header block overwrote the verify page's `no-referrer`, and SPA HTML under app routes wasn't `no-cache`. **P14.1:** [runner report](../benchmarks/results/2026-10-08-runner-scenarios.md) from perf runs 37737458557 and 37737494369. A p95 ≤ 13 ms with 0 errors; B about 353 req/s, limited by API CPU (2 workers at about 97% each), with failures that are 5 s pool timeouts. **P14.2:** [profile analysis](../benchmarks/results/2026-10-09-read-path.md). The top costs are SQLAlchemy plus asyncpg (38.7%), a transaction per request (5%) and route matching (6.1%); the pool's pre-ping was found later (2.6%, half of all BEGINs). **P14.3**, four changes, each measured before and after in-process: read cache −20%, routers first −5%, lazy transaction −14%, idle-only ping −3% CPU per request. It stays open until the runner's same-machine comparison (`compare=ref:1e3b76b`) reports. P14.4 waits for `compare=replicas`; P14.5 waits for a Postgres-restart re-run with the new ping behaviour. |
 | 0 | Product & architecture | 4 | 4 |
 | 1 | Repository, tooling, CI, walking skeleton | 8 | 8 |
 | 2 | Platform kernel: database, tenancy, RLS, audit, errors | 11 | 11 |
@@ -42,8 +43,8 @@
 | 11 | Marksheet PDFs & verification | 5 | 5 |
 | 12 | Notifications | 3 | 3 |
 | 13 | Analytics (basic) & audit viewer | 5 | 5 |
-| 14 | Performance engineering (measure → optimise → re-measure) | 5 | 0 |
-| 15 | Security review & hardening | 5 | 0 |
+| 14 | Performance engineering (measure → optimise → re-measure) | 5 | 2 |
+| 15 | Security review & hardening | 5 | 5 |
 | 16 | Deployment, backups, monitoring, runbooks | 6 | 0 |
 | 17 | Thapar & demo tenants, documentation, presentation (MVP complete) | 5 | 0 |
 
@@ -193,19 +194,19 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 14 — Performance engineering (measure → optimise → re-measure)
 
-- [ ] **P14.1** Full scenario runs · Done when: Reports with p50/p95/p99, RPS, errors, resources
-- [ ] **P14.2** Bottleneck analysis · Done when: Written analysis identifies top 3 bottlenecks
+- [x] **P14.1** Full scenario runs · Done when: Reports with p50/p95/p99, RPS, errors, resources
+- [x] **P14.2** Bottleneck analysis · Done when: Written analysis identifies top 3 bottlenecks
 - [ ] **P14.3** Targeted optimisations · Done when: Before/after report per change
 - [ ] **P14.4** Horizontal scaling demonstration · Done when: Report (NFR-16)
 - [ ] **P14.5** Failure-under-load tests · Done when: Results recorded per [15 §6](15-testing-strategy.md#6-failure-testing)
 
 ### Phase 15 — Security review & hardening
 
-- [ ] **P15.1** Threat model review · Done when: Doc updated
-- [ ] **P15.2** ASVS L2 checklist · Done when: Checklist committed with status
-- [ ] **P15.3** Security test completion · Done when: Suites green
-- [ ] **P15.4** DAST & scans · Done when: Reports saved
-- [ ] **P15.5** Admin protections · Done when: Tests
+- [x] **P15.1** Threat model review · Done when: Doc updated
+- [x] **P15.2** ASVS L2 checklist · Done when: Checklist committed with status
+- [x] **P15.3** Security test completion · Done when: Suites green
+- [x] **P15.4** DAST & scans · Done when: Reports saved
+- [x] **P15.5** Admin protections · Done when: Tests
 
 ### Phase 16 — Deployment, backups, monitoring, runbooks
 
