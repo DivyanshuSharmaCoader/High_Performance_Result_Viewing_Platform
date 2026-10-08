@@ -9,12 +9,13 @@ from contextlib import asynccontextmanager
 import sentry_sdk
 from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST
 from sqlalchemy import text
 
 from app.core.config import Settings, get_settings
 from app.core.container import Infra
 from app.core.logging import configure_logging, get_logger
+from app.core.metrics import render as render_metrics
 from app.jobs_registry import load_job_handlers
 from app.models_registry import metadata as _all_models  # noqa: F401  (every table, so FKs resolve)
 from app.modules.identity.authn import CookieAuthenticator
@@ -99,7 +100,7 @@ def create_app(settings: Settings | None = None, infra: Infra | None = None) -> 
     async def metrics() -> Response:
         if not settings.metrics_enabled:
             return Response(status_code=404)
-        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+        return Response(render_metrics(), media_type=CONTENT_TYPE_LATEST)
 
     include_routers(app)
     return app

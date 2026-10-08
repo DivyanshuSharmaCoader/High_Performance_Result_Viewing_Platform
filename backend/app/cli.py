@@ -50,8 +50,15 @@ def cmd_migrate(_: argparse.Namespace) -> None:
 
 
 def cmd_api(args: argparse.Namespace) -> None:
+    import tempfile
+
     import uvicorn
 
+    from app.core.metrics import MULTIPROC_ENV, prepare_multiprocess
+
+    if args.workers > 1:  # one /metrics for all workers (core/metrics.py)
+        default = str(Path(tempfile.gettempdir()) / "scorecode-metrics")
+        prepare_multiprocess(os.environ.get(MULTIPROC_ENV) or default)
     uvicorn.run(
         "app.main:create_app",
         factory=True,

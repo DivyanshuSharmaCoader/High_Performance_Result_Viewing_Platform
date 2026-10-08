@@ -1,9 +1,38 @@
 """Prometheus metrics (docs/14 §Q). Exposed on ``/metrics`` — internal network only (the proxy never
-routes it publicly)."""
+routes it publicly).
+
+With several Uvicorn workers, each process counts on its own, and a scrape reaches whichever process
+answers it: counters would jump between processes and ``rate()`` would be meaningless. So ``scorecode
+api --workers N`` (N > 1) turns on prometheus_client's multiprocess mode before the workers start. Each
+process writes its samples to a shared directory, and ``/metrics`` reports the sum over all of them.
+"""
 
 from __future__ import annotations
 
-from prometheus_client import Counter, Gauge, Histogram
+import os
+import shutil
+from pathlib import Path
+
+from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram, generate_latest, multiprocess
+
+MULTIPROC_ENV = "PROMETHEUS_MULTIPROC_DIR"
+
+
+def prepare_multiprocess(path: str) -> None:
+    """Before the API's workers start: a fresh directory (samples of a previous run would be added in)."""
+    shutil.rmtree(path, ignore_errors=True)
+    Path(path).mkdir(mode=0o700, parents=True)
+    os.environ[MULTIPROC_ENV] = path
+
+
+def render() -> bytes:
+    """Every process's samples when several workers share the work; this process's otherwise."""
+    if os.environ.get(MULTIPROC_ENV):
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)  # type: ignore[no-untyped-call]
+        return generate_latest(registry)
+    return generate_latest()
+
 
 HTTP_REQUESTS = Counter(
     "scorecode_http_requests_total",
@@ -42,6 +71,15 @@ DB_UNAVAILABLE = Counter(
 )
 BREACH_CHECKS = Counter("scorecode_breached_password_checks_total", "Breached-password lookups", ["outcome"])
 WORKER_ACTIVE = Gauge("scorecode_worker_active_jobs", "Jobs currently executing in this worker")
+# Exported by every worker every 15 s from jobs_stats() (the same totals from each; alert on max()).
+JOBS_BY_STATUS = Gauge(
+    "scorecode_jobs_in_state",
+    "Jobs by queue and status (queued = due now, not scheduled)",
+    ["queue", "status"],
+)
+JOBS_OLDEST = Gauge(
+    "scorecode_jobs_oldest_seconds", "Age of the oldest job in that queue and status", ["queue", "status"]
+)
 
 
 def route_class(path: str) -> str:

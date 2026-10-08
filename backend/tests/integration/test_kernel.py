@@ -286,6 +286,52 @@ async def test_reaper_requeues_jobs_from_dead_workers(infra) -> None:
     assert "reaped" in _calls
 
 
+@registry.register("test.stats", queue="test-stats")
+async def _stats_job(ctx: JobContext) -> None:
+    return None
+
+
+async def test_worker_exports_backlog_dead_letters_and_the_oldest_due_job(infra) -> None:
+    """The gauges behind the queue alerts (docs/14 §Q): due work only, and 0 once a queue drains."""
+    from datetime import timedelta
+
+    from prometheus_client import REGISTRY
+
+    from app.core.clock import utcnow
+
+    t = await make_tenant(infra)
+    async with infra.db.uow(t.id) as uow:
+        for _ in range(3):
+            await enqueue(uow, "test.stats", {})
+        await enqueue(uow, "test.stats", {}, run_at=utcnow() + timedelta(hours=1))  # scheduled: not backlog
+        dead = await enqueue(uow, "test.stats", {})
+        await uow.session.execute(
+            text("UPDATE jobs SET status = 'dead', finished_at = now() WHERE id = :id"), {"id": dead}
+        )
+        await uow.session.execute(
+            text(
+                "UPDATE jobs SET run_at = now() - interval '90 seconds' "
+                "WHERE queue = 'test-stats' AND status = 'queued' AND run_at <= now()"
+            )
+        )
+
+    def sample(name: str, status: str) -> float | None:
+        return REGISTRY.get_sample_value(name, {"queue": "test-stats", "status": status})
+
+    worker = Worker(infra, ["test-stats"])
+    await worker.export_stats()
+    assert sample("scorecode_jobs_in_state", "queued") == 3
+    assert sample("scorecode_jobs_in_state", "dead") == 1
+    assert sample("scorecode_jobs_in_state", "running") == 0
+    assert (sample("scorecode_jobs_oldest_seconds", "queued") or 0) >= 90
+    assert await worker.drain() == 3
+    await worker.export_stats()
+    assert (
+        sample("scorecode_jobs_in_state", "queued") == 0
+        and sample("scorecode_jobs_oldest_seconds", "queued") == 0
+    )
+
+
 async def test_runtime_role_cannot_read_other_tenants_jobs(infra) -> None:
     a = await make_tenant(infra)
     b = await make_tenant(infra)

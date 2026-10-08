@@ -27,7 +27,7 @@ from sqlalchemy import text
 from app.core.errors import DomainError
 from app.core.ids import uuid7
 from app.core.logging import get_logger
-from app.core.metrics import JOB_DURATION, JOBS, WORKER_ACTIVE
+from app.core.metrics import JOB_DURATION, JOBS, JOBS_BY_STATUS, JOBS_OLDEST, WORKER_ACTIVE
 
 if TYPE_CHECKING:
     from app.core.container import Infra
@@ -282,14 +282,29 @@ class Worker:
             n = (await uow.session.execute(text("SELECT jobs_reap()"))).scalar_one()
         return int(n or 0)
 
+    async def export_stats(self) -> None:
+        """Queue backlog, running and dead jobs as gauges (docs/14 §Q alerts). Statuses with no jobs
+        report 0, so a queue that drained doesn't keep its last value."""
+        async with self.infra.db.uow() as uow:
+            rows = (await uow.session.execute(text("SELECT * FROM jobs_stats()"))).all()
+        seen = {(r.queue, r.status): (r.jobs, r.oldest_s) for r in rows}
+        for queue in {*self.queues, *(q for q, _ in seen)}:
+            for status in ("queued", "running", "dead"):
+                jobs, oldest = seen.get((queue, status), (0, 0.0))
+                JOBS_BY_STATUS.labels(queue, status).set(jobs)
+                JOBS_OLDEST.labels(queue, status).set(oldest)
+
     async def run_forever(self) -> None:
         log.info("worker_started", queue=",".join(self.queues))
-        last_reap = 0.0
+        last_reap = last_stats = 0.0
         while not self._stop.is_set():
             try:
                 if time.monotonic() - last_reap > 30:
                     await self.reap()
                     last_reap = time.monotonic()
+                if time.monotonic() - last_stats > 15:
+                    await self.export_stats()
+                    last_stats = time.monotonic()
                 free = self.concurrency - len(self._tasks)
                 jobs = await self._claim(max(1, free)) if free > 0 else []
             except Exception:
