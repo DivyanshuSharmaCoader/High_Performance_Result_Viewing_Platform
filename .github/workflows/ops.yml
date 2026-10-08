@@ -119,10 +119,9 @@ jobs:
     name: Backups · encrypted backup, lose the database, restore, measure RTO (P16.4)
     runs-on: ubuntu-24.04
     timeout-minutes: 60
-    env:
-      AGE_DIR: ${{ runner.temp }}/age
     steps:
       - uses: actions/checkout@v7
+      - run: echo "AGE_DIR=$RUNNER_TEMP/age" >> "$GITHUB_ENV"  # the runner context isn't available at job level
       - uses: astral-sh/setup-uv@v10.2.0
         with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
       - name: Start the stack
