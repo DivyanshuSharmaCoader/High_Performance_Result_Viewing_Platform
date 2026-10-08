@@ -21,7 +21,7 @@ export function NotificationPreferences() {
             {
               onSuccess: () =>
                 toast.success(email_results ? "We'll email you about new results" : "No more result emails"),
-              onError: toastError,
+              onError: (e) => toastError(e),
             },
           )
         }
