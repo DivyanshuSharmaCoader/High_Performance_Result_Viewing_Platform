@@ -12,7 +12,7 @@ for table in $(psql -c "SELECT tablename FROM pg_tables WHERE schemaname = 'publ
 done
 psql -c "SELECT 'md5 published_results ' || md5(string_agg(publication_id::text || student_id::text || payload::text, '|' ORDER BY publication_id, student_id)) FROM published_results"
 psql -c "SELECT 'md5 exam_statistics ' || md5(string_agg(publication_id::text || stats::text, '|' ORDER BY publication_id)) FROM exam_statistics"
-psql -c "SELECT 'md5 verification_records ' || md5(string_agg(row(v.*)::text, '|' ORDER BY v.id)) FROM verification_records v"
-psql -c "SELECT 'md5 marksheet_documents ' || md5(string_agg(row(d.*)::text, '|' ORDER BY d.id)) FROM marksheet_documents d"
-psql -c "SELECT 'md5 users ' || md5(string_agg(row(u.*)::text, '|' ORDER BY u.id)) FROM users u"
-psql -c "SELECT 'md5 audit_logs ' || md5(string_agg(row(a.*)::text, '|' ORDER BY a.id)) FROM audit_logs a"
+psql -c "SELECT 'md5 verification_records ' || md5(string_agg(row(v.*)::text, '|' ORDER BY row(v.*)::text)) FROM verification_records v"
+psql -c "SELECT 'md5 marksheet_documents ' || md5(string_agg(row(d.*)::text, '|' ORDER BY row(d.*)::text)) FROM marksheet_documents d"
+psql -c "SELECT 'md5 users ' || md5(string_agg(row(u.*)::text, '|' ORDER BY row(u.*)::text)) FROM users u"
+psql -c "SELECT 'md5 audit_logs ' || md5(string_agg(row(a.*)::text, '|' ORDER BY row(a.*)::text)) FROM audit_logs a"
