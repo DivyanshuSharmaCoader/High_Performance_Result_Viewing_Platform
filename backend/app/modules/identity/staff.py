@@ -47,6 +47,7 @@ class StaffMember:
     designation: str | None = None
     department_id: uuid.UUID | None = None
     phone: str | None = None
+    mfa_enabled: bool = False
 
 
 @dataclass
@@ -328,4 +329,5 @@ def _member(user: User, role: str, profile: StaffProfile | None) -> StaffMember:
         designation=profile.designation if profile else None,
         department_id=profile.department_id if profile else None,
         phone=profile.phone if profile else None,
+        mfa_enabled=user.totp_enabled_at is not None,
     )

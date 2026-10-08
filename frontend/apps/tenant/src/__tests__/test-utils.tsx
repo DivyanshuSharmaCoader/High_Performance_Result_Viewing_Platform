@@ -48,6 +48,7 @@ export const ownerMe: Me = {
   features: {},
   plan: { code: "free", name: "Free", status: "active", period_end: null },
   reauthenticated_at: null,
+  mfa_enabled: false,
 };
 
 type Handler = (url: string, init: RequestInit) => { status: number; body?: unknown };

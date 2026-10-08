@@ -24,6 +24,7 @@ import { z } from "zod";
 
 import { applyServerError } from "../../lib/forms";
 import { NotificationPreferences } from "../notifications/preferences";
+import { TwoStepSection } from "./two-step";
 import { useSession } from "../../lib/session";
 
 interface SessionItem {
@@ -157,6 +158,7 @@ export default function AccountPage() {
           />
         </Section>
         {me.kind === "student" && <NotificationPreferences />}
+        {me.kind === "staff" && <TwoStepSection />}
         <Section title="Password" description="Use a long passphrase you don't use anywhere else.">
           <ChangePassword staff={me.kind === "staff"} />
         </Section>

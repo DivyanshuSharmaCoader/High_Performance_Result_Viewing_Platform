@@ -23,6 +23,10 @@ export default function LoginPage() {
   const qc = useQueryClient();
   const [formError, setFormError] = useState<{ message: string; retryAt?: number } | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  // Two-step sign-in: after a right password, the same credentials go again with a code.
+  const [pending, setPending] = useState<Values | null>(null);
+  const [code, setCode] = useState("");
+  const [recovery, setRecovery] = useState(false);
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { login_id: "", password: "" },
@@ -35,13 +39,28 @@ export default function LoginPage() {
   }, [formError?.retryAt]);
 
   const login = useMutation({
-    mutationFn: (values: Values) => api.post<SessionOut>("/api/v1/auth/login", values),
+    mutationFn: (values: Values & { totp_code?: string }) =>
+      api.post<SessionOut>("/api/v1/auth/login", values),
     onSuccess: async () => {
       const me = await qc.fetchQuery({ queryKey: meKey, queryFn: () => api.get<Me>("/api/v1/me") });
       void navigate(safeNext(params.get("next")) ?? homePathFor(me), { replace: true });
     },
-    onError: (error) => {
+    onError: (error, values) => {
+      if (error instanceof ApiError && error.code === "totp-required") {
+        setPending({ login_id: values.login_id, password: values.password });
+        setFormError(null);
+        return;
+      }
       form.setValue("password", "");
+      if (pending) {
+        setCode("");
+        setFormError({
+          message: recovery
+            ? "That recovery code didn't work."
+            : "That code didn't match. Try the newest one.",
+        });
+        return;
+      }
       if (error instanceof ApiError && error.status === 429) {
         setFormError({
           message: "Too many sign-in attempts.",
@@ -58,6 +77,76 @@ export default function LoginPage() {
   });
 
   const waitSeconds = formError?.retryAt ? Math.max(0, Math.ceil((formError.retryAt - now) / 1000)) : 0;
+
+  if (pending) {
+    return (
+      <AuthLayout
+        title="Two-step sign-in"
+        subtitle={
+          recovery
+            ? "Enter one of the recovery codes you saved when you set this up. Each works once."
+            : "Open your authenticator app and enter the 6-digit code for ScoreCode."
+        }
+      >
+        <form
+          noValidate
+          onSubmit={(e) => {
+            e.preventDefault();
+            setFormError(null);
+            login.mutate({ ...pending, totp_code: code });
+          }}
+          className="flex flex-col gap-5"
+        >
+          {formError && (
+            <Callout tone="danger" title="We couldn't sign you in">
+              {formError.message}
+            </Callout>
+          )}
+          <Field label={recovery ? "Recovery code" : "Authenticator code"}>
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              autoComplete="one-time-code"
+              inputMode={recovery ? "text" : "numeric"}
+              autoCapitalize="characters"
+              spellCheck={false}
+              placeholder={recovery ? "XXXXX-XXXXX" : "123456"}
+              maxLength={recovery ? 20 : 6}
+              autoFocus
+            />
+          </Field>
+          <Button type="submit" size="lg" loading={login.isPending} disabled={code.trim().length < 6}>
+            Verify and sign in
+          </Button>
+          <div className="flex items-center justify-between text-[13px]">
+            <button
+              type="button"
+              className="font-medium text-brand-ink hover:underline"
+              onClick={() => {
+                setRecovery((r) => !r);
+                setCode("");
+                setFormError(null);
+              }}
+            >
+              {recovery ? "Use the authenticator app" : "Use a recovery code"}
+            </button>
+            <button
+              type="button"
+              className="text-fg-muted hover:text-fg"
+              onClick={() => {
+                setPending(null);
+                setCode("");
+                setRecovery(false);
+                form.setValue("password", "");
+              }}
+            >
+              Back
+            </button>
+          </div>
+        </form>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout

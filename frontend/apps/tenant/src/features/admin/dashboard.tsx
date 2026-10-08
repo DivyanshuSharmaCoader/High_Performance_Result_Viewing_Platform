@@ -9,6 +9,7 @@ import {
   Badge,
   Button,
   Meter,
+  Callout,
   PageHeader,
   ProgressBar,
   Section,
@@ -192,6 +193,18 @@ function RecentActivity() {
   );
 }
 
+/** Administrators hold every student's results: nudge them towards two-step sign-in until it's on. */
+function ProtectAccount() {
+  return (
+    <Callout tone="info" title="Protect your account">
+      <p>Turn on two-step sign-in so a leaked password alone can't reach your institution's results.</p>
+      <Link to="/account" className="mt-2 inline-block font-medium text-brand-ink hover:underline">
+        Set it up in two minutes
+      </Link>
+    </Callout>
+  );
+}
+
 export default function DashboardPage() {
   const me = useSession();
   const canSettings = useCan("settings.manage");
@@ -208,6 +221,7 @@ export default function DashboardPage() {
           {canAudit && <RecentActivity />}
         </div>
         <div className="flex flex-col gap-6">
+          {canSettings && !me.mfa_enabled && <ProtectAccount />}
           <PlanUsage />
         </div>
       </div>

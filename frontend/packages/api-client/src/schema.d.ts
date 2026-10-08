@@ -4827,6 +4827,11 @@ export interface components {
             id: string;
             /** Last Login At */
             last_login_at: string | null;
+            /**
+             * Mfa Enabled
+             * @default false
+             */
+            mfa_enabled: boolean;
             /** Phone */
             phone?: string | null;
             /** Role */

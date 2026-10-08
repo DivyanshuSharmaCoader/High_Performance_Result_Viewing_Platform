@@ -7592,6 +7592,11 @@
             ],
             "title": "Last Login At"
           },
+          "mfa_enabled": {
+            "default": false,
+            "title": "Mfa Enabled",
+            "type": "boolean"
+          },
           "phone": {
             "anyOf": [
               {

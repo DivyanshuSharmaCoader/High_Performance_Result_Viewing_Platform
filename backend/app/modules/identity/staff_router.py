@@ -25,6 +25,7 @@ class StaffOut(BaseModel):
     last_login_at: datetime | None
     created_at: datetime
     employee_code: str | None = None
+    mfa_enabled: bool = False
     designation: str | None = None
     department_id: uuid.UUID | None = None
     phone: str | None = None

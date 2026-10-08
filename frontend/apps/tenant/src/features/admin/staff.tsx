@@ -45,6 +45,7 @@ import {
   UserPlus,
   UserX,
   Users,
+  KeyRound,
 } from "lucide-react";
 import { useDeferredValue, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
@@ -290,6 +291,7 @@ type PendingAction =
   | { kind: "enable"; member: Staff }
   | { kind: "role"; member: Staff; role: "faculty" | "institution_admin" }
   | { kind: "owner"; member: Staff }
+  | { kind: "mfa"; member: Staff }
   | null;
 
 export default function StaffPage() {
@@ -342,6 +344,9 @@ export default function StaffPage() {
       if (action.kind === "role") {
         return withReauth(() => api.put(`/api/v1/admin/staff/${id}/role`, { role: action.role }));
       }
+      if (action.kind === "mfa") {
+        return withReauth(() => api.post(`/api/v1/admin/staff/${id}/mfa/reset`));
+      }
       return withReauth(() => api.post(`/api/v1/admin/staff/${id}/transfer-ownership`));
     },
     onSuccess: (_d, action) => {
@@ -353,6 +358,7 @@ export default function StaffPage() {
         enable: `${name} can sign in again.`,
         role: `${name} is now ${action.kind === "role" ? ROLE[action.role]?.label.toLowerCase() : ""}.`,
         owner: `${name} is now the owner. You remain an administrator.`,
+        mfa: `Two-step sign-in reset for ${name}. They sign in with their password and set it up again.`,
       };
       toast.success(messages[action.kind]);
       if (action.kind === "owner") void qc.invalidateQueries({ queryKey: ["me"] });
@@ -405,6 +411,11 @@ export default function StaffPage() {
               onSelect={() => setPending({ kind: "role", member: m, role: "faculty" })}
             >
               Change to faculty
+            </MenuItem>
+          )}
+          {!limited && m.mfa_enabled && (
+            <MenuItem icon={<KeyRound />} onSelect={() => setPending({ kind: "mfa", member: m })}>
+              Reset two-step sign-in
             </MenuItem>
           )}
           {!limited && isOwner && m.role === "institution_admin" && m.status === "active" && (
@@ -582,7 +593,7 @@ export default function StaffPage() {
           onOpenChange={(o) => !o && setPending(null)}
           loading={act.isPending}
           onConfirm={() => act.mutate(pending)}
-          variant={pending.kind === "disable" ? "danger" : "primary"}
+          variant={pending.kind === "disable" || pending.kind === "mfa" ? "danger" : "primary"}
           confirmText={pending.kind === "owner" ? "TRANSFER" : undefined}
           title={
             pending.kind === "disable"
@@ -591,7 +602,9 @@ export default function StaffPage() {
                 ? `Re-enable ${pending.member.full_name}?`
                 : pending.kind === "role"
                   ? `Change ${pending.member.full_name}'s role?`
-                  : `Make ${pending.member.full_name} the owner?`
+                  : pending.kind === "mfa"
+                    ? `Reset ${pending.member.full_name}'s two-step sign-in?`
+                    : `Make ${pending.member.full_name} the owner?`
           }
           description={
             pending.kind === "disable"
@@ -602,7 +615,9 @@ export default function StaffPage() {
                   ? pending.role === "institution_admin"
                     ? "Administrators can manage students, exams, results, staff and settings. They'll be signed out and need to sign in again."
                     : "They'll lose administrator access and keep only faculty access. They'll be signed out and need to sign in again."
-                  : "The owner controls billing and can transfer ownership. You'll become an administrator. This can only be undone by the new owner."
+                  : pending.kind === "mfa"
+                    ? "Only for a lost or replaced phone. Their sign-in falls back to the password until they set two-step up again. Make sure you're really talking to them."
+                    : "The owner controls billing and can transfer ownership. You'll become an administrator. This can only be undone by the new owner."
           }
           confirmLabel={
             pending.kind === "disable"
@@ -611,7 +626,9 @@ export default function StaffPage() {
                 ? "Re-enable"
                 : pending.kind === "role"
                   ? "Change role"
-                  : "Transfer ownership"
+                  : pending.kind === "mfa"
+                    ? "Reset two-step"
+                    : "Transfer ownership"
           }
         />
       )}
