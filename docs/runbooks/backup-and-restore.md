@@ -40,9 +40,9 @@ Before every deploy, `deploy.sh` does this automatically with the running versio
      -v "$PWD/restore-key:/key:ro" backup restore.sh            # the newest backup
    # or: … backup restore.sh s3://…/scorecode-20261009T210000Z.dump.age
    ```
-   It restores in three steps as the database owner (no superuser needed): schema, then data, then
-   policies, triggers and constraints. Forced row-level security is lifted only while the rows load, and
-   only from the tables that had it.
+   It restores as the database owner (no superuser needed): the schema, then the data, policies, triggers
+   and constraints. Forced row-level security is lifted only for the restore, only from the tables that
+   had it, and put back at the end. The drill's fingerprint checks the flags.
 4. **Start:** `dc up -d --wait`. The migrations run, and are a no-op when the backup is at the same
    version.
 5. **Smoke test:** `infra/ops/smoke.sh` (with `SMOKE_BASE_DOMAIN`, `SMOKE_SCHEME=https`).

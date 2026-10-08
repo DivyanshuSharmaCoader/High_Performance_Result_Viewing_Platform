@@ -28,17 +28,22 @@ age --decrypt --identity "$BACKUP_AGE_IDENTITY" --output "$work/db.dump" "$work/
 existing=$(psql -Atc "SELECT count(*) FROM pg_tables WHERE schemaname = 'public'")
 [ "$existing" = 0 ] || { echo "refusing to restore into $PGDATABASE: it already has $existing tables" >&2; exit 1; }
 jobs=${RESTORE_JOBS:-4}
-# Tenant tables FORCE row-level security, which binds even their owner, so the rows can't be loaded as
-# they stand. In three steps, as the owner, with no superuser (works on managed PostgreSQL): the schema;
-# then the data with FORCE lifted from exactly the tables that have it; then FORCE again, before the
-# policies, triggers, indexes and constraints. db-fingerprint.sh compares the RLS flags after a drill.
+# Tenant tables FORCE row-level security, which binds even their owner. Loading the rows, and validating
+# the foreign keys afterwards, are queries a policy would filter, which pg_restore refuses. So it restores
+# as the owner, with no superuser (works on managed PostgreSQL), in steps:
+#   1. the schema;
+#   2. FORCE lifted from exactly the tables that have it;
+#   3. the data, then the policies, triggers, indexes and constraints;
+#   4. FORCE again.
+# Nothing connects during the restore (the API and worker are stopped). db-fingerprint.sh compares the RLS
+# flags after a drill.
 pg_restore --exit-on-error --section=pre-data --dbname="$PGDATABASE" "$work/db.dump"
 forced=$(psql -At -c "SELECT c.oid::regclass FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
                        WHERE n.nspname = 'public' AND c.relforcerowsecurity ORDER BY 1")
 for t in $forced; do psql -v ON_ERROR_STOP=1 -q -c "ALTER TABLE $t NO FORCE ROW LEVEL SECURITY"; done
 pg_restore --exit-on-error --jobs="$jobs" --section=data --dbname="$PGDATABASE" "$work/db.dump"
-for t in $forced; do psql -v ON_ERROR_STOP=1 -q -c "ALTER TABLE $t FORCE ROW LEVEL SECURITY"; done
 pg_restore --exit-on-error --jobs="$jobs" --section=post-data --dbname="$PGDATABASE" "$work/db.dump"
+for t in $forced; do psql -v ON_ERROR_STOP=1 -q -c "ALTER TABLE $t FORCE ROW LEVEL SECURITY"; done
 psql -v ON_ERROR_STOP=1 -c "ANALYZE" > /dev/null
 printf '{"restored":"%s","into":"%s","forced_rls_tables":%s,"seconds":%s}\n' "$src" "$PGDATABASE" \
   "$(echo "$forced" | grep -c . || true)" "$(( $(date +%s) - started ))"

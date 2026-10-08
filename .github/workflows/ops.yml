@@ -61,8 +61,14 @@ jobs:
             grep -q "^$job .* up" targets.txt || { echo "target $job is not up"; exit 1; }
           done
           for i in $(seq 1 20); do [ -n "$(q 'scorecode_jobs_in_state')" ] && break; sleep 5; done
-          echo "config requests counted: $(q 'sum(scorecode_http_requests_total{route_class="config"})')"
-          [ "$(q 'sum(scorecode_http_requests_total{route_class="config"})' | cut -d. -f1)" -ge 30 ]
+          # The next scrape (every 15 s) carries them: both API workers' counts, summed (multiprocess mode).
+          for i in $(seq 1 12); do
+            n=$(q 'sum(scorecode_http_requests_total{route_class="config"})' | cut -d. -f1)
+            [ "${n:-0}" -ge 30 ] && break
+            sleep 5
+          done
+          echo "config requests counted: ${n:-none}"
+          [ "${n:-0}" -ge 30 ]
           [ -n "$(q 'scorecode_jobs_in_state')" ] || { echo "worker queue gauges missing"; exit 1; }
           curl -fsS -u admin:grafana-dev-pw "http://127.0.0.1:53000/api/search?query=ScoreCode%20overview" | grep -q scorecode-overview
           echo "Grafana dashboard provisioned"
