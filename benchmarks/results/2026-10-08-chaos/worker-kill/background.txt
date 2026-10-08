@@ -1,0 +1,10 @@
+background work after publishing 8,000 results: 1322 s (measured from data load end)
+pdf processes per worker: default
+rendered|8000
+marksheet render span (s): 1321
+notifications: 8000
+documents.render|succeeded|160
+notifications.publication_live|succeeded|1
+results.process|succeeded|1
+marksheet files: 8000 for 8000 rendered marksheets
+duplicate notifications: 0

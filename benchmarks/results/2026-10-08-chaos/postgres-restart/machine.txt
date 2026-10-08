@@ -1,0 +1,11 @@
+### Machine
+```
+commit c9f90f2
+4
+               total        used        free      shared  buff/cache   available
+Mem:           15989        1259       12181          44        2926       14730
+CPU(s):                                  4
+Model name:                              AMD EPYC 7763 64-Core Processor
+Thread(s) per core:                      2
+docker 28.0.4
+```

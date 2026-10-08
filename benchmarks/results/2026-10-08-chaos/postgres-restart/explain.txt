@@ -1,0 +1,95 @@
+== tenant from host (cache miss)
+SELECT id, slug, name, status, config_version FROM resolve_tenant(:slug, NULL)
+
+Function Scan on resolve_tenant  (cost=0.25..10.25 rows=1000 width=116) (actual time=0.382..0.383 rows=1 loops=1)
+  Buffers: shared hit=4
+Planning Time: 0.012 ms
+Execution Time: 0.423 ms
+
+== session + user (cache miss)
+SELECT s.*, u.* FROM sessions s JOIN users u ON u.id = s.user_id AND u.tenant_id = s.tenant_id WHERE s.id = :session_id
+
+Nested Loop  (cost=0.56..16.61 rows=1 width=549) (actual time=0.048..0.049 rows=1 loops=1)
+  Buffers: shared hit=5 read=1
+  ->  Index Scan using pk_sessions on sessions s  (cost=0.28..8.30 rows=1 width=272) (actual time=0.017..0.018 rows=1 loops=1)
+        Index Cond: (id = '\xeb2cd834ba344cc662b783b5ebda5433202933ebfbc4686c3c383116931359d5'::bytea)
+        Filter: (tenant_id = (current_setting('app.tenant_id'::text))::uuid)
+        Buffers: shared hit=3
+  ->  Index Scan using pk_users on users u  (cost=0.28..8.31 rows=1 width=277) (actual time=0.028..0.028 rows=1 loops=1)
+        Index Cond: (id = s.user_id)
+        Filter: (tenant_id = (current_setting('app.tenant_id'::text))::uuid)
+        Buffers: shared hit=2 read=1
+Planning:
+  Buffers: shared hit=147
+Planning Time: 1.185 ms
+Execution Time: 0.085 ms
+
+== the session's student
+SELECT * FROM students WHERE user_id = :user_id
+
+Index Scan using uq_students__tenant_user on students  (cost=0.29..8.31 rows=1 width=1128) (actual time=0.016..0.017 rows=1 loops=1)
+  Index Cond: ((tenant_id = (current_setting('app.tenant_id'::text))::uuid) AND (user_id = 'b32578ec-3850-418c-a461-1201d1ac509e'::uuid))
+  Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=36
+Planning Time: 0.248 ms
+Execution Time: 0.032 ms
+
+== my results (latest first)
+SELECT p.*, r.payload FROM publications p JOIN published_results r ON r.publication_id = p.id AND r.student_id = :student_id WHERE p.status = 'published' ORDER BY p.published_at DESC, p.id
+
+Sort  (cost=16.50..16.51 rows=1 width=1314) (actual time=0.066..0.067 rows=1 loops=1)
+  Sort Key: p.published_at DESC, p.id
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=8
+  ->  Nested Loop  (cost=0.44..16.49 rows=1 width=1314) (actual time=0.029..0.030 rows=1 loops=1)
+        Join Filter: (r.publication_id = p.id)
+        Buffers: shared hit=5
+        ->  Index Scan using uq_publications__tenant_id_id on publications p  (cost=0.15..8.17 rows=1 width=368) (actual time=0.014..0.015 rows=1 loops=1)
+              Index Cond: (tenant_id = (current_setting('app.tenant_id'::text))::uuid)
+              Filter: ((status)::text = 'published'::text)
+              Buffers: shared hit=2
+        ->  Index Scan using ix_published_results__student on published_results r  (cost=0.29..8.31 rows=1 width=962) (actual time=0.011..0.011 rows=1 loops=1)
+              Index Cond: ((tenant_id = (current_setting('app.tenant_id'::text))::uuid) AND (student_id = 'afa10b68-187a-4aa4-a543-8bb73b639b9f'::uuid))
+              Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=133
+Planning Time: 1.125 ms
+Execution Time: 0.120 ms
+
+== class statistics
+SELECT stats FROM exam_statistics WHERE publication_id = :publication_id
+
+Index Scan using pk_exam_statistics on exam_statistics  (cost=0.16..8.18 rows=1 width=32) (actual time=0.015..0.015 rows=1 loops=1)
+  Index Cond: ((tenant_id = (current_setting('app.tenant_id'::text))::uuid) AND (publication_id = '01a11a38-22a8-7114-b895-78a33e577173'::uuid))
+  Buffers: shared hit=2
+Planning:
+  Buffers: shared hit=27
+Planning Time: 0.228 ms
+Execution Time: 0.029 ms
+
+== marksheet
+SELECT * FROM marksheet_documents WHERE publication_id = :publication_id AND student_id = :student_id
+
+Index Scan using pk_marksheet_documents on marksheet_documents  (cost=0.29..8.31 rows=1 width=695) (actual time=0.048..0.049 rows=1 loops=1)
+  Index Cond: ((tenant_id = (current_setting('app.tenant_id'::text))::uuid) AND (publication_id = '01a11a38-22a8-7114-b895-78a33e577173'::uuid) AND (student_id = 'afa10b68-187a-4aa4-a543-8bb73b639b9f'::uuid))
+  Buffers: shared read=3
+Planning:
+  Buffers: shared hit=57 read=7 dirtied=5
+Planning Time: 0.596 ms
+Execution Time: 0.073 ms
+
+== unread notifications
+SELECT count(*) FROM notifications WHERE user_id = :user_id AND read_at IS NULL
+
+Aggregate  (cost=4.31..4.32 rows=1 width=8) (actual time=0.061..0.061 rows=1 loops=1)
+  Buffers: shared read=3
+  ->  Index Only Scan using ix_notifications__unread on notifications  (cost=0.29..4.31 rows=1 width=0) (actual time=0.058..0.058 rows=1 loops=1)
+        Index Cond: ((tenant_id = (current_setting('app.tenant_id'::text))::uuid) AND (user_id = 'b32578ec-3850-418c-a461-1201d1ac509e'::uuid))
+        Heap Fetches: 0
+        Buffers: shared read=3
+Planning:
+  Buffers: shared hit=103 read=6
+Planning Time: 0.899 ms
+Execution Time: 0.102 ms
+

@@ -24,16 +24,18 @@ TIMEOUT_S = 2.0
 
 
 def _fetch(prefix: str, timeout: float) -> str:
-    request = urllib.request.Request(  # noqa: S310 - fixed https URL
+    # A fixed https URL, never user input.
+    request = urllib.request.Request(  # noqa: S310  # nosec B310
         RANGE_API + prefix, headers={"Add-Padding": "true", "User-Agent": "ScoreCode password check"}
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310  # nosec B310
         return str(response.read().decode())
 
 
 async def times_breached(password: str) -> int | None:
     """How often the password appears in known breaches; ``None`` when the check couldn't run."""
-    digest = hashlib.sha1(password.encode()).hexdigest().upper()  # noqa: S324 - the API's format, not storage
+    # SHA-1 is the range API's lookup format, not a password hash: nothing is stored or compared with it.
+    digest = hashlib.sha1(password.encode(), usedforsecurity=False).hexdigest().upper()
     prefix, suffix = digest[:5], digest[5:]
     try:
         with anyio.fail_after(TIMEOUT_S + 0.5):
