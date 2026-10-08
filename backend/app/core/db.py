@@ -2,10 +2,11 @@
 
 Two runtime engines:
 
-* ``app`` — role ``scorecode_app`` (NOBYPASSRLS). Every transaction that touches tenant data first
-  runs ``set_config('app.tenant_id', :tid, true)`` (transaction-local, PgBouncer-safe). Policies use
-  ``current_setting('app.tenant_id')`` *without* ``missing_ok`` so a query that forgot the context
-  fails closed.
+* ``app`` — role ``scorecode_app`` (NOBYPASSRLS). Every transaction of a unit of work bound to a tenant
+  starts with ``set_config('app.tenant_id', :tid, true)`` (transaction-local, PgBouncer-safe). Policies
+  use ``current_setting('app.tenant_id')`` *without* ``missing_ok`` so a query that forgot the context
+  fails closed. The transaction, and with it ``set_config``, starts at the first statement, so a request
+  answered entirely from cache never checks out a connection (P14.3).
 * ``platform`` — role ``scorecode_platform`` (BYPASSRLS). Only the platform module may use it.
 
 Independently of RLS, the ORM adds ``tenant_id = :ctx`` to every statement on ``TenantScoped`` models
@@ -20,9 +21,9 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import event, text
+from sqlalchemy import Connection, event, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import ORMExecuteState, Session, with_loader_criteria
+from sqlalchemy.orm import ORMExecuteState, Session, SessionTransaction, with_loader_criteria
 
 from app.core.config import Settings
 from app.core.logging import get_logger
@@ -31,6 +32,7 @@ from app.core.models import TenantScoped
 log = get_logger(__name__)
 
 AfterCommit = Callable[[], Awaitable[None]]
+_SET_TENANT = text("SELECT set_config('app.tenant_id', :tid, true)")
 
 
 def _engine(url: str, settings: Settings, app_name: str, pool_size: int | None = None) -> AsyncEngine:
@@ -66,6 +68,14 @@ def _tenant_criteria(state: ORMExecuteState) -> None:
             include_aliases=True,
         )
     )
+
+
+@event.listens_for(Session, "after_begin")
+def _bind_tenant(session: Session, transaction: SessionTransaction, connection: Connection) -> None:
+    """Isolation layer L2: the RLS variable, set as the transaction's first statement."""
+    tenant_id = session.info.get("tenant_id")
+    if tenant_id is not None and not transaction.nested:
+        connection.execute(_SET_TENANT, {"tid": str(tenant_id)})
 
 
 class Database:
@@ -123,14 +133,16 @@ class UnitOfWork:
     _committed: bool = False
 
     async def set_tenant(self, tenant_id: uuid.UUID) -> None:
-        """Bind this transaction to a tenant: RLS variable + ORM criteria."""
+        """Bind this unit of work to a tenant: RLS variable + ORM criteria.
+
+        Before the transaction has begun, ``_bind_tenant`` sets the variable when it does; once it has
+        (e.g. sign-up looked up the slug first), it is set here and now."""
         if self.tenant_id is not None and self.tenant_id != tenant_id:
             raise RuntimeError("Unit of work is already bound to a different tenant")
-        await self.session.execute(
-            text("SELECT set_config('app.tenant_id', :tid, true)"), {"tid": str(tenant_id)}
-        )
         self.tenant_id = tenant_id
         self.session.info["tenant_id"] = tenant_id
+        if self.session.in_transaction():
+            await self.session.execute(_SET_TENANT, {"tid": str(tenant_id)})
 
     def require_tenant(self) -> uuid.UUID:
         if self.tenant_id is None:

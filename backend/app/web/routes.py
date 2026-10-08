@@ -30,10 +30,18 @@ from app.web.jobs_router import router as jobs_router
 
 
 def include_routers(app: FastAPI) -> None:
+    # Requests are matched against the routers in this order, each testing its routes' patterns, so the
+    # student read path (config, me, results, marksheets, inbox, verify) goes first: on result day it is
+    # nearly all traffic. Route matching was 6% of API CPU under scenario B with these near the end
+    # (benchmarks/results/2026-10-09-read-path.md).
     for router in (
         identity_router,
-        platform_auth_router,
         branding_router,
+        my_results_router,
+        my_marksheets_router,
+        notifications_router,
+        verification_router,
+        platform_auth_router,
         staff_router,
         settings_router,
         signup_router,
@@ -48,11 +56,7 @@ def include_routers(app: FastAPI) -> None:
         marks_router,
         results_router,
         publications_router,
-        my_results_router,
         marksheets_admin_router,
-        my_marksheets_router,
         plans_router,
-        notifications_router,
-        verification_router,
     ):
         app.include_router(router)

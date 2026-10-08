@@ -7,7 +7,12 @@ connection and waited for a second — a pool deadlock resolved only by the pool
 
 from __future__ import annotations
 
+import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 import pytest
+from sqlalchemy import text
 
 from app.core.container import Infra
 from app.main import create_app
@@ -57,6 +62,26 @@ async def test_platform_request_needs_only_one_connection(migrated_db: str) -> N
         await infra.close()
 
 
+@asynccontextmanager
+async def _holding_the_only_connection(infra: Infra, tenant_id: uuid.UUID) -> AsyncIterator[None]:
+    """A unit of work checks out its connection at its first statement, so run one."""
+    async with infra.db.uow(tenant_id) as uow:
+        await uow.session.execute(text("SELECT 1"))
+        yield
+
+
+async def test_a_unit_of_work_takes_no_connection_until_its_first_statement(migrated_db: str) -> None:
+    """A request answered from cache (most of result day's student reads) never waits for the pool."""
+    settings = make_settings(db_pool_size=1, db_max_overflow=0, db_pool_timeout_s=0.2, redis_url=None)
+    infra = Infra.build(settings, app_name="scorecode-test-lazy-uow")
+    try:
+        t = await make_tenant(infra)
+        async with _holding_the_only_connection(infra, t.id), infra.db.uow(t.id) as idle:
+            assert idle.tenant_id == t.id  # bound, but nothing checked out
+    finally:
+        await infra.close()
+
+
 async def test_exhausted_pool_answers_a_retryable_503_not_a_500(migrated_db: str) -> None:
     """Result-day overload: when no pooled connection comes free in time, clients get 503 with
     Retry-After (the SPAs back off with jitter and retry) instead of an unexplained 500."""
@@ -70,15 +95,15 @@ async def test_exhausted_pool_answers_a_retryable_503_not_a_500(migrated_db: str
         t = await make_tenant(infra)
         async with Client(app, t.host) as c:
             await c.login(t.owner_email)
-            async with infra.db.uow(t.id):  # holds the only connection
-                r = await c.get("/api/v1/me")
+            async with _holding_the_only_connection(infra, t.id):
+                r = await c.get("/api/v1/admin/staff")
             assert r.status_code == 503, r.text
             assert r.headers["retry-after"] == "2"
             assert r.headers["content-type"].startswith("application/problem+json")
             assert r.json()["code"] == "overloaded" and r.json()["retry_after"] == 2
             # Same when the tenant lookup itself (in the middleware, before any route) needs the database.
             infra.cache.local.clear()
-            async with infra.db.uow(t.id):
+            async with _holding_the_only_connection(infra, t.id):
                 r = await c.get("/api/v1/tenant/config")
             assert r.status_code == 503, r.text
             assert r.headers["retry-after"] == "2" and r.json()["code"] == "overloaded"

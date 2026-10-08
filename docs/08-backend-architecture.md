@@ -94,7 +94,7 @@ Patterns used deliberately: Strategy (grading, import profiles, channels), State
 5. **Session authentication** (cookie → hashed lookup → cache) → `Principal(user_id, tenant_id, roles)`; check `principal.tenant_id == ctx.tenant_id`.
 6. **CSRF check** for state-changing methods (double-submit token header).
 7. **Route dependency** `require(permission)` + entitlement gate `require_feature("custom_domain")`.
-8. **Unit of Work**: open transaction, `set_config('app.tenant_id', ...)`, run service, commit; on error rollback.
+8. **Unit of Work**: bind the tenant, run service, commit; on error rollback. The transaction starts at the first statement, and `set_config('app.tenant_id', ...)` is always its first statement (a session `after_begin` hook), so a request answered entirely from cache never checks out a connection (P14.3).
 9. **Error mapping** to RFC 9457 `application/problem+json`.
 
 ---

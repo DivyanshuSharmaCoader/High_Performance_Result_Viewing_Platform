@@ -42,7 +42,7 @@ The design achieves I-1 with **five independent layers**, so a single mistake in
    ```
    `current_setting('app.tenant_id')` **without** the `missing_ok` flag raises an error if unset → a query that forgot to set tenant context *fails closed* instead of returning everything.
 2. The application connects as role **`scorecode_app`**: not superuser, not table owner, `NOBYPASSRLS`. Migrations run as a separate owner role `scorecode_migrator`.
-3. Tenant context is set **per transaction** with `SELECT set_config('app.tenant_id', :tid, true)` (`true` = `SET LOCAL` semantics). This is compatible with PgBouncer **transaction pooling** — the setting dies with the transaction, so it cannot leak to the next client of that connection.
+3. Tenant context is set **per transaction** with `SELECT set_config('app.tenant_id', :tid, true)` (`true` = `SET LOCAL` semantics). This is compatible with PgBouncer **transaction pooling** — the setting dies with the transaction, so it cannot leak to the next client of that connection. It is issued as the first statement of every transaction of a unit of work bound to a tenant (`app/core/db.py`, `_bind_tenant`), so the transaction, and the connection, are only taken when a statement actually runs.
 4. Platform-admin cross-tenant reads use a **separate role** `scorecode_platform` (`BYPASSRLS`, read-mostly grants), a **separate connection pool**, available only inside the `platform` module, and every use is audited.
 5. A **migration test** in CI asserts: every table with a `tenant_id` column has RLS enabled + forced + a policy. A new table cannot ship without isolation.
 
