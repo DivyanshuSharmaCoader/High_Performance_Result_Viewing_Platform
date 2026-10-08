@@ -21,7 +21,7 @@
 | | |
 |---|---|
 | Current phase | **Phase 11 — Marksheet PDFs & verification** (Phases 0–10 complete; Gates M1–M4 and M5a passed) |
-| Next step | **P11.1** sandboxed marksheet template and PDF renderer with external fetches refused |
+| Next step | Tick **P11.2** once the CI render-timing step reports, then Gate M5; then **Phase 12** (notifications) |
 | Last updated | 2026-10-08 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -39,7 +39,7 @@
 | 8 | Marks entry & marks import | 7 | 7 |
 | 9 | Result processing, preview, approval | 5 | 5 |
 | 10 | Publication, read model, student portal | 6 | 6 |
-| 11 | Marksheet PDFs & verification | 5 | 0 |
+| 11 | Marksheet PDFs & verification | 5 | 4 |
 | 12 | Notifications | 3 | 0 |
 | 13 | Analytics (basic) & audit viewer | 5 | 0 |
 | 14 | Performance engineering (measure → optimise → re-measure) | 5 | 0 |
@@ -170,11 +170,11 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 11 — Marksheet PDFs & verification
 
-- [ ] **P11.1** Template system · Done when: Security test: template cannot fetch external URL
+- [x] **P11.1** Template system · Done when: Security test: template cannot fetch external URL
 - [ ] **P11.2** Render jobs · Done when: Tests + timing measured per PDF
-- [ ] **P11.3** Download · Done when: Isolation tests
-- [ ] **P11.4** Verification records · Done when: State tests
-- [ ] **P11.5** Verify page · Done when: E2E-4
+- [x] **P11.3** Download · Done when: Isolation tests
+- [x] **P11.4** Verification records · Done when: State tests
+- [x] **P11.5** Verify page · Done when: E2E-4
 - [ ] 🚩 **Gate M5 — Result day (complete)** · Done when: Publish → view → download → scan QR → verified
 
 ### Phase 12 — Notifications
@@ -237,6 +237,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-08 | P11.1, P11.3, P11.4, P11.5 ticked | Verified by CI for 0ba609b (all 7 jobs). Integration ran 481 tests with none skipped, so the PDF tests ran with Pango. The E2E job passed E2E-4 with real rendering in the worker container. Five mutations were caught: scheduled codes made verifiable, names unmasked, revocation ignored, failed renders never marked failed, downloads not scoped to the student. So was a sixth in Docker: a fetcher that allows URLs. Locally, E2E-4 and P10 also passed against the rebuilt stack. After that: the admin drawer shows the issued marksheet with download and revocation (3806d5c). P11.2 stays open until CI reports a render time from a machine that isn't on battery. |
 | 2026-10-08 | P11.1–P11.5 written (not ticked; CI pending) | **Marksheet PDFs and verification.** Migration 0011 adds `marksheet_documents` and `verification_records` (global 128-bit Crockford codes; status derived from the publication; column-level grants; `verification_lookup` definer). Publishing creates a pending document and a code per student and enqueues `documents.render` jobs (50 students each, `pdf` queue). A scheduled release renders ahead of go-live. Each job lays out PDFs in a thread without holding a connection and stores each in its own transaction. Failures retry; after the last attempt the document is `failed` and admins can retry. Marksheets count towards storage but never block. Students get signed 120 s download links located through their session, plus a shareable verification link. Admins get per-student downloads, progress, retry and per-student revocation (re-auth + audit). The public verify page is server-rendered with no scripts, masked identity, the PDF's SHA-256, noindex, no-referrer, a strict CSP and an HTML 429. The renderer uses a Jinja sandbox and refuses every non-`data:` fetch. Tests: 9 integration (flow, isolation, retries, lifecycle, page, rate limit, definer scope) and 3 PDF tests that run in CI and the Docker image (live-server SSRF suite with a control request; real render). They passed in the Docker image locally. The template was reviewed as rendered PDFs and the layout fixed. Mutation check: making scheduled codes verifiable was caught; the remaining mutation checks are still to redo. E2E-4 (`verify.spec.ts`) checks that the downloaded file's SHA-256 matches the verify page, axe passes, and a withdrawal shows. **Deviations:** rendering starts at publication, not approval (docs/03 W9). Only the `standard` template exists; `classic` and a template setting come later. "Superseded" can't be reached through the UI until the correction workflow ships, so it's covered by an integration test. **Not verified yet:** timing per PDF (waiting for AC power: the laptop is on battery with Low Power Mode); E2E-4 in CI. 478 backend tests pass locally; frontend tests pass; student bundle 140.0 kB. |
 | 2026-10-08 | P10.6 and Gate M5a ticked | Verified by CI for fddb60b (all 7 jobs). The gate's demo, publish → students view results, is the Playwright publish journey; the baseline is in benchmarks/results/2026-10-08-k6-scenarios-A-B.md. Still open, and carried into Phase 14: B-cold after the fix on AC power. **Next:** Phase 11. |
 | 2026-10-08 | P10.6 written (not ticked; CI pending); two result-day fixes | CI for 9eea1e5 green on all 7 jobs. **P10.6.** I ran k6 scenarios A and B, pre-authenticated (3 runs each) and cold (1 each), on one M2 laptop with the load generator co-located: benchmarks/results/2026-10-08-k6-scenarios-A-B.md, with raw data. A: p95 ≤ 11 ms, no errors; a sign-in costs 34 ms. B pre-authenticated: about 600 req/s, p95 0.5–0.7 s, 0.016% errors. The first limit is API CPU (two workers at 150–170%; Postgres about 45%), so docs/11's prediction holds only in part. **Found and fixed:** (1) The API keyed per-IP limits on the right-most X-Forwarded-For entry, which is the nearest proxy (a CDN edge in production), so 601 of 1,000 cold sign-ins got 429. Caddy now resolves the client address (`trusted_proxies_strict`) and overwrites X-Real-IP, which is the only header the API reads; 980 of 1,000 sign-ins then succeeded. (2) DB pool timeouts became 500s; they are now `503 overloaded` + Retry-After, in routes and in the middleware's tenant lookup. Both have tests that fail under mutation, and the client address was also checked end to end through Caddy. Also: the `compose.yml` login-limit override (stricter than the production default) is gone; a stale ENVIRONMENT row is gone; tests no longer read `trust_proxy_headers` from a developer's .env; and `benchmarks/k6/run.sh` refuses to run on battery. **Not verified:** B-cold after the fix on AC power. The later runs were on battery with Low Power Mode, which cut throughput by 32–44%, so they are reported only as controls. 460 backend tests pass locally. **Next:** CI, then tick P10.6 and Gate M5a; re-run B-cold on AC; Phase 11. |
