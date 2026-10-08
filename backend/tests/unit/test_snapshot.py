@@ -133,6 +133,7 @@ STATS = {
     "pass_percentage": "66.7",
     "average_percentage": "53.33",
     "median_percentage": "50",
+    "stdev_percentage": "24.5",
     "histogram": [{"from": 0, "to": 10, "count": 0}],
     "grades": [{"grade": "A+", "count": 1}],
     "grades_basis": "paper",
@@ -150,8 +151,11 @@ STATS = {
             "average": "53.33",
             "highest": "85",
             "lowest": "25",
+            "median": "50",
+            "stdev": "24.5",
         }
     ],
+    "cohorts": [{"cohort_id": "c1", "code": "X-A", "name": "Class X A", "students": 4}],
 }
 
 
@@ -164,13 +168,17 @@ def test_students_see_only_the_statistics_the_institution_allows() -> None:
     full = student_stats(STATS, "full")
     assert full is not None
     assert full["pass_percentage"] == "66.7" and full["histogram"] == STATS["histogram"]
+    assert full["stdev_percentage"] == "24.5"
     assert full["papers"] == [
         {
             "course_code": "UCS301",
             "average": "53.33",
             "max_total": "100",
             "highest": "85",
+            "median": "50",
             "pass_percentage": "66.7",
         }
     ]
-    assert "lowest" not in str(full) and "paper_id" not in str(full)  # nothing beyond what's listed
+    # Nothing beyond what's listed: no lowest score, no ids, and no section-by-section comparison.
+    assert "lowest" not in str(full) and "paper_id" not in str(full)
+    assert "cohorts" not in full and "X-A" not in str(full)

@@ -20,7 +20,6 @@ import {
   SheetContent,
   Skeleton,
   Spinner,
-  StatTile,
   TBody,
   THead,
   Table,
@@ -46,7 +45,7 @@ import {
   Undo2,
   XCircle,
 } from "lucide-react";
-import { useDeferredValue, useState } from "react";
+import { lazy, Suspense, useDeferredValue, useState } from "react";
 import { Link, useParams } from "react-router";
 
 import { useReauth } from "../../components/reauth";
@@ -62,7 +61,6 @@ import {
   useResults,
   useSetResults,
   type Anomaly,
-  type ResultStats,
 } from "./api";
 import { StudentResultView } from "../student/result-view";
 import { useTenant } from "../../lib/tenant";
@@ -70,9 +68,9 @@ import { previewPayload } from "./preview";
 import { IssuedMarksheet, useLivePublication } from "./issued";
 import { PublishPanel } from "./publish";
 
-type Pending = "process" | "approve" | "reject" | "revoke" | "discard" | null;
+const ExamAnalytics = lazy(() => import("./analytics"));
 
-const pct = (v: string | null | undefined) => (v === null || v === undefined ? "—" : `${trimNum(v)}%`);
+type Pending = "process" | "approve" | "reject" | "revoke" | "discard" | null;
 
 // ---- run status and actions ---------------------------------------------------------------------
 
@@ -312,136 +310,6 @@ function RunPanel({ o }: { o: ResultsOverview }) {
 }
 
 // ---- statistics ---------------------------------------------------------------------------------
-
-function Histogram({ bins }: { bins: ResultStats["histogram"] }) {
-  const max = Math.max(1, ...bins.map((b) => b.count));
-  const label = (b: { from: number; to: number }) => `${b.from}–${b.to === 100 ? 100 : b.to - 1}%`;
-  return (
-    <figure>
-      <ul className="flex h-36 items-end gap-1.5" aria-label="Students by percentage">
-        {bins.map((b) => (
-          <li
-            key={b.from}
-            className="flex h-full flex-1 flex-col items-center justify-end gap-1"
-            aria-label={`${label(b)}: ${formatNumber(b.count)} ${noun(b.count, "student")}`}
-          >
-            <span className="tabular text-[11px] text-fg-subtle" aria-hidden>
-              {b.count || ""}
-            </span>
-            <span
-              aria-hidden
-              className="w-full rounded-t bg-brand/75"
-              style={{ height: `${(b.count / max) * 100}%`, minHeight: b.count ? 2 : 0 }}
-            />
-          </li>
-        ))}
-      </ul>
-      <div className="mt-1 flex gap-1.5 border-t border-border pt-1 text-[11px] text-fg-subtle" aria-hidden>
-        {bins.map((b) => (
-          <span key={b.from} className="flex-1 text-center">
-            {b.from}
-          </span>
-        ))}
-      </div>
-      <figcaption className="mt-1 text-[12px] text-fg-subtle">Percentage (students with a result)</figcaption>
-    </figure>
-  );
-}
-
-function Stats({ s }: { s: ResultStats }) {
-  const o = s.outcomes;
-  return (
-    <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatTile label="Pass rate" value={pct(s.pass_percentage)} hint={`${formatNumber(o.pass)} passed`} />
-        <StatTile label="Failed" value={formatNumber(o.fail)} />
-        <StatTile
-          label="Average"
-          value={pct(s.average_percentage)}
-          hint={s.median_percentage ? `median ${trimNum(s.median_percentage)}%` : undefined}
-        />
-        <StatTile
-          label="No result"
-          value={formatNumber(o.absent + o.incomplete + o.withheld)}
-          hint={[
-            o.absent && `${o.absent} absent`,
-            o.incomplete && `${o.incomplete} incomplete`,
-            o.withheld && `${o.withheld} withheld`,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        />
-      </div>
-      <div className="grid gap-5 lg:grid-cols-[1fr_280px]">
-        <Section title="Distribution">
-          <Histogram bins={s.histogram} />
-        </Section>
-        <Section
-          title={s.grades_basis === "paper" ? "Paper grades" : "Grades"}
-          description={
-            s.grades_basis === "paper" ? "Grades of every paper sat; the exam result is an SGPA." : undefined
-          }
-        >
-          {s.grades.length === 0 ? (
-            <p className="text-sm text-fg-subtle">This scheme doesn&apos;t give grades.</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {s.grades.map((g) => {
-                const total = s.grades.reduce((n, x) => n + x.count, 0);
-                return (
-                  <li key={g.grade} className="flex items-center gap-3 text-sm">
-                    <span className="w-10 font-semibold">{g.grade}</span>
-                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2" aria-hidden>
-                      <span
-                        className="block h-full rounded-full bg-brand/70"
-                        style={{ width: `${(g.count / Math.max(1, total)) * 100}%` }}
-                      />
-                    </span>
-                    <span className="tabular w-10 text-right text-fg-muted">{g.count}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Section>
-      </div>
-      <TableContainer>
-        <Table>
-          <caption className="sr-only">Results by paper</caption>
-          <THead>
-            <tr>
-              <Th>Paper</Th>
-              <Th className="text-right">Appeared</Th>
-              <Th className="text-right">Pass rate</Th>
-              <Th className="hidden text-right sm:table-cell">Average</Th>
-              <Th className="hidden text-right md:table-cell">Highest</Th>
-              <Th className="hidden text-right md:table-cell">Lowest</Th>
-              <Th className="hidden text-right lg:table-cell">Absent</Th>
-            </tr>
-          </THead>
-          <TBody>
-            {s.papers.map((p) => (
-              <tr key={p.paper_id}>
-                <Td>
-                  <span className="font-medium">{p.course_code}</span>{" "}
-                  <span className="hidden text-fg-muted sm:inline">{p.course_name}</span>
-                </Td>
-                <Td className="tabular text-right">{formatNumber(p.appeared)}</Td>
-                <Td className="tabular text-right">{pct(p.pass_percentage)}</Td>
-                <Td className="tabular hidden text-right sm:table-cell">
-                  {p.average ? `${trimNum(p.average)}/${trimNum(p.max_total)}` : "—"}
-                </Td>
-                <Td className="tabular hidden text-right md:table-cell">{trimNum(p.highest) || "—"}</Td>
-                <Td className="tabular hidden text-right md:table-cell">{trimNum(p.lowest) || "—"}</Td>
-                <Td className="tabular hidden text-right lg:table-cell">{formatNumber(p.absent)}</Td>
-              </tr>
-            ))}
-          </TBody>
-        </Table>
-      </TableContainer>
-    </div>
-  );
-}
 
 // ---- anomalies ----------------------------------------------------------------------------------
 
@@ -727,7 +595,9 @@ export default function ExamResultsPage() {
       )}
       {showResults && (
         <>
-          <Stats s={stats} />
+          <Suspense fallback={<Skeleton className="h-72 w-full" />}>
+            <ExamAnalytics s={stats} />
+          </Suspense>
           <Anomalies items={anomaliesOf(o)} onOpen={setStudentId} />
           <Students o={o} onOpen={setStudentId} />
           <StudentSheet o={o} exam={exam.data} studentId={studentId} onClose={() => setStudentId(null)} />

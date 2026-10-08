@@ -209,19 +209,36 @@ def _median(values: list[Decimal]) -> Decimal | None:
     return v[mid] if len(v) % 2 else (v[mid - 1] + v[mid]) / 2
 
 
+def _stdev(values: list[Decimal]) -> Decimal | None:
+    """Population standard deviation: the cohort *is* the whole population, not a sample of it."""
+    if not values:
+        return None
+    mean = sum(values, Decimal(0)) / len(values)
+    return (sum(((v - mean) ** 2 for v in values), Decimal(0)) / len(values)).sqrt()
+
+
+def _bins(percentages: Iterable[Decimal]) -> list[dict[str, int]]:
+    """Ten 10-point bins of percentages; 100% falls in the last one."""
+    counts = [0] * 10
+    for p in percentages:
+        counts[min(max(int(p // 10), 0), 9)] += 1
+    return [{"from": i * 10, "to": i * 10 + 10, "count": n} for i, n in enumerate(counts)]
+
+
 def _r2(d: Decimal | None) -> str | None:
     return num(d.quantize(Decimal("0.01"))) if d is not None else None
 
 
-def statistics(c: Computed, papers: Iterable[Paper]) -> dict[str, Any]:
-    """Distribution, pass rate and per-paper figures for the preview. Pass % counts students with a result
-    (pass or fail); absent, withheld and incomplete students are reported separately."""
+def statistics(
+    c: Computed, papers: Iterable[Paper], cohorts: Mapping[str, tuple[str, str]] | None = None
+) -> dict[str, Any]:
+    """Distribution, pass rate and per-paper and per-section figures for the preview and the published
+    snapshot (P13.1). Pass % counts students with a result (pass or fail); absent, withheld and
+    incomplete students are reported separately. Spread is the population standard deviation.
+    ``cohorts`` maps cohort ids to (code, name) for the per-section breakdown."""
     outcomes = Counter(o.result.outcome.value for o in c.outcomes)
     decided = [o for o in c.outcomes if o.result.outcome in DECIDED]
     pcts = [o.result.percentage for o in decided if o.result.percentage is not None]
-    bins = [0] * 10
-    for p in pcts:
-        bins[min(int(p // 10), 9)] += 1
     by_grade: dict[str, list[Decimal]] = defaultdict(list)
     for o in decided:
         if o.result.grade:
@@ -240,6 +257,8 @@ def statistics(c: Computed, papers: Iterable[Paper]) -> dict[str, Any]:
         rows = [pr for o in c.outcomes for pr in o.result.papers if pr.paper_id == pid]
         sat = [pr for pr in rows if pr.outcome in (PaperOutcome.PASS, PaperOutcome.FAIL)]
         totals = [pr.total for pr in sat if pr.total is not None]
+        max_total = paper.spec.max_total
+        paper_pcts = [t * 100 / max_total for t in totals] if max_total else []
         per_paper.append(
             {
                 "paper_id": pid,
@@ -252,20 +271,48 @@ def statistics(c: Computed, papers: Iterable[Paper]) -> dict[str, Any]:
                 "absent": sum(1 for pr in rows if pr.outcome is PaperOutcome.ABSENT),
                 "incomplete": sum(1 for pr in rows if pr.outcome is PaperOutcome.INCOMPLETE),
                 "average": _r2(_mean(totals)),
+                "median": _r2(_median(totals)),
+                "stdev": _r2(_stdev(totals)),
                 "highest": num(max(totals)) if totals else None,
                 "lowest": num(min(totals)) if totals else None,
+                "histogram": _bins(paper_pcts),
             }
         )
+    by_cohort: dict[str, list[Outcome]] = defaultdict(list)
+    for o in c.outcomes:
+        by_cohort[o.student.cohort_id].append(o)
+    sections: list[dict[str, Any]] = []
+    for cohort_id, members in by_cohort.items():
+        took = [o for o in members if o.result.outcome in DECIDED]
+        values = [o.result.percentage for o in took if o.result.percentage is not None]
+        code, name = (cohorts or {}).get(cohort_id, (cohort_id, cohort_id))
+        sections.append(
+            {
+                "cohort_id": cohort_id,
+                "code": code,
+                "name": name,
+                "students": len(members),
+                "appeared": len(took),
+                "passed": sum(1 for o in took if o.result.outcome is ExamOutcome.PASS),
+                "pass_percentage": _pct(
+                    sum(1 for o in took if o.result.outcome is ExamOutcome.PASS), len(took)
+                ),
+                "average_percentage": _r2(_mean(values)),
+            }
+        )
+    sections.sort(key=lambda r: str(r["code"]))
     return {
         "students": len(c.outcomes),
         "outcomes": {k.value: outcomes.get(k.value, 0) for k in ExamOutcome},
         "pass_percentage": _pct(outcomes.get("pass", 0), len(decided)),
         "average_percentage": _r2(_mean(pcts)),
         "median_percentage": _r2(_median(pcts)),
-        "histogram": [{"from": i * 10, "to": i * 10 + 10, "count": n} for i, n in enumerate(bins)],
+        "stdev_percentage": _r2(_stdev(pcts)),
+        "histogram": _bins(pcts),
         "grades": [{"grade": g, "count": len(v)} for g, v in grades],
         "grades_basis": basis,
         "papers": per_paper,
+        "cohorts": sections,
     }
 
 

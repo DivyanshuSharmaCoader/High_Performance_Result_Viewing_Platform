@@ -4,6 +4,7 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { Link, useParams } from "react-router";
 
 import { useMyResult, useMyStats } from "./api";
+import { ClassStats, type FullStats } from "./class-stats";
 import { MarksheetCard } from "./marksheet";
 import { StudentResultView } from "./result-view";
 
@@ -51,6 +52,9 @@ export default function StudentResultPage() {
           )}
           <StudentResultView payload={q.data.payload} averages={averages} />
           <MarksheetCard publicationId={publicationId} />
+          {stats.data?.stats?.histogram ? (
+            <ClassStats stats={stats.data.stats as FullStats} percentage={q.data.payload.result.percentage} />
+          ) : null}
           <p className="mt-5 text-[12px] text-fg-subtle">
             Published by {q.data.payload.institution.name} on {formatDateTime(q.data.published_at)}
             {classAverage && <> · class average {classAverage}%</>}.

@@ -153,6 +153,7 @@ def student_stats(stats: Mapping[str, Any], level: str) -> dict[str, Any] | None
             "students": stats.get("students"),
             "pass_percentage": stats.get("pass_percentage"),
             "median_percentage": stats.get("median_percentage"),
+            "stdev_percentage": stats.get("stdev_percentage"),
             "histogram": stats.get("histogram", []),
             "grades": stats.get("grades", []),
             "grades_basis": stats.get("grades_basis"),
@@ -160,6 +161,7 @@ def student_stats(stats: Mapping[str, Any], level: str) -> dict[str, Any] | None
                 p
                 | {
                     "highest": q.get("highest"),
+                    "median": q.get("median"),
                     "pass_percentage": q.get("pass_percentage"),
                 }
                 for p, q in zip(papers, stats.get("papers", []), strict=True)

@@ -348,6 +348,65 @@ describe("results page", () => {
     await waitFor(() => expect(revoked).toEqual([{ reason: "Issued to the wrong person" }]));
   });
 
+  it("compares sections and drills into a paper's distribution", async () => {
+    const bins = (counts: number[]) => counts.map((count, i) => ({ from: i * 10, to: i * 10 + 10, count }));
+    const stats = {
+      ...STATS,
+      stdev_percentage: "24.5",
+      papers: [
+        {
+          ...STATS.papers[0]!,
+          median: "50",
+          stdev: "24.5",
+          histogram: bins([0, 0, 1, 0, 0, 1, 0, 0, 1, 0]),
+        },
+      ],
+      cohorts: [
+        {
+          cohort_id: "c1",
+          code: "COE-1",
+          name: "Section 1",
+          students: 3,
+          appeared: 2,
+          passed: 2,
+          pass_percentage: "100",
+          average_percentage: "67.5",
+        },
+        {
+          cohort_id: "c2",
+          code: "COE-2",
+          name: "Section 2",
+          students: 1,
+          appeared: 1,
+          passed: 0,
+          pass_percentage: "0",
+          average_percentage: "25",
+        },
+      ],
+    };
+    mockApi({
+      [`GET ${URL}`]: () => ({ status: 200, body: overview({ run: run({ stats }) }) }),
+      "GET /api/v1/admin/exams/e1": () => ({ status: 200, body: exam }),
+      [`GET ${URL}/students`]: () => ({
+        status: 200,
+        body: { run_id: "r1", items: [student], next_after: null },
+      }),
+    });
+    render();
+    expect(await screen.findByText(/median 50% · spread ±24.5/)).toBeInTheDocument();
+    const sections = screen.getByRole("table", { name: "Results by section" });
+    const weak = within(sections).getByText("COE-2").closest("tr")!;
+    expect(weak).toHaveTextContent("Below the exam");
+    expect(within(sections).getByText("COE-1").closest("tr")).not.toHaveTextContent("Below the exam");
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "UCS301 Data Structures: details" }));
+    const sheet = await screen.findByRole("dialog", { name: "UCS301 · Data Structures" });
+    expect(within(sheet).getByText("2 of 3 passed")).toBeInTheDocument();
+    expect(within(sheet).getByText("median 50 · spread ±24.5")).toBeInTheDocument();
+    expect(within(sheet).getByRole("listitem", { name: "80–89%: 1 student" })).toBeInTheDocument();
+  });
+
   it("approves after confirming the password", async () => {
     document.cookie = "sc_csrf=x";
     let reauthed = false;

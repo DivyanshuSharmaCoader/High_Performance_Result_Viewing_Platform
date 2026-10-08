@@ -5,7 +5,12 @@ const ACTIONS: Record<string, string> = {
   "tenant.reactivated": "Portal reactivated by ScoreCode",
   "tenant.plan_changed": "Plan changed",
   "tenant.override_set": "Plan limit adjusted by ScoreCode",
+  "tenant.override_removed": "Plan limit adjustment removed by ScoreCode",
   "tenant.ownership_transferred": "Ownership transferred",
+  "trial.started": "Free trial started",
+  "trial.granted": "Free trial granted by ScoreCode",
+  "trial.refused": "Free trial refused",
+  "trial.revoked": "Free trial ended by ScoreCode",
   "settings.updated": "Institution settings updated",
   "branding.updated": "Branding updated",
   "branding.logo_updated": "Logo uploaded",
@@ -14,6 +19,7 @@ const ACTIONS: Record<string, string> = {
   "user.invite_resent": "Invitation re-sent",
   "user.invite_accepted": "Invitation accepted",
   "user.role_changed": "Role changed",
+  "user.profile_updated": "Profile updated",
   "user.disabled": "Account disabled",
   "user.enabled": "Account re-enabled",
   "user.password_changed": "Password changed",
@@ -21,17 +27,88 @@ const ACTIONS: Record<string, string> = {
   "user.login_locked": "Account temporarily locked after failed sign-ins",
   "auth.login": "Signed in",
   "student.activated": "Student activated their account",
+  "activation_codes.issued": "Activation codes issued",
+  "cohort.members_added": "Students added to a section",
+  "session.made_current": "Academic session made current",
+  "session.structure_copied": "Structure copied from another session",
+  "import.uploaded": "Spreadsheet uploaded",
+  "import.committed": "Import applied",
+  "import.cancelled": "Import cancelled",
+  "grading_scheme.made_default": "Default grading scheme changed",
+  "grading_scheme.version_saved": "Grading scheme: new version saved",
+  "exam.paper_added": "Paper added to an exam",
+  "exam.paper_removed": "Paper removed from an exam",
+  "exam.paper_updated": "Exam paper changed",
+  "exam.cohorts_changed": "Exam sections changed",
+  "exam.faculty_assigned": "Faculty assigned to a paper",
+  "exam.open_entry": "Marks entry opened",
+  "exam.close_entry": "Marks entry closed",
+  "exam.reopen_entry": "Marks entry reopened",
+  "marks.entered": "Marks entered",
+  "marks.imported": "Marks imported",
+  "paper.submitted": "Marks submitted",
+  "paper.returned": "Marks returned for correction",
+  "results.processing_started": "Result processing started",
+  "results.processed": "Results processed",
+  "results.stale": "Results out of date (marks changed)",
+  "results.approved": "Results approved",
+  "results.rejected": "Results rejected",
+  "results.approval_revoked": "Approval revoked",
+  "results.discarded": "Results discarded",
+  "publication.published": "Results published",
+  "publication.scheduled": "Publication scheduled",
+  "publication.cancelled": "Scheduled publication cancelled",
+  "publication.withdrawn": "Results withdrawn",
+  "verification.revoked": "Marksheet verification revoked",
+};
+
+const ENTITIES: Record<string, string> = {
+  session: "Academic session",
+  term: "Term",
+  department: "Department",
+  program: "Programme",
+  cohort: "Section",
+  course: "Course",
+  student: "Student",
+  exam: "Exam",
+  grading_scheme: "Grading scheme",
+  user: "Account",
+};
+const VERBS: Record<string, string> = {
+  created: "created",
+  updated: "changed",
+  deleted: "deleted",
+  archived: "archived",
+  restored: "restored",
+  status_changed: "status changed",
+  cohort_assigned: "added to a section",
+  cohort_removed: "removed from a section",
 };
 
 export function describeAction(action: string): string {
-  return ACTIONS[action] ?? action.replace(/[._]/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+  const known = ACTIONS[action];
+  if (known) return known;
+  const [entity = "", verb = ""] = action.split(".");
+  if (ENTITIES[entity] && VERBS[verb]) return `${ENTITIES[entity]} ${VERBS[verb]}`;
+  return action.replace(/[._]/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
+/** Prefix filters: the server matches actions that start with the value. */
 export const ACTION_FILTERS: { value: string; label: string }[] = [
   { value: "", label: "All activity" },
-  { value: "settings.", label: "Settings" },
-  { value: "branding.", label: "Branding" },
+  { value: "results.", label: "Results & approval" },
+  { value: "publication.", label: "Publication" },
+  { value: "marks.", label: "Marks" },
+  { value: "paper.", label: "Mark submissions" },
+  { value: "exam.", label: "Exams" },
+  { value: "student.", label: "Students" },
+  { value: "import.", label: "Imports" },
+  { value: "grading_scheme.", label: "Grading schemes" },
+  { value: "verification.", label: "Verification" },
   { value: "user.", label: "People & accounts" },
   { value: "auth.", label: "Sign-ins" },
+  { value: "settings.", label: "Settings" },
+  { value: "branding.", label: "Branding" },
   { value: "tenant.", label: "Plan & institution" },
+  { value: "trial.", label: "Free trial" },
 ];

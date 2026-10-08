@@ -24,7 +24,8 @@ export interface ResultStats {
   pass_percentage: string | null;
   average_percentage: string | null;
   median_percentage: string | null;
-  histogram: { from: number; to: number; count: number }[];
+  stdev_percentage?: string | null; // population standard deviation (runs processed since P13.1)
+  histogram: Bin[];
   grades: { grade: string; count: number }[];
   grades_basis?: "exam" | "paper"; // "paper": the scheme grades papers and gives the exam an SGPA
   papers: {
@@ -40,7 +41,26 @@ export interface ResultStats {
     average: string | null;
     highest: string | null;
     lowest: string | null;
+    median?: string | null;
+    stdev?: string | null;
+    histogram?: Bin[]; // of the paper's percentage
   }[];
+  cohorts?: {
+    cohort_id: string;
+    code: string;
+    name: string;
+    students: number;
+    appeared: number;
+    passed: number;
+    pass_percentage: string | null;
+    average_percentage: string | null;
+  }[];
+}
+
+export interface Bin {
+  from: number;
+  to: number;
+  count: number;
 }
 
 export interface Anomaly {

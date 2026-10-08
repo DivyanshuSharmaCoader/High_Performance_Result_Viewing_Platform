@@ -89,6 +89,30 @@ export default function OverviewPage() {
               </ul>
             </Section>
           </div>
+          {d.result_day && (
+            <Section
+              title="Result day"
+              description="Marksheets and emails still to go across all institutions. Anything failed, or pending for long, needs a look."
+            >
+              <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { label: "Marksheets being prepared", value: d.result_day.marksheets_pending, bad: false },
+                  { label: "Marksheets failed", value: d.result_day.marksheets_failed, bad: true },
+                  { label: "Emails sending", value: d.result_day.emails_queued, bad: false },
+                  { label: "Emails failed (7 days)", value: d.result_day.emails_failed_7d, bad: true },
+                ].map((m) => (
+                  <div key={m.label}>
+                    <dt className="text-[13px] text-fg-subtle">{m.label}</dt>
+                    <dd
+                      className={`tabular text-xl font-semibold ${m.bad && m.value > 0 ? "text-danger" : "text-fg"}`}
+                    >
+                      {formatNumber(m.value)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </Section>
+          )}
           <Section title="Background jobs" description="Queued, running and dead-lettered work by queue.">
             {d.queues.length === 0 ? (
               <p className="text-sm text-fg-subtle">No queued, running or failed jobs.</p>

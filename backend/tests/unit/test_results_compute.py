@@ -110,6 +110,29 @@ def test_results_statistics_and_anomalies_for_a_hand_worked_exam() -> None:
     )
     assert (p1["average"], p1["highest"], p1["lowest"]) == ("65", "100", "25")
     assert (p2["appeared"], p2["passed"], p2["pass_percentage"], p2["average"]) == (4, 3, "75", "58.75")
+    # Spread (P13.1), by hand. Exam: percentages 100, 62.5, 27.5 → mean 63.333…, squared deviations
+    # 1344.44 + 0.69 + 1284.03 = 2629.17, / 3 = 876.39, √ = 29.60 (population: the cohort is everyone).
+    assert s["stdev_percentage"] == "29.6"
+    # UCS301 totals 100, 70, 25: median 70; deviations 35, 5, −40 → (1225 + 25 + 1600) / 3 = 950, √ = 30.82.
+    assert (p1["median"], p1["stdev"]) == ("70", "30.82")
+    # UMA101 totals 100, 55, 50, 30: median (50 + 55) / 2 = 52.5; (1701.56 + 14.06 + 76.56 + 826.56) / 4
+    # = 654.69, √ = 25.59.
+    assert (p2["median"], p2["stdev"]) == ("52.5", "25.59")
+    assert [b["count"] for b in p1["histogram"]] == [0, 0, 1, 0, 0, 0, 0, 1, 0, 1]  # 25%, 70%, 100%
+    assert [b["count"] for b in p2["histogram"]] == [0, 0, 0, 1, 0, 2, 0, 0, 0, 1]  # 30%, 50%, 55%, 100%
+    # Per section (all six in c1 here); names come from the caller.
+    assert statistics(c, (P1, P2), {"c1": ("COE-1", "Section 1")})["cohorts"] == [
+        {
+            "cohort_id": "c1",
+            "code": "COE-1",
+            "name": "Section 1",
+            "students": 6,
+            "appeared": 3,
+            "passed": 2,
+            "pass_percentage": "66.7",
+            "average_percentage": "63.33",
+        }
+    ]
 
     found = {a["code"]: a for a in anomalies(c, (P1, P2))}
     assert set(found) == {"NO_MARKS", "INCOMPLETE", "ABSENT_ALL", "ALL_MAX"}
@@ -236,3 +259,23 @@ def test_input_order_never_changes_results_or_hashes(
         a, b = compute(first), compute(second)
         assert a.content_hash == b.content_hash
         assert [result_doc(o) for o in a.outcomes] == [result_doc(o) for o in b.outcomes]
+
+
+def test_sections_are_compared_side_by_side() -> None:
+    students = tuple(
+        Student(f"s{i}", f"A00{i}", f"Student {i}", "c1" if i <= 3 else "c2") for i in range(1, 7)
+    )
+    s = statistics(compute(inputs(students=students)), (P1, P2), {"c1": ("A", "Sec A"), "c2": ("B", "Sec B")})
+    a, b = s["cohorts"]
+    # A: A001 pass 100%, A002 pass 62.5%, A003 incomplete. B: A004 incomplete, A005 absent, A006 fail 27.5%.
+    assert (a["code"], a["students"], a["appeared"], a["passed"], a["pass_percentage"]) == (
+        "A",
+        3,
+        2,
+        2,
+        "100",
+    )
+    assert a["average_percentage"] == "81.25"
+    assert (b["code"], b["students"], b["appeared"], b["passed"], b["pass_percentage"]) == ("B", 3, 1, 0, "0")
+    assert b["average_percentage"] == "27.5"
+    assert statistics(compute(inputs(marks={})), (P1, P2))["stdev_percentage"] is None  # nothing to spread

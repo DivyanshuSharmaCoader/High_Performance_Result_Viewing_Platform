@@ -541,7 +541,7 @@ class PlatformService:
             await uow.session.execute(text("SELECT to_regclass('public.publications') IS NOT NULL"))
         ).scalar_one()
         if not exists:
-            return {"publications": {"last_7_days": 0, "live": 0}}
+            return {"publications": {"last_7_days": 0, "live": 0}, "result_day": None}
         row = (
             await uow.session.execute(
                 text(
@@ -550,7 +550,27 @@ class PlatformService:
                 )
             )
         ).one()
-        return {"publications": {"last_7_days": int(row.week), "live": int(row.live)}}
+        work = (
+            await uow.session.execute(
+                text(
+                    "SELECT (SELECT count(*) FROM marksheet_documents WHERE status = 'pending') AS pending, "
+                    "(SELECT count(*) FROM marksheet_documents WHERE status = 'failed') AS failed, "
+                    "(SELECT count(*) FROM notification_deliveries WHERE status = 'queued') AS emails_queued, "
+                    "(SELECT count(*) FROM notification_deliveries WHERE status = 'failed' "
+                    " AND updated_at > now() - interval '7 days') AS emails_failed"
+                )
+            )
+        ).one()
+        return {
+            "publications": {"last_7_days": int(row.week), "live": int(row.live)},
+            # What a result day leaves behind: anything not zero here for long needs a look.
+            "result_day": {
+                "marksheets_pending": int(work.pending),
+                "marksheets_failed": int(work.failed),
+                "emails_queued": int(work.emails_queued),
+                "emails_failed_7d": int(work.emails_failed),
+            },
+        }
 
     async def deep_health(self) -> dict[str, Any]:
         async def timed(name: str, coro: Any) -> dict[str, Any]:

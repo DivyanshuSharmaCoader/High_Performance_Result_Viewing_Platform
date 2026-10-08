@@ -116,6 +116,12 @@ export interface PlatformOverview {
   users: { active_students: number; staff: number };
   queues: { queue: string; status: string; count: number; oldest_seconds: number }[];
   publications: { last_7_days: number; live: number };
+  result_day: {
+    marksheets_pending: number;
+    marksheets_failed: number;
+    emails_queued: number;
+    emails_failed_7d: number;
+  } | null;
   process_metrics: {
     scope: string;
     redis_cache_hit_rate: number | null;

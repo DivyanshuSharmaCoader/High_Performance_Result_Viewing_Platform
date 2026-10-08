@@ -416,6 +416,13 @@ async def test_platform_suspend_reactivate_and_plan_change(app, infra) -> None:
             }
             overview = (await console.get("/api/v1/platform/metrics/overview")).json()
             assert overview["tenants"]["by_status"]["active"] >= 1
+            assert set(overview["result_day"]) == {
+                "marksheets_pending",
+                "marksheets_failed",
+                "emails_queued",
+                "emails_failed_7d",
+            }
+            assert all(isinstance(v, int) and v >= 0 for v in overview["result_day"].values())
             health = (await console.get("/api/v1/platform/health/deep")).json()
             assert {c["name"]: c["status"] for c in health["checks"]}["database"] == "up"
 

@@ -320,7 +320,17 @@ class ResultsService:
         run.input_hash = input_hash(inputs)
         run.content_hash = computed.content_hash
         run.students = len(computed.outcomes)
-        run.stats = statistics(computed, inputs.papers)
+        cohorts = {
+            str(cid): (code, name)
+            for cid, code, name in (
+                await uow.session.execute(
+                    select(Cohort.id, Cohort.code, Cohort.name)
+                    .join(ExamCohort, ExamCohort.cohort_id == Cohort.id)
+                    .where(ExamCohort.exam_id == exam.id)
+                )
+            ).all()
+        }
+        run.stats = statistics(computed, inputs.papers, cohorts)
         run.anomalies = anomalies(
             computed,
             inputs.papers,

@@ -270,6 +270,42 @@ describe("student portal", () => {
     expect(screen.getByText(verification.code)).toBeInTheDocument();
   });
 
+  it("shows where the student stands when the institution shares full statistics", async () => {
+    mockApi({
+      "GET /api/v1/me/results/p2": () => ({
+        status: 200,
+        body: {
+          publication_id: "p2",
+          version: 1,
+          published_at: "2026-10-07T10:00:00Z",
+          revised: false,
+          payload,
+        },
+      }),
+      "GET /api/v1/me/results/p2/marksheet": () => ({ status: 200, body: marksheet("pending") }),
+      "GET /api/v1/me/results/p2/stats": () => ({
+        status: 200,
+        body: {
+          available: true,
+          stats: {
+            students: 120,
+            pass_percentage: "91.67",
+            average_percentage: "61.50",
+            median_percentage: "63",
+            papers: [],
+            histogram: Array.from({ length: 10 }, (_, i) => ({ from: i * 10, to: i * 10 + 10, count: i })),
+          },
+        },
+      }),
+    });
+    studentRoutes("/me/results/p2");
+    const section = await screen.findByRole("region", { name: "How the class did" });
+    expect(section).toHaveTextContent("120 students · 91.67% passed · average 61.5% · median 63%");
+    // The payload says 85%: the 80–89% band is theirs.
+    expect(within(section).getByRole("listitem", { name: "80–89%: 8 students (you)" })).toBeInTheDocument();
+    expect(within(section).getByRole("listitem", { name: "70–79%: 7 students" })).toBeInTheDocument();
+  });
+
   it("explains a withdrawn or missing result kindly", async () => {
     mockApi({
       "GET /api/v1/me/results/gone": () => ({

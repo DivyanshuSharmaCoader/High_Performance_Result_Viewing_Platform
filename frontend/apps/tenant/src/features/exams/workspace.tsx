@@ -27,6 +27,7 @@ import {
   FileDown,
   FileText,
   FileUp,
+  History,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -466,6 +467,7 @@ export default function ExamWorkspacePage() {
   const navigate = useNavigate();
   const canManage = useCan("exams.manage");
   const canSeeResults = useCan("results.view");
+  const canAudit = useCan("audit.view");
   const q = useExam(examId);
   const [deleting, setDeleting] = useState(false);
   const del = useMutation({
@@ -494,12 +496,26 @@ export default function ExamWorkspacePage() {
           </>
         }
         actions={
-          canManage &&
-          exam.status === "draft" && (
-            <Button variant="ghost" leadingIcon={<Trash2 />} onClick={() => setDeleting(true)}>
-              Delete draft
-            </Button>
-          )
+          <div className="flex flex-wrap gap-2">
+            {canAudit && (
+              <Button
+                variant="ghost"
+                leadingIcon={<History />}
+                onClick={() =>
+                  void navigate(
+                    `/admin/audit-log?${new URLSearchParams({ entity_id: exam.id, label: exam.name })}`,
+                  )
+                }
+              >
+                History
+              </Button>
+            )}
+            {canManage && exam.status === "draft" && (
+              <Button variant="ghost" leadingIcon={<Trash2 />} onClick={() => setDeleting(true)}>
+                Delete draft
+              </Button>
+            )}
+          </div>
         }
       />
       <nav aria-label="Exam sections" className="mb-5 flex gap-1 border-b border-border">
