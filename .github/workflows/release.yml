@@ -31,6 +31,9 @@ jobs:
     env:
       COMPOSE_FILES: compose.prod.yml:infra/ops/rehearsal/compose.override.yml
       SMOKE_CACERT: certs/origin.pem
+      # Production refuses demo data (`scorecode seed`), so there is no tenant here: the smoke test checks
+      # every host except one tenant's own configuration, which E2E covers.
+      SMOKE_TENANT: ""
     steps:
       - uses: actions/checkout@v7
       - name: Build the four images as rehearsal-1 (what a tag would push)
@@ -55,10 +58,11 @@ jobs:
       - name: First install (rehearsal-1)
         run: |
           set -euo pipefail
-          SKIP_PULL=1 SKIP_BACKUP=1 SMOKE_TENANT= infra/ops/deploy.sh rehearsal-1
-          SCORECODE_VERSION=rehearsal-1 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
-            --env-file env/deploy.env exec -T api scorecode seed --students 20
+          SKIP_PULL=1 SKIP_BACKUP=1 infra/ops/deploy.sh rehearsal-1
           test "$(cat .deployed-version)" = rehearsal-1
+          # ...and production really refuses demo data.
+          if SCORECODE_VERSION=rehearsal-1 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
+            --env-file env/deploy.env exec -T api scorecode seed --students 5; then echo "seeded production"; exit 1; fi
       - name: Upgrade (rehearsal-2), with a backup taken first
         run: |
           set -euo pipefail

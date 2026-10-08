@@ -441,3 +441,40 @@ async def test_liveness_readiness_and_metrics(app) -> None:
         assert ready.status_code == 200 and ready.json()["database"] == "up"
         metrics = await c.get("/metrics")
         assert metrics.status_code == 200 and "scorecode_http_requests_total" in metrics.text
+
+
+async def test_operators_list_and_retry_dead_jobs_and_the_app_role_cannot(infra, capsys, monkeypatch) -> None:
+    """`scorecode jobs dead|retry` (docs/runbooks/stuck-publication.md), on the platform role only."""
+    import argparse
+
+    from app import cli
+
+    t = await make_tenant(infra)
+    async with infra.db.uow(t.id) as uow:
+        dead = await enqueue(uow, "test.stats", {})
+        await uow.session.execute(
+            text(
+                "UPDATE jobs SET status = 'dead', attempts = 3, last_error = 'boom', finished_at = now() WHERE id = :id"
+            ),
+            {"id": dead},
+        )
+    monkeypatch.setattr(cli, "get_settings", lambda: infra.settings)
+    await asyncio.to_thread(cli.cmd_jobs, argparse.Namespace(jobs_command="dead", limit=500))
+    listed = capsys.readouterr().out
+    assert str(dead) in listed and "test-stats/test.stats" in listed and "boom" in listed
+    await asyncio.to_thread(cli.cmd_jobs, argparse.Namespace(jobs_command="retry", job_ids=[str(dead)]))
+    assert f"{dead}: queued again" in capsys.readouterr().out
+    await asyncio.to_thread(cli.cmd_jobs, argparse.Namespace(jobs_command="retry", job_ids=[str(dead)]))
+    assert "not dead" in capsys.readouterr().out  # already queued: nothing to do
+    assert await Worker(infra, ["test-stats"]).drain() >= 1
+    async with infra.db.uow(t.id) as uow:
+        status = (
+            await uow.session.execute(text("SELECT status FROM jobs WHERE id = :id"), {"id": dead})
+        ).scalar_one()
+    assert status == "succeeded"
+
+    # The running application's role can't reach across tenants with these.
+    for sql in ("SELECT * FROM jobs_dead(10)", f"SELECT jobs_retry('{dead}')"):
+        with pytest.raises(DBAPIError, match="permission denied"):
+            async with infra.db.uow() as uow:
+                await uow.session.execute(text(sql))

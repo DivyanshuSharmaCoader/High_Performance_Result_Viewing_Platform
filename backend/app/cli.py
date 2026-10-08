@@ -73,6 +73,50 @@ def cmd_api(args: argparse.Namespace) -> None:
     )
 
 
+async def _jobs(args: argparse.Namespace) -> None:
+    """Uses the platform role: these functions span tenants and are granted to it alone (0015)."""
+    import uuid
+
+    from sqlalchemy import text
+
+    from app.core.container import Infra
+
+    infra = Infra.build(get_settings(), app_name="scorecode-cli")
+    try:
+        async with infra.db.platform_uow() as uow:
+            if args.jobs_command == "stats":
+                rows = (await uow.session.execute(text("SELECT * FROM jobs_stats() ORDER BY 1, 2"))).all()
+                print(f"{'queue':15} {'status':8} {'jobs':>7} {'oldest':>10}")
+                for r in rows:
+                    print(f"{r.queue:15} {r.status:8} {r.jobs:7d} {r.oldest_s:9.0f}s")
+                if not rows:
+                    print("no due, running or dead jobs")
+            elif args.jobs_command == "dead":
+                rows = (
+                    await uow.session.execute(text("SELECT * FROM jobs_dead(:n)"), {"n": args.limit})
+                ).all()
+                for r in rows:
+                    print(f"{r.id}  {r.queue}/{r.kind}  tenant={r.tenant_id}  attempts={r.attempts}")
+                    when = f"{r.finished_at:%Y-%m-%d %H:%M} UTC" if r.finished_at else "-"
+                    print(f"    {when}  {r.last_error or ''}")
+                if not rows:
+                    print("no dead jobs")
+            else:
+                for job_id in args.job_ids:
+                    ok = (
+                        await uow.session.execute(text("SELECT jobs_retry(:id)"), {"id": uuid.UUID(job_id)})
+                    ).scalar_one()
+                    print(
+                        f"{job_id}: {'queued again' if ok else 'not dead, or an equivalent job is already queued'}"
+                    )
+    finally:
+        await infra.close()
+
+
+def cmd_jobs(args: argparse.Namespace) -> None:
+    asyncio.run(_jobs(args))
+
+
 def cmd_worker(_: argparse.Namespace) -> None:
     from app.worker import main as worker_main
 
@@ -127,6 +171,17 @@ def main(argv: list[str] | None = None) -> None:
     cpu.add_argument("--role", default="platform_admin", choices=["platform_admin", "support", "readonly"])
     cpu.add_argument("--password")
     cpu.set_defaults(fn=cmd_create_platform_user)
+
+    jobs = sub.add_parser(
+        "jobs", help="operator view of background jobs (docs/runbooks/stuck-publication.md)"
+    )
+    jobs_sub = jobs.add_subparsers(dest="jobs_command", required=True)
+    jobs_sub.add_parser("stats", help="due, running and dead jobs per queue, with the oldest's age")
+    dead = jobs_sub.add_parser("dead", help="jobs that failed every attempt, newest first")
+    dead.add_argument("--limit", type=int, default=50)
+    retry = jobs_sub.add_parser("retry", help="run dead jobs again from attempt 0")
+    retry.add_argument("job_ids", nargs="+")
+    jobs.set_defaults(fn=cmd_jobs)
 
     args = parser.parse_args(argv)
     args.fn(args)
