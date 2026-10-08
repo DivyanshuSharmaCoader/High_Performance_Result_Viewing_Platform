@@ -19,10 +19,18 @@ from sqlalchemy.exc import TimeoutError as PoolTimeout
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.config import Settings
-from app.core.errors import CsrfFailed, DomainError, NotFound, Overloaded, TenantUnavailable
+from app.core.db import is_connectivity_error
+from app.core.errors import (
+    CsrfFailed,
+    DatabaseUnavailable,
+    DomainError,
+    NotFound,
+    Overloaded,
+    TenantUnavailable,
+)
 from app.core.ids import uuid7
 from app.core.logging import get_logger
-from app.core.metrics import DB_POOL_EXHAUSTED, HTTP_LATENCY, HTTP_REQUESTS, route_class
+from app.core.metrics import DB_POOL_EXHAUSTED, DB_UNAVAILABLE, HTTP_LATENCY, HTTP_REQUESTS, route_class
 from app.core.security import constant_time_equals, new_token
 from app.core.tenant import Realm, classify_host
 from app.modules.tenancy.service import TenantResolver
@@ -100,6 +108,12 @@ class ScoreCodeMiddleware:
                 except PoolTimeout:  # a host-lookup cache miss found no free connection: retryable
                     DB_POOL_EXHAUSTED.inc()
                     error = Overloaded()
+                except Exception as exc:  # the database is down: an outage, answered retryably
+                    if not is_connectivity_error(exc):
+                        raise
+                    DB_UNAVAILABLE.inc()
+                    log.warning("database_unavailable", error_code=type(exc).__name__)
+                    error = DatabaseUnavailable()
                 if error is None and path.startswith("/api/") and method not in SAFE_METHODS:
                     error = self._check_csrf(headers, csrf_cookie)
                 if error is not None:

@@ -154,3 +154,12 @@ class Overloaded(ServiceUnavailable):
         super().__init__("We're handling a lot of requests right now. Please try again in a moment.")
         self.retry_after_s = retry_after_s
         self.extra["retry_after"] = retry_after_s
+
+
+class DatabaseUnavailable(ServiceUnavailable):
+    """The database can't be reached (restarting, failing over, network). Retryable."""
+
+    def __init__(self, retry_after_s: int = 5) -> None:
+        super().__init__("We can't reach our database right now. Please try again in a moment.")
+        self.retry_after_s = retry_after_s
+        self.extra["retry_after"] = retry_after_s

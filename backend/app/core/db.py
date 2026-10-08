@@ -158,3 +158,35 @@ class UnitOfWork:
                 await fn()
             except Exception:  # side effects are best-effort (cache invalidation etc.)
                 log.exception("after_commit_hook_failed")
+
+
+def is_connectivity_error(exc: BaseException) -> bool:
+    """True when ``exc`` means "the database can't be reached", not "this query is wrong".
+
+    Covers SQLAlchemy's operational/interface errors, driver errors that invalidated the connection, asyncpg's
+    connection errors, and OS-level errors (refused, reset, DNS) raised while the pool was connecting. An
+    OSError from anywhere else (object storage, say) is *not* one of these.
+    """
+    import traceback
+
+    import asyncpg
+    from sqlalchemy import exc as sa_exc
+
+    seen: set[int] = set()
+    current: BaseException | None = exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, sa_exc.OperationalError | sa_exc.InterfaceError):
+            return True
+        if isinstance(current, sa_exc.DBAPIError) and current.connection_invalidated:
+            return True
+        if isinstance(current, asyncpg.PostgresConnectionError | asyncpg.CannotConnectNowError):
+            return True
+        if isinstance(current, asyncpg.InterfaceError) and "connection" in str(current).lower():
+            return True
+        if isinstance(current, OSError):
+            frames = traceback.extract_tb(current.__traceback__)
+            if any("asyncpg" in f.filename or "sqlalchemy" in f.filename for f in frames):
+                return True
+        current = current.__cause__ or current.__context__
+    return False

@@ -37,6 +37,9 @@ SIGNUP_TRAPPED = Counter(
 DB_POOL_EXHAUSTED = Counter(
     "scorecode_db_pool_exhausted_total", "Requests answered 503 because no database connection came free"
 )
+DB_UNAVAILABLE = Counter(
+    "scorecode_db_unavailable_total", "Requests answered 503 because the database was unreachable"
+)
 WORKER_ACTIVE = Gauge("scorecode_worker_active_jobs", "Jobs currently executing in this worker")
 
 

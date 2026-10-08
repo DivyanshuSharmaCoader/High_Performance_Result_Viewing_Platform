@@ -11,9 +11,10 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import TimeoutError as PoolTimeout
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.errors import PROBLEM_BASE, DomainError, Overloaded
+from app.core.db import is_connectivity_error
+from app.core.errors import PROBLEM_BASE, DatabaseUnavailable, DomainError, Overloaded
 from app.core.logging import get_logger
-from app.core.metrics import DB_POOL_EXHAUSTED
+from app.core.metrics import DB_POOL_EXHAUSTED, DB_UNAVAILABLE
 
 log = get_logger("scorecode.errors")
 PROBLEM_JSON = "application/problem+json"
@@ -98,6 +99,11 @@ def install_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unexpected(request: Request, exc: Exception) -> JSONResponse:
+        # The database restarting or failing over is an outage, not a bug: say so, retryably (docs/15 §6).
+        if is_connectivity_error(exc):
+            DB_UNAVAILABLE.inc()
+            log.warning("database_unavailable", error_code=type(exc).__name__)
+            return await _domain(request, DatabaseUnavailable())
         log.exception("unhandled_exception", error_code=type(exc).__name__)
         sentry_sdk.capture_exception(exc)
         return JSONResponse(
@@ -112,3 +118,10 @@ def install_error_handlers(app: FastAPI) -> None:
             status_code=500,
             media_type=PROBLEM_JSON,
         )
+
+    # The same handler at the route level for driver and OS errors, so they become a response there instead
+    # of reaching the server-error middleware (which would also re-raise them).
+    from sqlalchemy.exc import DBAPIError
+
+    app.add_exception_handler(DBAPIError, _unexpected)
+    app.add_exception_handler(OSError, _unexpected)

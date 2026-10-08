@@ -24,6 +24,9 @@ on:
         description: "Record a py-spy profile of the API during the first B run"
         type: boolean
         default: true
+      chaos:
+        description: "Failure to inject (P14.5): none, redis, postgres (during the first B run) or worker (while marksheets render)"
+        default: "none"
 
 concurrency:
   group: perf
@@ -68,6 +71,13 @@ jobs:
           mkdir -p benchmarks/results/runs && chmod 777 benchmarks/results/runs
           q() { docker compose exec -T postgres psql -U postgres -d scorecode -Atc "$1"; }
           started=$(date +%s)
+          if [ "${{ inputs.chaos }}" = worker ]; then
+            sleep 30
+            echo "chaos: kill -9 the worker at $(date -u +%T) (epoch $(date +%s))" | tee benchmarks/results/runs/chaos.txt
+            docker kill -s KILL scorecode-worker-1
+            sleep 15
+            docker compose --profile app start worker
+          fi
           until [ "$(q "SELECT count(*) FROM jobs WHERE status IN ('queued','running')")" = 0 ]; do
             [ $(( $(date +%s) - started )) -gt 2700 ] && { echo "background work still running after 45 min"; break; }
             sleep 10
@@ -79,6 +89,9 @@ jobs:
             q "SELECT 'marksheet render span (s): ' || round(extract(epoch FROM max(rendered_at) - min(created_at))) FROM marksheet_documents"
             q "SELECT 'notifications: ' || count(*) FROM notifications"
             q "SELECT kind, status, count(*) FROM jobs GROUP BY kind, status ORDER BY kind"
+            # Exactly-once checks (after a worker kill especially): one PDF file per marksheet, one notice each.
+            q "SELECT 'marksheet files: ' || count(*) || ' for ' || (SELECT count(*) FROM marksheet_documents WHERE status = 'rendered') || ' rendered marksheets' FROM files WHERE kind = 'marksheet'"
+            q "SELECT 'duplicate notifications: ' || count(*) FROM (SELECT user_id, dedupe_key FROM notifications GROUP BY 1, 2 HAVING count(*) > 1) d"
           } | tee benchmarks/results/runs/background.txt
       - name: Reset query statistics
         run: |
@@ -88,6 +101,7 @@ jobs:
         run: |
           set -euo pipefail
           first_b=1
+          first_chaos=1
           for spec in $RUNS; do
             IFS=: read -r scenario variant times <<< "$spec"
             for i in $(seq 1 "$times"); do
@@ -98,6 +112,17 @@ jobs:
                     -v "$PWD/benchmarks/results/runs:/out" python:3.12-slim sh -c \
                     "pip install -q py-spy && py-spy record --pid 1 --subprocesses --duration 120 \
                      --format raw -o /out/py-spy-$scenario-$variant-$i.txt --nonblocking" ) &
+              fi
+              if [ "$scenario" = B ] && [ "$first_chaos" = 1 ] && [ "${{ inputs.chaos }}" != none ] && [ "${{ inputs.chaos }}" != worker ]; then
+                first_chaos=0
+                ( sleep 150
+                  echo "chaos: ${{ inputs.chaos }} at $(date -u +%T) (epoch $(date +%s)) during $scenario-$variant-$i" | tee -a benchmarks/results/runs/chaos.txt
+                  if [ "${{ inputs.chaos }}" = redis ]; then
+                    docker compose stop redis; sleep 60; docker compose start redis
+                  else
+                    docker compose restart postgres
+                  fi
+                  echo "chaos: recovered action done at $(date -u +%T) (epoch $(date +%s))" | tee -a benchmarks/results/runs/chaos.txt ) &
               fi
               benchmarks/k6/run.sh "$scenario" "$variant" "$i"
               sleep 20
@@ -114,6 +139,9 @@ jobs:
                FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = 'scorecode')
               ORDER BY total_exec_time DESC LIMIT 20" > benchmarks/results/runs/pg_stat_statements.txt
           (cd backend && uv run python scripts/explain_hot_queries.py) > benchmarks/results/runs/explain.txt
+          docker compose --profile app logs --no-log-prefix api 2>/dev/null \
+            | python3 benchmarks/k6/timeline.py --around "$(grep -o 'epoch [0-9]*' benchmarks/results/runs/chaos.txt 2>/dev/null | head -1 | cut -d' ' -f2)" \
+            > benchmarks/results/runs/timeline.txt || true
       - name: Summary
         if: always()
         run: |
