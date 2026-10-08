@@ -1,0 +1,15 @@
+scenario A · cold
+requests 24016 · 65.1/s · failed 0.00%
+config   p50=3.2ms p95=9.7ms p99=21.3ms max=194ms
+me       p50=3.3ms p95=7.5ms p99=12.7ms max=124ms
+latest   p50=4.1ms p95=8.0ms p99=12.6ms max=200ms
+stats    p50=4.5ms p95=7.9ms p99=12.7ms max=137ms
+history  p50=3.5ms p95=5.8ms p99=9.5ms max=33ms
+csrf     p50=1.6ms p95=3.7ms p99=4.0ms max=14ms
+login    p50=34.0ms p95=49.2ms p99=53.0ms max=55ms
+check login 200: 100 ok, 0 failed
+check config 200: 5541 ok, 0 failed
+check me 200: 5541 ok, 0 failed
+check latest 200: 5541 ok, 0 failed
+check stats 200: 5541 ok, 0 failed
+check history 200: 1652 ok, 0 failed

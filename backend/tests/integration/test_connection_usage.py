@@ -55,3 +55,33 @@ async def test_platform_request_needs_only_one_connection(migrated_db: str) -> N
             assert (await c.get("/api/v1/platform/tenants")).status_code == 200
     finally:
         await infra.close()
+
+
+async def test_exhausted_pool_answers_a_retryable_503_not_a_500(migrated_db: str) -> None:
+    """Result-day overload: when no pooled connection comes free in time, clients get 503 with
+    Retry-After (the SPAs back off with jitter and retry) instead of an unexplained 500."""
+    settings = make_settings(db_pool_size=1, db_max_overflow=0, db_pool_timeout_s=0.2, redis_url=None)
+    infra = Infra.build(settings, app_name="scorecode-test-pool-exhausted")
+    try:
+        from app.modules.entitlements.sync import sync_catalogue
+
+        await sync_catalogue(infra.db)
+        app = create_app(settings, infra)
+        t = await make_tenant(infra)
+        async with Client(app, t.host) as c:
+            await c.login(t.owner_email)
+            async with infra.db.uow(t.id):  # holds the only connection
+                r = await c.get("/api/v1/me")
+            assert r.status_code == 503, r.text
+            assert r.headers["retry-after"] == "2"
+            assert r.headers["content-type"].startswith("application/problem+json")
+            assert r.json()["code"] == "overloaded" and r.json()["retry_after"] == 2
+            # Same when the tenant lookup itself (in the middleware, before any route) needs the database.
+            infra.cache.local.clear()
+            async with infra.db.uow(t.id):
+                r = await c.get("/api/v1/tenant/config")
+            assert r.status_code == 503, r.text
+            assert r.headers["retry-after"] == "2" and r.json()["code"] == "overloaded"
+            assert (await c.get("/api/v1/me")).status_code == 200  # and it recovers
+    finally:
+        await infra.close()

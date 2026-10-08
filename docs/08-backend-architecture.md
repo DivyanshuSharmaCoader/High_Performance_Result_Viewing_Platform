@@ -231,5 +231,5 @@ REGISTRY = {s.code: s for s in (PercentageBandsStrategy(), CreditGpaStrategy(), 
 - Secrets in the host's secret store (cloud secret manager or encrypted env files via SOPS for VM deployments); never in Git (gitleaks in CI).
 
 ## 9. Error handling & logging
-- Domain errors are typed (`NotFound`, `PermissionDenied`, `LimitExceeded`, `InvalidState`, `ValidationFailed`, `Conflict`) and mapped centrally to HTTP problems; unexpected exceptions → 500 with request id, reported to Sentry, no internals leaked.
+- Domain errors are typed (`NotFound`, `PermissionDenied`, `LimitExceeded`, `InvalidState`, `ValidationFailed`, `Conflict`) and mapped centrally to HTTP problems; unexpected exceptions → 500 with request id, reported to Sentry, no internals leaked. A database pool timeout is not unexpected under load: it maps to `503 overloaded` with `Retry-After`, which clients retry.
 - Structured JSON logs (`structlog`) with `request_id`, `tenant_id`, `user_id` (opaque id), route, status, latency; **no marks, names, passwords or tokens in logs** (log scrubbing processor + tests).

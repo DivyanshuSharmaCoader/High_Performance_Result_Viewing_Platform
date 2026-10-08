@@ -13,7 +13,7 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_DATABASE_URL_APP` | dev URL | Runtime role `scorecode_app` (NOBYPASSRLS) |
 | `SCORECODE_DATABASE_URL_PLATFORM` | dev URL | Platform-console role `scorecode_platform` (BYPASSRLS) |
 | `SCORECODE_DATABASE_URL_MIGRATOR` | dev URL | Schema owner, used only by `scorecode migrate` |
-| `SCORECODE_DB_POOL_SIZE` / `_MAX_OVERFLOW` / `_POOL_TIMEOUT_S` | `10` / `5` / `5` | Per process |
+| `SCORECODE_DB_POOL_SIZE` / `_MAX_OVERFLOW` / `_POOL_TIMEOUT_S` | `10` / `5` / `5.0` | Connections per process; a request that waits longer than the timeout gets `503 overloaded` + `Retry-After` |
 | `SCORECODE_REDIS_URL` | unset | Optional cache and shared rate limits; the app works without it |
 | `SCORECODE_REDIS_TIMEOUT_S` / `_CONNECT_TIMEOUT_S` | `0.5` / `1.0` | A circuit breaker stops repeated waits when Redis is unhealthy |
 | `SCORECODE_S3_ENDPOINT_URL` | `http://localhost:59000` | S3 API endpoint used by the app |
@@ -27,14 +27,13 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_RATE_LOGIN_IP_PER_MINUTE` / `_BURST` | 3000 / 1000 | Every sign-in attempt per IP: a flood ceiling, because whole classes share an address |
 | `SCORECODE_RATE_LOGIN_FAILURES_IP_PER_MINUTE` / `_BURST` | 60 / 60 | Failed sign-ins per IP (credential stuffing) |
 | `SCORECODE_COOKIE_SECURE` | `false` | `true` outside development → `__Host-` prefixed, Secure cookies |
-| `SCORECODE_TRUST_PROXY_HEADERS` | `false` | Use `X-Forwarded-For` for client IP — only behind our own proxy |
+| `SCORECODE_TRUST_PROXY_HEADERS` | `false` | Take the client IP from `X-Real-IP`, which our Caddy overwrites — only behind our own proxy. `X-Forwarded-For` is never read by the API (docs/10 §7) |
 | `SCORECODE_ARGON2_TIME_COST` / `_MEMORY_KIB` / `_PARALLELISM` / `_MAX_CONCURRENCY` | `2` / `19456` / `1` / `4` | Password hashing cost and per-process concurrency (measured: benchmarks/results) |
 | `SCORECODE_STUDENT_SESSION_DAYS` | `30` | Sliding student session |
 | `SCORECODE_STAFF_SESSION_IDLE_HOURS` / `_ABSOLUTE_DAYS` | `12` / `7` | Staff session limits |
 | `SCORECODE_PLATFORM_SESSION_HOURS` | `8` | Console session |
 | `SCORECODE_LOGIN_MAX_FAILURES` / `_LOCKOUT_MINUTES` | `5` / `15` | Progressive account lockout |
 | `SCORECODE_REAUTH_WINDOW_MINUTES` | `10` | Password re-confirmation window for sensitive actions |
-| `SCORECODE_RATE_LOGIN_IP_PER_MINUTE` / `_BURST` | `20` / `10` | Login attempts per IP |
 | `SCORECODE_RATE_SIGNUP_IP_PER_HOUR` | `5` | Self-serve sign-ups per IP |
 | `SCORECODE_RATE_ACTIVATION_IP_PER_HOUR` | `120` | Student activation attempts per IP (burst = half); per enrollment no. stays 5/hour |
 | `SCORECODE_MAX_UPLOAD_BYTES` / `_MAX_IMPORT_ROWS` / `_MAX_IMPORT_COLUMNS` / `_MAX_XLSX_UNCOMPRESSED_BYTES` | 10 MB / 50,000 / 200 / 100 MB | Hard caps for spreadsheet imports (plans can be stricter via `max_import_rows`) |
@@ -46,7 +45,10 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_EXPOSE_DOCS` | `true` | `/api/docs` and `/api/openapi.json` |
 
 Frontend apps have no runtime configuration: the tenant, its branding and features come from
-`GET /api/v1/tenant/config` on the same origin. The Caddy edge reads `BASE_DOMAIN` and `FILES_ORIGIN`.
+`GET /api/v1/tenant/config` on the same origin. The Caddy edge reads `BASE_DOMAIN`, `FILES_ORIGIN` and
+`TRUSTED_PROXIES`: the proxies allowed to tell Caddy the client address (default `private_ranges`; in
+production, the CDN's published ranges, space-separated). Caddy reads `X-Forwarded-For` from the right, skips
+those proxies, and overwrites `X-Real-IP` with the first address it does not trust.
 
 ## Troubleshooting the local stack
 

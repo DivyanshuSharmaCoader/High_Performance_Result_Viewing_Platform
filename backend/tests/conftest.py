@@ -51,6 +51,7 @@ def make_settings(**overrides: object) -> Settings:
         "argon2_max_concurrency": 8,
         "metrics_enabled": True,
         "api_session_burst": 250,  # suites that sweep every route make many calls per session
+        "trust_proxy_headers": False,  # not from a developer's .env: tests set it where they need it
     }
     values.update(overrides)
     return Settings(**values)  # type: ignore[arg-type]

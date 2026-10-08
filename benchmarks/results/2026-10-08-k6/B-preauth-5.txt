@@ -1,0 +1,12 @@
+scenario B · preauth
+requests 150505 · 404.1/s · failed 1.45%
+config   p50=537.3ms p95=3460.3ms p99=5167.3ms max=10123ms
+me       p50=564.1ms p95=3201.7ms p99=5033.6ms max=9213ms
+latest   p50=517.7ms p95=2996.7ms p99=5027.4ms max=8588ms
+stats    p50=434.2ms p95=2745.7ms p99=5021.5ms max=9142ms
+history  p50=416.0ms p95=2823.8ms p99=5024.8ms max=8226ms
+check config 200: 34507 ok, 607 failed
+check me 200: 34549 ok, 565 failed
+check latest 200: 34609 ok, 505 failed
+check stats 200: 34245 ok, 364 failed
+check history 200: 10414 ok, 140 failed

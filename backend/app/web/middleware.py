@@ -1,7 +1,7 @@
 """Request pipeline (docs/08 §4) as one pure-ASGI middleware:
 
 1. request id (accepted from the proxy or generated) bound to the logger
-2. client IP (X-Forwarded-For only when ``trust_proxy_headers``)
+2. client IP (the proxy's ``X-Real-IP`` only when ``trust_proxy_headers``)
 3. host → realm → tenant context (L1); unknown host 404, unavailable tenant 403
 4. CSRF double-submit check for state-changing API calls; CSRF cookie issued when missing
 5. security headers and RED metrics on every response
@@ -15,13 +15,14 @@ import time
 from typing import Any
 
 import structlog
+from sqlalchemy.exc import TimeoutError as PoolTimeout
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.config import Settings
-from app.core.errors import CsrfFailed, DomainError, NotFound, TenantUnavailable
+from app.core.errors import CsrfFailed, DomainError, NotFound, Overloaded, TenantUnavailable
 from app.core.ids import uuid7
 from app.core.logging import get_logger
-from app.core.metrics import HTTP_LATENCY, HTTP_REQUESTS, route_class
+from app.core.metrics import DB_POOL_EXHAUSTED, HTTP_LATENCY, HTTP_REQUESTS, route_class
 from app.core.security import constant_time_equals, new_token
 from app.core.tenant import Realm, classify_host
 from app.modules.tenancy.service import TenantResolver
@@ -94,7 +95,11 @@ class ScoreCodeMiddleware:
 
         try:
             if not path.startswith(UNSCOPED_PATHS):
-                error = await self._resolve(scope, state, headers)
+                try:
+                    error: DomainError | None = await self._resolve(scope, state, headers)
+                except PoolTimeout:  # a host-lookup cache miss found no free connection: retryable
+                    DB_POOL_EXHAUSTED.inc()
+                    error = Overloaded()
                 if error is None and path.startswith("/api/") and method not in SAFE_METHODS:
                     error = self._check_csrf(headers, csrf_cookie)
                 if error is not None:
@@ -120,10 +125,14 @@ class ScoreCodeMiddleware:
             structlog.contextvars.unbind_contextvars("request_id")
 
     def _client_ip(self, scope: Scope, headers: dict[str, str]) -> str:
+        # Our Caddy works out the client address (walking X-Forwarded-For from the right past its own
+        # trusted proxies, e.g. a CDN) and *overwrites* X-Real-IP with it, so a client cannot choose
+        # it. The right-most X-Forwarded-For entry is not the client: behind a CDN it is the CDN edge,
+        # which would put every student of a city in one rate-limit bucket on result day.
         if self.settings.trust_proxy_headers:
-            forwarded = headers.get("x-forwarded-for")
-            if forwarded:
-                return forwarded.split(",")[-1].strip()[:64]
+            real = headers.get("x-real-ip", "").strip()
+            if real:
+                return real[:64]
         client = scope.get("client")
         return str(client[0]) if client else "unknown"
 
@@ -163,16 +172,14 @@ class ScoreCodeMiddleware:
 
     async def _send_problem(self, send: Any, err: DomainError, request_id: str, path: str) -> None:
         body = _problem_body(err, request_id, path)
-        await send(
-            {
-                "type": "http.response.start",
-                "status": err.status,
-                "headers": [
-                    (b"content-type", b"application/problem+json"),
-                    (b"content-length", str(len(body)).encode()),
-                ],
-            }
-        )
+        headers = [
+            (b"content-type", b"application/problem+json"),
+            (b"content-length", str(len(body)).encode()),
+        ]
+        retry_after = getattr(err, "retry_after_s", None)
+        if retry_after:
+            headers.append((b"retry-after", str(retry_after).encode()))
+        await send({"type": "http.response.start", "status": err.status, "headers": headers})
         await send({"type": "http.response.body", "body": body})
 
 

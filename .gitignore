@@ -36,7 +36,7 @@ blob-report/
 
 # Local data
 .data/
-benchmarks/results/raw/
+benchmarks/results/runs/
 
 # Load-test data (synthetic sessions; never commit)
 benchmarks/data/

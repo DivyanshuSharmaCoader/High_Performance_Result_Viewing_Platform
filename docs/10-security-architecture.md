@@ -112,6 +112,18 @@ allowed = role_has_permission(principal.roles, "marks.enter")         # RBAC
 | Free-trial starts per IP | 5/hour; one trial per institution, enforced with hashed identity signals (docs/12 §6) |
 Implemented as token buckets in Redis (Lua, atomic) with in-process fallback; edge (Cloudflare) rules as an outer layer. Responses: `429` + `Retry-After`.
 
+**Which address is "the IP".** Per-IP limits are only as good as the address they key on. Caddy works it
+out: `trusted_proxies` lists the proxies in front of it (a CDN's published ranges in production;
+`TRUSTED_PROXIES`), and with `trusted_proxies_strict` it reads `X-Forwarded-For` from the right and takes
+the first hop it does not trust. A client can prepend whatever it likes to that header and it is never
+reached. Caddy then **overwrites** `X-Real-IP` with that address, and the API reads only `X-Real-IP`
+(when `SCORECODE_TRUST_PROXY_HEADERS`), never `X-Forwarded-For`. The right-most `X-Forwarded-For` entry is
+the nearest proxy: behind a CDN that is an edge server shared by a whole city, so keying on it put every
+student in one sign-in bucket. The P10.6 load test found exactly that: 601 of 1,000 cold sign-ins got
+429 (benchmarks/results/2026-10-08-k6-scenarios-A-B.md). Covered by
+`test_client_address_comes_only_from_the_header_our_proxy_overwrites` and
+`test_students_behind_one_cdn_edge_get_their_own_sign_in_buckets`.
+
 ## 8. Secrets & keys
 - Secrets via environment from a secret manager / SOPS-encrypted files; rotated on staff change; separate per environment.
 - Application-level encryption (AES-GCM via `cryptography`) for especially sensitive columns: TOTP secrets, integration credentials. Student marks are not field-encrypted (they must be queried/aggregated) — protected by DB encryption at rest (managed DB) + access control.

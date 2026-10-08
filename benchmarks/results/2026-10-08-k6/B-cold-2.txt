@@ -1,0 +1,15 @@
+scenario B · cold
+requests 137752 · 370.2/s · failed 3.44%
+config   p50=686.6ms p95=4413.5ms p99=5207.0ms max=10040ms
+me       p50=713.4ms p95=4096.9ms p99=5041.1ms max=9158ms
+latest   p50=634.8ms p95=3964.3ms p99=5037.5ms max=9815ms
+stats    p50=534.3ms p95=3726.1ms p99=5035.1ms max=8982ms
+history  p50=483.8ms p95=3823.4ms p99=5038.2ms max=8746ms
+csrf     p50=1.5ms p95=27.9ms p99=170.5ms max=390ms
+login    p50=44.3ms p95=2945.8ms p99=5095.1ms max=5191ms
+check login 200: 980 ok, 20 failed
+check config 200: 30932 ok, 913 failed
+check me 200: 30434 ok, 1411 failed
+check latest 200: 30474 ok, 1371 failed
+check stats 200: 29866 ok, 608 failed
+check history 200: 9331 ok, 412 failed

@@ -8,7 +8,9 @@
 (api) {
 	@api path /api/* /v/*
 	handle @api {
-		reverse_proxy {$API_UPSTREAM:host.docker.internal:8000}
+		reverse_proxy {$API_UPSTREAM:host.docker.internal:8000} {
+			header_up X-Real-IP {client_ip}
+		}
 	}
 }
 
@@ -22,7 +24,9 @@ http://admin.localhost:8080 {
 http://verify.localhost:8080 {
 	import api
 	handle {
-		reverse_proxy {$API_UPSTREAM:host.docker.internal:8000}
+		reverse_proxy {$API_UPSTREAM:host.docker.internal:8000} {
+			header_up X-Real-IP {client_ip}
+		}
 	}
 }
 

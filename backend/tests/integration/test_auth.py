@@ -157,6 +157,56 @@ async def test_a_whole_class_signing_in_from_one_address_is_not_rate_limited(app
     assert codes == [200] * 80
 
 
+async def test_client_address_comes_only_from_the_header_our_proxy_overwrites(infra) -> None:
+    """Behind our Caddy the client address is X-Real-IP, which Caddy overwrites with the address it
+    worked out past its trusted proxies (``trusted_proxies_strict``). The API never reads
+    X-Forwarded-For: its right-most entry is the nearest proxy (a CDN edge, which on result day would
+    put a whole city's students in one sign-in bucket) and its left-most is whatever the client wrote."""
+    from app.main import create_app
+    from tests.conftest import make_settings
+
+    behind_caddy = create_app(make_settings(trust_proxy_headers=True), infra)
+    direct = create_app(make_settings(trust_proxy_headers=False), infra)
+    t = await make_tenant(infra)
+    edge = "10.77.0.1"  # the socket peer: Caddy, or the CDN edge in front of it
+    spoof = {"X-Forwarded-For": "198.51.100.66, 192.0.2.10"}
+
+    async def session_ip(application: object, headers: dict[str, str]) -> str | None:
+        async with Client(application, t.host, ip=edge) as c:
+            c.http.headers.update(headers)
+            await c.login(t.owner_email)
+            sessions = (await c.get("/api/v1/me/sessions")).json()
+            return next(s["ip"] for s in sessions if s["current"])
+
+    assert await session_ip(behind_caddy, {"X-Real-IP": "203.0.113.7", **spoof}) == "203.0.113.7"
+    assert await session_ip(behind_caddy, spoof) == edge  # no proxy header: the socket peer
+    assert await session_ip(direct, {"X-Real-IP": "203.0.113.7", **spoof}) == edge  # not behind our proxy
+
+
+async def test_students_behind_one_cdn_edge_get_their_own_sign_in_buckets(infra) -> None:
+    """Many students reach us through the same CDN edge (same socket peer, same right-most
+    X-Forwarded-For). One student hammering wrong passwords must not lock the others out."""
+    from app.main import create_app
+    from tests.conftest import make_settings
+
+    behind_caddy = create_app(make_settings(trust_proxy_headers=True), infra)
+    t = await make_tenant(infra)
+    edge = f"10.78.{uuid.uuid4().int % 250}.1"
+    via_edge = {"X-Forwarded-For": f"203.0.113.9, {edge}"}
+    async with Client(behind_caddy, t.host, ip=edge) as attacker:
+        attacker.http.headers.update({"X-Real-IP": "203.0.113.9", **via_edge})
+        codes = [
+            (
+                await attacker.post("/api/v1/auth/login", json={"login_id": f"u{i}@x.com", "password": "no"})
+            ).status_code
+            for i in range(65)
+        ]
+        assert 429 in codes
+    async with Client(behind_caddy, t.host, ip=edge) as student:
+        student.http.headers.update({"X-Real-IP": "203.0.113.10", **via_edge})
+        await student.login(t.owner_email)
+
+
 async def test_unknown_host_and_suspended_tenant(app, infra) -> None:
     async with Client(app, "doesnotexist1.localhost") as c:
         r = await c.get("/api/v1/tenant/config")

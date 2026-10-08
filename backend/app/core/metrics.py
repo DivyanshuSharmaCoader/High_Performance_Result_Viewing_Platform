@@ -34,6 +34,9 @@ RATE_LIMITED = Counter("scorecode_rate_limited_total", "Requests rejected by rat
 SIGNUP_TRAPPED = Counter(
     "scorecode_signup_honeypot_total", "Sign-ups dropped because the hidden form field was filled"
 )
+DB_POOL_EXHAUSTED = Counter(
+    "scorecode_db_pool_exhausted_total", "Requests answered 503 because no database connection came free"
+)
 WORKER_ACTIVE = Gauge("scorecode_worker_active_jobs", "Jobs currently executing in this worker")
 
 

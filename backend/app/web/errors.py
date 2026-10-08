@@ -8,10 +8,12 @@ import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import TimeoutError as PoolTimeout
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.core.errors import PROBLEM_BASE, DomainError, RateLimited
+from app.core.errors import PROBLEM_BASE, DomainError, Overloaded
 from app.core.logging import get_logger
+from app.core.metrics import DB_POOL_EXHAUSTED
 
 log = get_logger("scorecode.errors")
 PROBLEM_JSON = "application/problem+json"
@@ -38,8 +40,9 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(DomainError)
     async def _domain(request: Request, exc: DomainError) -> JSONResponse:
         headers = {}
-        if isinstance(exc, RateLimited):
-            headers["Retry-After"] = str(exc.retry_after_s)
+        retry_after = getattr(exc, "retry_after_s", None)
+        if retry_after:
+            headers["Retry-After"] = str(retry_after)
         if exc.status >= 500:
             log.warning("domain_error", error_code=exc.code, status=exc.status)
         return JSONResponse(
@@ -48,6 +51,13 @@ def install_error_handlers(app: FastAPI) -> None:
             media_type=PROBLEM_JSON,
             headers=headers,
         )
+
+    @app.exception_handler(PoolTimeout)
+    async def _pool_exhausted(request: Request, exc: PoolTimeout) -> JSONResponse:
+        # Every pooled connection stayed busy for db_pool_timeout_s: this process is saturated. A 503
+        # with Retry-After lets clients back off and retry (the SPAs do, with jitter) instead of a 500.
+        DB_POOL_EXHAUSTED.inc()
+        return await _domain(request, Overloaded())
 
     @app.exception_handler(RequestValidationError)
     async def _validation(request: Request, exc: RequestValidationError) -> JSONResponse:

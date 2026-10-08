@@ -24,8 +24,6 @@ x-backend-env: &backend-env
   SCORECODE_LOG_JSON: "true"
   SCORECODE_TRUST_PROXY_HEADERS: "true"
   # Local stack only: relaxed abuse limits so repeated end-to-end runs from one IP aren't throttled.
-  SCORECODE_RATE_LOGIN_IP_PER_MINUTE: "300"
-  SCORECODE_RATE_LOGIN_IP_BURST: "100"
   SCORECODE_RATE_SIGNUP_IP_PER_HOUR: "200"
   SCORECODE_RATE_ACTIVATION_IP_PER_HOUR: "2000"
 

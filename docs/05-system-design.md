@@ -183,6 +183,7 @@ Properties:
 | DB primary down | Read & write outage | Managed DB failover (small production+). Demo tier: restore from backup — documented RTO/RPO. Student pages show a friendly maintenance message, not stack traces. |
 | Object storage slow/down | Marksheet download fails | Result *view* still works (it's in Postgres); download button shows retry message. |
 | Email provider down | Notifications delayed | Retries with backoff; in-app notifications still visible. |
+| Every pooled DB connection busy (process saturated) | Requests wait up to `SCORECODE_DB_POOL_TIMEOUT_S` | `503` problem `overloaded` + `Retry-After: 2` (never a bare 500); the SPAs retry with jittered backoff; counted in `scorecode_db_pool_exhausted_total`. Found by the P10.6 load test. |
 | Traffic beyond capacity | Latency rises | Per-tenant & per-IP rate limits (429 with Retry-After), static "results are being published, please retry in a moment" page for the student app, priority for already-authenticated users over new logins. |
 | Bad import file | — | Never touches live marks until explicit commit; staging is isolated. |
 | Bug in grading | Wrong results | Preview + anomaly checks + approval gate + correction workflow (versioned) + audit trail. |

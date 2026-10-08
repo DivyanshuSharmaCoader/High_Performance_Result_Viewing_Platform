@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     mail_from: str = "ScoreCode <no-reply@scorecode.localhost>"
 
     # --- Security ---------------------------------------------------------------------------------
-    trust_proxy_headers: bool = False  # true only behind our own proxy (Caddy), which sets X-Forwarded-For
+    trust_proxy_headers: bool = False  # true only behind our own Caddy, which overwrites X-Real-IP
     secret_key: SecretStr = SecretStr(DEV_SECRET)
     # Keys the hashes of trial identity signals (docs/12 §6). Never rotate it: a new key forgets every
     # trial already taken, so the same institution could take another.

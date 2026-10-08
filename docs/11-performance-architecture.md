@@ -25,6 +25,8 @@
 
 → Prediction: **login throughput and connection management are the limits**, not result reads. The load tests are designed to confirm or refute this.
 
+**Measured (P10.6, one M2 laptop, load generator co-located; [results](../benchmarks/results/2026-10-08-k6-scenarios-A-B.md)):** only partly confirmed. With 1,000 pre-authenticated students (about 600 req/s), the first limit was the API processes' CPU: two Uvicorn workers at 150–170% while Postgres sat at about 45%. Pool waits were a *symptom* of that saturation. A sign-in costs about 34 ms of Argon2. The 1,000-student cold-login run instead measured a client-address bug (fixed), so it has to be repeated.
+
 ---
 
 ## 2. Component-by-component justification
@@ -158,5 +160,6 @@ p50/p95/p99 latency per endpoint, RPS achieved, error rate (split: 5xx vs 429), 
 - Record: git commit SHA, hardware (vCPU, RAM, disk), OS, container limits, dataset size, config (pool sizes, workers, Argon2 params), k6 script version.
 - Report negative results and bottlenecks honestly; every optimisation is validated by a before/after run of the same scenario.
 - Local hardware limits (e.g. a laptop can't generate 10k VUs *and* host the stack) are written down, and the largest feasible scenario is reported instead of extrapolating.
+- Same power state for every run being compared. A laptop on battery with Low Power Mode served 32–44% less of scenario B than on AC; `benchmarks/k6/run.sh` refuses to run on battery.
 
 Results live in `benchmarks/results/<date>-<scenario>.md` (template in [benchmarks/README.md](../benchmarks/README.md)).

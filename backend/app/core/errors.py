@@ -142,3 +142,15 @@ class ServiceUnavailable(DomainError):
     status = 503
     code = "service-unavailable"
     title = "Service temporarily unavailable"
+
+
+class Overloaded(ServiceUnavailable):
+    """The process is saturated (e.g. every pooled database connection stayed busy). Retryable."""
+
+    code = "overloaded"
+    title = "Busy right now"
+
+    def __init__(self, retry_after_s: int = 2) -> None:
+        super().__init__("We're handling a lot of requests right now. Please try again in a moment.")
+        self.retry_after_s = retry_after_s
+        self.extra["retry_after"] = retry_after_s
