@@ -20,8 +20,8 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 12 — Notifications** (Phases 0–11 complete; Gates M1–M5 passed) |
-| Next step | **P12.1–P12.3** in-app notifications, email delivery tracking, preferences |
+| Current phase | **Phase 13 — Analytics (basic) & audit viewer** (Phases 0–12 complete; Gates M1–M5 passed) |
+| Next step | **P13.1** statistics snapshot: add standard deviation and per-paper median; hand-computed fixture tests |
 | Last updated | 2026-10-08 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -40,7 +40,7 @@
 | 9 | Result processing, preview, approval | 5 | 5 |
 | 10 | Publication, read model, student portal | 6 | 6 |
 | 11 | Marksheet PDFs & verification | 5 | 5 |
-| 12 | Notifications | 3 | 0 |
+| 12 | Notifications | 3 | 3 |
 | 13 | Analytics (basic) & audit viewer | 5 | 0 |
 | 14 | Performance engineering (measure → optimise → re-measure) | 5 | 0 |
 | 15 | Security review & hardening | 5 | 0 |
@@ -179,9 +179,9 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 12 — Notifications
 
-- [ ] **P12.1** In-app notifications · Done when: Tests
-- [ ] **P12.2** Email channel · Done when: Integration with Mailpit; failure retry test
-- [ ] **P12.3** Notification preferences · Done when: Tests
+- [x] **P12.1** In-app notifications · Done when: Tests
+- [x] **P12.2** Email channel · Done when: Integration with Mailpit; failure retry test
+- [x] **P12.3** Notification preferences · Done when: Tests
 
 ### Phase 13 — Analytics (basic) & audit viewer
 
@@ -237,6 +237,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-08 | P12.1–P12.3 ticked | Verified by CI for d2bc101 (all 7 jobs, including the P10 E2E with the phone student's notification). e3e3077 had failed the frontend typecheck: a local `pnpm -s` run had hidden the error. That's fixed, and checks now run without `-s`. **Next:** Phase 13. |
 | 2026-10-08 | P12.1–P12.3 written (not ticked; CI pending) | Backend (b2044e1): migration 0012 (inbox with idempotent fan-out; per-channel deliveries; `users.notify_email`); a fan-out job when a publication goes live; email in throttled batches of 50 with retries; inbox, read, read-all and preferences API; email counts per publication. Six integration tests; five mutations caught (opt-out ignored, withdrawn still notified, read not scoped to the user, tenant switch ignored, duplicate fan-out). UI: a bell with an unread badge in the student header (count read on load and focus, never polled), the inbox panel, a result-email switch on the account page, and an email summary on the publication panel. Student bundle 141.0 kB. The P10 E2E now also checks the student's notification; it passes locally against the stack, as does E2E-4. SPF, DKIM and DMARC are documented in docs/14 §R. **Not built:** provider bounce webhooks (Phase 16, once the provider is chosen). |
 | 2026-10-08 | P11.2 and Gate M5 ticked | Verified by CI for b64ff96 (all 7 jobs). Render time on the CI runner (run 37714377613): p50 202 ms, p95 292 ms per six-paper PDF on one thread, 20.7 KiB each; the laptop on battery measured p50 172 ms. Both are in benchmarks/results/2026-10-08-marksheet-render.md. The gate's demo, publish → view → download → verify, is E2E-4: CI checks the downloaded PDF's SHA-256 on the verify page. Carried into Phase 14: a process pool for rendering (one process takes about 25–28 min for 8,000 students). |
 | 2026-10-08 | P11.1, P11.3, P11.4, P11.5 ticked | Verified by CI for 0ba609b (all 7 jobs). Integration ran 481 tests with none skipped, so the PDF tests ran with Pango. The E2E job passed E2E-4 with real rendering in the worker container. Five mutations were caught: scheduled codes made verifiable, names unmasked, revocation ignored, failed renders never marked failed, downloads not scoped to the student. So was a sixth in Docker: a fetcher that allows URLs. Locally, E2E-4 and P10 also passed against the rebuilt stack. After that: the admin drawer shows the issued marksheet with download and revocation (3806d5c). P11.2 stays open until CI reports a render time from a machine that isn't on battery. |
