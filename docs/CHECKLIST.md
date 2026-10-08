@@ -20,8 +20,8 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 10 — Publication, read model, student portal** (Phases 0–9 complete; Gates M1–M4 passed) |
-| Next step | Tick **P10.6** and Gate M5a after CI, then **Phase 11** (marksheet PDFs and verification) |
+| Current phase | **Phase 11 — Marksheet PDFs & verification** (Phases 0–10 complete; Gates M1–M4 and M5a passed) |
+| Next step | **P11.1** sandboxed marksheet template and PDF renderer with external fetches refused |
 | Last updated | 2026-10-08 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -38,7 +38,7 @@
 | 7 | Examinations & grading engine | 6 | 6 |
 | 8 | Marks entry & marks import | 7 | 7 |
 | 9 | Result processing, preview, approval | 5 | 5 |
-| 10 | Publication, read model, student portal | 6 | 5 |
+| 10 | Publication, read model, student portal | 6 | 6 |
 | 11 | Marksheet PDFs & verification | 5 | 0 |
 | 12 | Notifications | 3 | 0 |
 | 13 | Analytics (basic) & audit viewer | 5 | 0 |
@@ -165,8 +165,8 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [x] **P10.3** Publish now / schedule / withdraw · Done when: Fault-injection test (rollback mid-way)
 - [x] **P10.4** Student APIs · Done when: Isolation tests (student X vs Y)
 - [x] **P10.5** Student portal UI · Done when: Playwright on mobile viewport; budget < 150 KB gz
-- [ ] **P10.6** Load test harness · Done when: Baseline report in `benchmarks/results/`
-- [ ] 🚩 **Gate M5a — Result day (view)** · Done when: Publish → students view results; baseline numbers recorded (whatever they are)
+- [x] **P10.6** Load test harness · Done when: Baseline report in `benchmarks/results/`
+- [x] 🚩 **Gate M5a — Result day (view)** · Done when: Publish → students view results; baseline numbers recorded (whatever they are)
 
 ### Phase 11 — Marksheet PDFs & verification
 
@@ -237,6 +237,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-08 | P10.6 and Gate M5a ticked | Verified by CI for fddb60b (all 7 jobs). The gate's demo, publish → students view results, is the Playwright publish journey; the baseline is in benchmarks/results/2026-10-08-k6-scenarios-A-B.md. Still open, and carried into Phase 14: B-cold after the fix on AC power. **Next:** Phase 11. |
 | 2026-10-08 | P10.6 written (not ticked; CI pending); two result-day fixes | CI for 9eea1e5 green on all 7 jobs. **P10.6.** I ran k6 scenarios A and B, pre-authenticated (3 runs each) and cold (1 each), on one M2 laptop with the load generator co-located: benchmarks/results/2026-10-08-k6-scenarios-A-B.md, with raw data. A: p95 ≤ 11 ms, no errors; a sign-in costs 34 ms. B pre-authenticated: about 600 req/s, p95 0.5–0.7 s, 0.016% errors. The first limit is API CPU (two workers at 150–170%; Postgres about 45%), so docs/11's prediction holds only in part. **Found and fixed:** (1) The API keyed per-IP limits on the right-most X-Forwarded-For entry, which is the nearest proxy (a CDN edge in production), so 601 of 1,000 cold sign-ins got 429. Caddy now resolves the client address (`trusted_proxies_strict`) and overwrites X-Real-IP, which is the only header the API reads; 980 of 1,000 sign-ins then succeeded. (2) DB pool timeouts became 500s; they are now `503 overloaded` + Retry-After, in routes and in the middleware's tenant lookup. Both have tests that fail under mutation, and the client address was also checked end to end through Caddy. Also: the `compose.yml` login-limit override (stricter than the production default) is gone; a stale ENVIRONMENT row is gone; tests no longer read `trust_proxy_headers` from a developer's .env; and `benchmarks/k6/run.sh` refuses to run on battery. **Not verified:** B-cold after the fix on AC power. The later runs were on battery with Low Power Mode, which cut throughput by 32–44%, so they are reported only as controls. 460 backend tests pass locally. **Next:** CI, then tick P10.6 and Gate M5a; re-run B-cold on AC; Phase 11. |
 | 2026-10-08 | P10.5 ticked; security hardening | P10.5 verified by CI for 0b58df4 (all 7 jobs; the bundle budget is enforced at 139.9 kB; Playwright on a phone viewport). Hardening, prompted by the owner's concern about competitors and students causing harm: (1) **result-day sign-in**: the per-IP login limit counted *every* attempt (20/min), so a school lab or a mobile carrier's NAT would have locked out real students. All attempts now meet only a flood ceiling (600/min); *failed* attempts per IP have their own bucket (60/min); per-account limits and lockout are unchanged. The limiter gained a Redis-aware non-consuming `check` and a non-raising `consume`. Tests: 80 students from one address all sign in; 65 failures from one address hit 429, and a correct password then waits too. (2) **signup honeypot**: a hidden field; bots that fill it get the normal answer, and nothing is stored or emailed (metric `scorecode_signup_honeypot_total`); tested. Docs: docs/10 rate-limit table, ENVIRONMENT. 457 backend tests locally. |
 | 2026-10-08 | P4.9 ticked; P10.5 written | P4.9 verified by CI for e7b7ea6 (all 7 jobs, including the Playwright trial flow). P10.5: the student home leads with the latest result (outcome, SGPA or percentage) and lists earlier results. The result page shows marks per paper with a bar per component, the class average where the institution shares it, a revised-result notice and print. The admin preview renders the same `StudentResultView`. A Publication panel on the Results tab offers publish now (re-auth and Idempotency-Key), schedule (gated by plan, with a link to plans), cancel, withdraw with a reason, publish again, and history. Student first load went from 185 kB to 139.9 kB gzipped (lazy staff shell, side-effect-free UI package, lazy re-auth dialog and toaster, light account menu); the budget is now **enforced** in CI at 150 kB. Tests: 52 component tests (7 new for the portal and publishing); new E2E `publish.spec.ts` covers approve → publish from the UI → the seeded student sees exactly their result on a phone viewport. Local E2E 26/26. |
