@@ -52,6 +52,7 @@ def make_settings(**overrides: object) -> Settings:
         "metrics_enabled": True,
         "api_session_burst": 250,  # suites that sweep every route make many calls per session
         "trust_proxy_headers": False,  # not from a developer's .env: tests set it where they need it
+        "breached_password_check": False,  # no network in tests; tested with a stand-in API
         "pdf_processes": 0,  # tests stand in for the renderer; a stand-in can't be sent to another process
     }
     values.update(overrides)

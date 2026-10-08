@@ -27,6 +27,7 @@ def test_production_rejects_dev_secret_and_insecure_cookies() -> None:
     assert "SECRET_KEY" in message
     assert "COOKIE_SECURE" in message
     assert "development password" in message
+    assert "EXPOSE_DOCS" in message  # no public API map in production
 
 
 def test_production_accepts_safe_configuration() -> None:
@@ -36,6 +37,7 @@ def test_production_accepts_safe_configuration() -> None:
         abuse_signal_key="y" * 48,
         cookie_secure=True,
         public_scheme="https",
+        expose_docs=False,
         s3_secret_key="prod-secret-value",
         database_url_app="postgresql+asyncpg://scorecode_app:Str0ng@db/scorecode",
         database_url_platform="postgresql+asyncpg://scorecode_platform:Str0ng@db/scorecode",

@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import pyotp
 from sqlalchemy import select, update
 
+from app.core.breached import password_issues
 from app.core.clock import utcnow
 from app.core.container import Infra
 from app.core.db import UnitOfWork
@@ -29,7 +30,7 @@ from app.core.ratelimit import (
     login_failure_bucket,
     login_ip_bucket,
 )
-from app.core.security import hash_token, new_token, normalise_human_code, password_problems
+from app.core.security import hash_token, new_token, normalise_human_code
 from app.core.tenant import TenantContext
 from app.modules.audit.service import Actor, record, record_platform
 from app.modules.identity.models import AuthToken, PlatformUser, User, UserRole
@@ -79,7 +80,9 @@ class AuthService:
         return now + timedelta(minutes=minutes)
 
     async def _check_password_rules(self, password: str, *, staff: bool, context: tuple[str, ...]) -> None:
-        problems = password_problems(password, min_length=12 if staff else 10, context=context)
+        problems = await password_issues(
+            password, min_length=12 if staff else 10, context=context, settings=self.settings
+        )
         if problems:
             raise ValidationFailed(" ".join(problems), field="password")
 

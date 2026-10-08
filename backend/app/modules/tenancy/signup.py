@@ -15,11 +15,12 @@ from datetime import timedelta
 
 from sqlalchemy import select
 
+from app.core.breached import password_issues
 from app.core.clock import utcnow
 from app.core.container import Infra
 from app.core.errors import Conflict, ValidationFailed
 from app.core.ratelimit import signup_ip_bucket
-from app.core.security import hash_token, new_token, password_problems
+from app.core.security import hash_token, new_token
 from app.core.tenant import TenantContext
 from app.modules.audit.service import Actor
 from app.modules.identity.models import AuthToken, SignupRequest, User
@@ -95,7 +96,9 @@ class SignupService:
             raise ValidationFailed("Please use your institution or personal email address.", field="email")
         if data.institution_type not in TENANT_TYPES:
             raise ValidationFailed("Choose an institution type.", field="institution_type")
-        problems = password_problems(data.password, min_length=12, context=(email, slug))
+        problems = await password_issues(
+            data.password, min_length=12, context=(email, slug), settings=self.settings
+        )
         if problems:
             raise ValidationFailed(" ".join(problems), field="password")
         token = new_token(32)

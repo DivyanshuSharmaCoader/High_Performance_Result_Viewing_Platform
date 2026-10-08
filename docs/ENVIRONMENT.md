@@ -45,7 +45,8 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `API_WORKERS` (compose) | `2` | Uvicorn worker processes per API container; scale containers with `docker compose up --scale api=N` (Caddy balances across them) |
 | `SCORECODE_SENTRY_DSN` | unset | Error reporting (PII scrubbed) |
 | `SCORECODE_LOG_LEVEL` / `SCORECODE_LOG_JSON` | `INFO` / `true` | Structured logs; secrets and personal data are redacted |
-| `SCORECODE_EXPOSE_DOCS` | `true` | `/api/docs` and `/api/openapi.json` |
+| `SCORECODE_EXPOSE_DOCS` | `true` | `/api/docs` and `/api/openapi.json`. Must be `false` outside development (refused at start-up) |
+| `SCORECODE_BREACHED_PASSWORD_CHECK` | `true` | Refuse passwords found in breaches (Have I Been Pwned range API: only 5 hash characters leave the server; fails open after 2 s). Needs outbound HTTPS to `api.pwnedpasswords.com` |
 
 Frontend apps have no runtime configuration: the tenant, its branding and features come from
 `GET /api/v1/tenant/config` on the same origin. The Caddy edge reads `BASE_DOMAIN`, `FILES_ORIGIN` and

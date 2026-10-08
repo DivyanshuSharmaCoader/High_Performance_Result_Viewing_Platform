@@ -40,6 +40,7 @@ DB_POOL_EXHAUSTED = Counter(
 DB_UNAVAILABLE = Counter(
     "scorecode_db_unavailable_total", "Requests answered 503 because the database was unreachable"
 )
+BREACH_CHECKS = Counter("scorecode_breached_password_checks_total", "Breached-password lookups", ["outcome"])
 WORKER_ACTIVE = Gauge("scorecode_worker_active_jobs", "Jobs currently executing in this worker")
 
 

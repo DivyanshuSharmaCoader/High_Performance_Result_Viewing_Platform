@@ -127,6 +127,7 @@ class Settings(BaseSettings):
     sentry_dsn: SecretStr | None = None
     metrics_enabled: bool = True
     expose_docs: bool = True
+    breached_password_check: bool = True  # Have I Been Pwned range API (k-anonymity); fails open
 
     # --- Platform bootstrap -----------------------------------------------------------------------
     totp_issuer: str = "ScoreCode"
@@ -151,6 +152,8 @@ class Settings(BaseSettings):
                 problems.append("SCORECODE_COOKIE_SECURE must be true outside development")
             if self.public_scheme != "https":
                 problems.append("SCORECODE_PUBLIC_SCHEME must be https outside development")
+            if self.expose_docs:
+                problems.append("SCORECODE_EXPOSE_DOCS must be false outside development (no public API map)")
             if self.s3_secret_key.get_secret_value() == "scorecode-dev-secret":
                 problems.append("SCORECODE_S3_SECRET_KEY must not use the development default")
             for name in ("database_url_app", "database_url_platform", "database_url_migrator"):
