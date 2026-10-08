@@ -3170,6 +3170,96 @@
         "title": "MappingIn",
         "type": "object"
       },
+      "MarksheetOut": {
+        "properties": {
+          "expires_in": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires In"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "rendered",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Signed download link; expires after expires_in seconds",
+            "title": "Url"
+          },
+          "verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerificationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "MarksheetOut",
+        "type": "object"
+      },
+      "MarksheetProgressOut": {
+        "properties": {
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "pending": {
+            "title": "Pending",
+            "type": "integer"
+          },
+          "rendered": {
+            "title": "Rendered",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "rendered",
+          "pending",
+          "failed"
+        ],
+        "title": "MarksheetProgressOut",
+        "type": "object"
+      },
       "MeOut": {
         "properties": {
           "email": {
@@ -4549,6 +4639,16 @@
             "title": "Id",
             "type": "string"
           },
+          "marksheets": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarksheetProgressOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "published_at": {
             "anyOf": [
               {
@@ -5597,6 +5697,19 @@
         "title": "ResultsOverviewOut",
         "type": "object"
       },
+      "RetryOut": {
+        "properties": {
+          "queued": {
+            "title": "Queued",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "queued"
+        ],
+        "title": "RetryOut",
+        "type": "object"
+      },
       "ReturnIn": {
         "additionalProperties": false,
         "properties": {
@@ -5611,6 +5724,33 @@
           "reason"
         ],
         "title": "ReturnIn",
+        "type": "object"
+      },
+      "RevokeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RevokeIn",
+        "type": "object"
+      },
+      "RevokedOut": {
+        "properties": {
+          "revoked": {
+            "default": true,
+            "title": "Revoked",
+            "type": "boolean"
+          }
+        },
+        "title": "RevokedOut",
         "type": "object"
       },
       "RoleIn": {
@@ -8092,6 +8232,25 @@
         "title": "ValidationError",
         "type": "object"
       },
+      "VerificationOut": {
+        "properties": {
+          "code": {
+            "description": "Grouped for display, e.g. 7KQ3-M9XD-\u2026",
+            "title": "Code",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "url"
+        ],
+        "title": "VerificationOut",
+        "type": "object"
+      },
       "VerifyIn": {
         "additionalProperties": false,
         "properties": {
@@ -10435,6 +10594,195 @@
           }
         },
         "summary": "Cancel Publication",
+        "tags": [
+          "publications"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/marksheets/retry": {
+      "post": {
+        "operationId": "retry_marksheets_api_v1_admin_exams__exam_id__publications__publication_id__marksheets_retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "publication_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Publication Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retry Marksheets",
+        "tags": [
+          "publications"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/marksheets/{student_id}": {
+      "get": {
+        "operationId": "student_marksheet_api_v1_admin_exams__exam_id__publications__publication_id__marksheets__student_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "publication_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Publication Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "student_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Student Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarksheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Student Marksheet",
+        "tags": [
+          "publications"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/verification/{student_id}/revoke": {
+      "post": {
+        "operationId": "revoke_verification_api_v1_admin_exams__exam_id__publications__publication_id__verification__student_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "publication_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Publication Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "student_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Student Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokedOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Revoke Verification",
         "tags": [
           "publications"
         ]
@@ -14205,6 +14553,49 @@
           }
         },
         "summary": "My Result",
+        "tags": [
+          "my results"
+        ]
+      }
+    },
+    "/api/v1/me/results/{publication_id}/marksheet": {
+      "get": {
+        "operationId": "my_marksheet_api_v1_me_results__publication_id__marksheet_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "publication_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Publication Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarksheetOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "My Marksheet",
         "tags": [
           "my results"
         ]

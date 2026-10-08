@@ -4,6 +4,7 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { Link, useParams } from "react-router";
 
 import { useMyResult, useMyStats } from "./api";
+import { MarksheetCard } from "./marksheet";
 import { StudentResultView } from "./result-view";
 
 export default function StudentResultPage() {
@@ -49,6 +50,7 @@ export default function StudentResultPage() {
             </Callout>
           )}
           <StudentResultView payload={q.data.payload} averages={averages} />
+          <MarksheetCard publicationId={publicationId} />
           <p className="mt-5 text-[12px] text-fg-subtle">
             Published by {q.data.payload.institution.name} on {formatDateTime(q.data.published_at)}
             {classAverage && <> · class average {classAverage}%</>}.

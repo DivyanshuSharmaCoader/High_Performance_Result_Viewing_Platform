@@ -8,6 +8,7 @@ import {
   DialogContent,
   Field,
   Input,
+  ProgressBar,
   Section,
   formatDateTime,
   formatNumber,
@@ -15,7 +16,7 @@ import {
   toast,
 } from "@scorecode/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Eye, EyeOff, Lock, Rocket, Undo2 } from "lucide-react";
+import { CalendarClock, Eye, EyeOff, FileCheck2, Lock, RefreshCw, Rocket, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -57,6 +58,8 @@ export function PublishPanel({
   const pubs = useQuery({
     queryKey: ["publications", examId],
     queryFn: () => api.get<Publication[]>(pubsUrl(examId)),
+    // Follow marksheet rendering while it runs; stop polling once nothing is pending.
+    refetchInterval: (q) => (q.state.data?.some((p) => (p.marksheets?.pending ?? 0) > 0) ? 3000 : false),
   });
   const [action, setAction] = useState<null | "now" | "withdraw" | "cancel">(null);
   const [scheduling, setScheduling] = useState(false);
@@ -111,6 +114,7 @@ export function PublishPanel({
   const list = pubs.data ?? [];
   const live = list.find((p) => p.status === "published");
   const scheduled = list.find((p) => p.status === "scheduled");
+  const current = live ?? scheduled;
   const ready = examStatus === "approved" || examStatus === "withdrawn";
 
   let body;
@@ -192,6 +196,7 @@ export function PublishPanel({
       }
     >
       {body}
+      {current && <Marksheets examId={examId} pub={current} canRetry={canPublish} onRetried={refresh} />}
       {!canSchedule && ready && !scheduled && canPublish && (
         <p className="mt-3 text-[13px] text-fg-subtle">
           Want results to go live at a set time, like 10:00 on result day?{" "}
@@ -275,5 +280,78 @@ export function PublishPanel({
         </DialogContent>
       </Dialog>
     </Section>
+  );
+}
+
+/** Marksheet PDFs of the current publication: rendered by the worker right after publishing (or ahead of a
+ * scheduled release), each with its own verification QR code. */
+function Marksheets({
+  examId,
+  pub,
+  canRetry,
+  onRetried,
+}: {
+  examId: string;
+  pub: Publication;
+  canRetry: boolean;
+  onRetried: () => void;
+}) {
+  const retry = useMutation({
+    mutationFn: () => api.post<{ queued: number }>(`${pubsUrl(examId)}/${pub.id}/marksheets/retry`),
+    onSuccess: (r) => {
+      toast.success(`Trying ${formatNumber(r.queued)} marksheets again`);
+      onRetried();
+    },
+    onError: toastError,
+  });
+  const m = pub.marksheets;
+  if (!m || m.total === 0) return null;
+  if (m.pending > 0) {
+    const pct = ((m.rendered + m.failed) / m.total) * 100;
+    return (
+      <div className="mt-4 flex flex-col gap-2" aria-live="polite">
+        <div className="flex items-baseline justify-between gap-3 text-[13px]">
+          <span className="font-medium text-fg">Preparing marksheet PDFs…</span>
+          <span className="tabular-nums text-fg-subtle">
+            {formatNumber(m.rendered)} of {formatNumber(m.total)}
+          </span>
+        </div>
+        <ProgressBar value={pct} label="Marksheets prepared" />
+        <p className="text-[12px] text-fg-subtle">
+          This runs in the background — you can leave this page. Each marksheet carries its own QR code for
+          verification.
+        </p>
+      </div>
+    );
+  }
+  if (m.failed > 0) {
+    return (
+      <Callout
+        tone="warning"
+        className="mt-4"
+        title={`${formatNumber(m.failed)} of ${formatNumber(m.total)} marksheets couldn't be prepared`}
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <span>Those students still see their result online; only the PDF is missing.</span>
+          {canRetry && (
+            <Button
+              size="sm"
+              variant="secondary"
+              leadingIcon={<RefreshCw />}
+              loading={retry.isPending}
+              onClick={() => retry.mutate()}
+            >
+              Try again
+            </Button>
+          )}
+        </div>
+      </Callout>
+    );
+  }
+  return (
+    <p className="mt-4 flex items-center gap-2 text-[13px] text-fg-muted">
+      <FileCheck2 className="size-4 text-success" aria-hidden />
+      All {formatNumber(m.total)} marksheets are ready to download, each with a QR code anyone can verify.
+    </p>
   );
 }

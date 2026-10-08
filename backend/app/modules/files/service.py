@@ -89,9 +89,10 @@ class FileService:
         file_type: FileType,
         original_name: str | None,
         uploaded_by: uuid.UUID | None,
+        enforce_quota: bool = True,
     ) -> StoredFile:
         tenant_id = uow.require_tenant()
-        await EntitlementService(self.infra).consume(uow, F.MAX_STORAGE_MB, len(data))
+        await EntitlementService(self.infra).consume(uow, F.MAX_STORAGE_MB, len(data), enforce=enforce_quota)
         key = tenant_object_key(tenant_id, kind, file_type.extension)
         record = StoredFile(
             tenant_id=tenant_id,

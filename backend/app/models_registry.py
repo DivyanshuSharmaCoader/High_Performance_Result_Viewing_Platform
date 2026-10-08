@@ -6,6 +6,7 @@ from app.modules.academics import models as _academics  # noqa: F401
 from app.modules.audit import models as _audit  # noqa: F401
 from app.modules.branding import models as _branding  # noqa: F401
 from app.modules.directory import models as _directory  # noqa: F401
+from app.modules.documents import models as _documents  # noqa: F401
 from app.modules.entitlements import models as _entitlements  # noqa: F401
 from app.modules.examinations import models as _examinations  # noqa: F401
 from app.modules.files import models as _files  # noqa: F401
@@ -16,5 +17,6 @@ from app.modules.marks import models as _marks  # noqa: F401
 from app.modules.publishing import models as _publishing  # noqa: F401
 from app.modules.results import models as _results  # noqa: F401
 from app.modules.tenancy import models as _tenancy  # noqa: F401
+from app.modules.verification import models as _verification  # noqa: F401
 
 metadata = Base.metadata

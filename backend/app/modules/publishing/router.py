@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Literal
 
@@ -9,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.http import InfraDep, Principal, UoW, require
 from app.core.idempotency import idempotent
+from app.modules.documents.service import MarksheetService, Progress
 from app.modules.identity.permissions import P
 from app.modules.publishing.models import Publication
 from app.modules.publishing.service import MyResult, PublishingService
@@ -22,6 +24,13 @@ NO_STORE = (
 )
 
 
+class MarksheetProgressOut(BaseModel):
+    total: int
+    rendered: int
+    pending: int
+    failed: int
+
+
 class PublicationOut(BaseModel):
     id: uuid.UUID
     version: int
@@ -33,6 +42,7 @@ class PublicationOut(BaseModel):
     students: int
     content_hash: str
     created_at: datetime
+    marksheets: MarksheetProgressOut | None = None
 
 
 class PublishIn(BaseModel):
@@ -150,7 +160,7 @@ class MyStatsOut(BaseModel):
     stats: dict[str, Any] | None = None
 
 
-def _pub(p: Publication) -> PublicationOut:
+def _pub(p: Publication, progress: Progress | None = None) -> PublicationOut:
     return PublicationOut(
         id=p.id,
         version=p.version,
@@ -162,6 +172,7 @@ def _pub(p: Publication) -> PublicationOut:
         students=p.students,
         content_hash=p.content_hash,
         created_at=p.created_at,
+        marksheets=MarksheetProgressOut(**asdict(progress)) if progress else None,
     )
 
 
@@ -183,7 +194,9 @@ async def list_publications(
 ) -> list[PublicationOut]:
     service = PublishingService(infra)
     await service.exam(uow, exam_id)
-    return [_pub(p) for p in await service.publications(uow, exam_id)]
+    pubs = await service.publications(uow, exam_id)
+    progress = await MarksheetService.progress(uow, [p.id for p in pubs])
+    return [_pub(p, progress.get(p.id)) for p in pubs]
 
 
 @admin_router.post("", status_code=201, response_model=PublicationOut)

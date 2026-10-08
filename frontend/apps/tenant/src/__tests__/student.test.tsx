@@ -1,4 +1,11 @@
-import type { Me, MyResult, MyResultItem, Publication, ResultPayload } from "@scorecode/api-client";
+import type {
+  Marksheet,
+  Me,
+  MyResult,
+  MyResultItem,
+  Publication,
+  ResultPayload,
+} from "@scorecode/api-client";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -11,6 +18,9 @@ import StudentResultPage from "../features/student/result";
 import { meKey } from "../lib/session";
 import { TenantProvider, tenantConfigKey } from "../lib/tenant";
 import { mockApi, ownerMe, renderRoutes, tenantConfig } from "./test-utils";
+
+vi.mock("../lib/navigate", () => ({ goTo: vi.fn() }));
+import { goTo } from "../lib/navigate";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -84,6 +94,18 @@ const payload: ResultPayload = {
     },
   ],
 };
+
+const verification = {
+  code: "7KQ3-M9XD-PA2F-8RTC-WV6H-Q7MN-2B",
+  url: "https://verify.scorecode.in/v/7KQ3M9XDPA2F8RTCWV6HQ7MN2B",
+};
+const marksheet = (status: Marksheet["status"], url: string | null = null): Marksheet => ({
+  status,
+  url,
+  filename: url ? "Marksheet-102401001-Half-yearly-2025-26.pdf" : null,
+  expires_in: url ? 120 : null,
+  verification,
+});
 
 const item = (id: string, name: string, extra: Partial<MyResultItem> = {}): MyResultItem => ({
   publication_id: id,
@@ -169,6 +191,7 @@ describe("student portal", () => {
           payload,
         } satisfies MyResult,
       }),
+      "GET /api/v1/me/results/p2/marksheet": () => ({ status: 200, body: marksheet("pending") }),
       "GET /api/v1/me/results/p2/stats": () => ({
         status: 200,
         body: {
@@ -193,6 +216,60 @@ describe("student portal", () => {
     expect(await screen.findByText(/class average 61.5%/)).toBeInTheDocument();
   });
 
+  it("downloads the marksheet through a fresh signed link and shares a verification link", async () => {
+    let calls = 0;
+    mockApi({
+      "GET /api/v1/me/results/p2": () => ({
+        status: 200,
+        body: {
+          publication_id: "p2",
+          version: 1,
+          published_at: "2026-10-07T10:00:00Z",
+          revised: false,
+          payload,
+        },
+      }),
+      "GET /api/v1/me/results/p2/stats": () => ({ status: 200, body: { available: false } }),
+      "GET /api/v1/me/results/p2/marksheet": () => {
+        calls += 1;
+        return { status: 200, body: marksheet("rendered", `https://files.example/m.pdf?sig=${calls}`) };
+      },
+    });
+    const user = userEvent.setup();
+    studentRoutes("/me/results/p2");
+    const download = await screen.findByRole("button", { name: "Download" });
+    expect(screen.getByText(/QR code anyone can scan/)).toBeInTheDocument();
+    await user.click(download);
+    // The link shown at page load may have expired: the click asks for a new one.
+    await waitFor(() => expect(goTo).toHaveBeenCalledWith("https://files.example/m.pdf?sig=2"));
+    expect(screen.getByText("verify.scorecode.in/v/7KQ3M9XDPA2F8RTCWV6HQ7MN2B")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Copy link" }));
+    expect(await screen.findByRole("button", { name: "Copied" })).toBeInTheDocument();
+    expect(await navigator.clipboard.readText()).toBe(verification.url);
+  });
+
+  it("says when the marksheet is still being prepared", async () => {
+    mockApi({
+      "GET /api/v1/me/results/p2": () => ({
+        status: 200,
+        body: {
+          publication_id: "p2",
+          version: 1,
+          published_at: "2026-10-07T10:00:00Z",
+          revised: false,
+          payload,
+        },
+      }),
+      "GET /api/v1/me/results/p2/stats": () => ({ status: 200, body: { available: false } }),
+      "GET /api/v1/me/results/p2/marksheet": () => ({ status: 200, body: marksheet("pending") }),
+    });
+    studentRoutes("/me/results/p2");
+    expect(await screen.findByText(/Being prepared/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Preparing/ })).toBeDisabled();
+    // The verification code exists from publication, so it can be shared straight away.
+    expect(screen.getByText(verification.code)).toBeInTheDocument();
+  });
+
   it("explains a withdrawn or missing result kindly", async () => {
     mockApi({
       "GET /api/v1/me/results/gone": () => ({
@@ -200,6 +277,10 @@ describe("student portal", () => {
         body: { code: "not-found", detail: "Result not found" },
       }),
       "GET /api/v1/me/results/gone/stats": () => ({ status: 404, body: { code: "not-found", detail: "x" } }),
+      "GET /api/v1/me/results/gone/marksheet": () => ({
+        status: 404,
+        body: { code: "not-found", detail: "x" },
+      }),
     });
     studentRoutes("/me/results/gone");
     expect(await screen.findByText(/may have been withdrawn by your institution/)).toBeInTheDocument();
@@ -285,6 +366,48 @@ describe("publication panel", () => {
     await user.click(within(dialog).getByRole("button", { name: "Publish now" }));
     await waitFor(() => expect(keys).toHaveLength(1));
     expect(keys[0]).toMatch(/^[\w-]{8,}$/);
+  });
+
+  it("follows marksheet preparation and retries the ones that failed", async () => {
+    document.cookie = "sc_csrf=x";
+    let retried = false;
+    mockApi({
+      "GET /api/v1/admin/exams/e1/publications": () => ({
+        status: 200,
+        body: [
+          pub({
+            marksheets: retried
+              ? { total: 120, rendered: 117, pending: 3, failed: 0 }
+              : { total: 120, rendered: 117, pending: 0, failed: 3 },
+          }),
+        ],
+      }),
+      "POST /api/v1/admin/exams/e1/publications/pub1/marksheets/retry": () => {
+        retried = true;
+        return { status: 200, body: { queued: 3 } };
+      },
+    });
+    render("published");
+    expect(await screen.findByText("3 of 120 marksheets couldn't be prepared")).toBeInTheDocument();
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Preparing marksheet PDFs…")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Marksheets prepared" })).toHaveAttribute(
+      "aria-valuenow",
+      "98",
+    );
+    expect(screen.getByText("117 of 120")).toBeInTheDocument();
+  });
+
+  it("says when every marksheet is ready", async () => {
+    mockApi({
+      "GET /api/v1/admin/exams/e1/publications": () => ({
+        status: 200,
+        body: [pub({ marksheets: { total: 120, rendered: 120, pending: 0, failed: 0 } })],
+      }),
+    });
+    render("published");
+    expect(await screen.findByText(/All 120 marksheets are ready/)).toBeInTheDocument();
   });
 
   it("withdraws live results only with a reason", async () => {

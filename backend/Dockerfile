@@ -3,10 +3,14 @@
 FROM python:3.12-slim-bookworm AS base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 \
     UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PROJECT_ENVIRONMENT=/opt/venv
-# WeasyPrint runtime libraries (pango/harfbuzz) + fonts for marksheets.
+# WeasyPrint runtime libraries (pango/harfbuzz) + fonts for marksheets. The font cache is built here, once:
+# without it every render rescans the fonts (the runtime user can't write a cache of its own).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libfontconfig1 fonts-dejavu-core fonts-noto-core curl \
+      libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libharfbuzz-subset0 libfontconfig1 fontconfig \
+      fonts-dejavu-core fonts-noto-core curl \
+    && fc-cache -f \
     && rm -rf /var/lib/apt/lists/*
+ENV XDG_CACHE_HOME=/tmp/.cache
 
 FROM base AS build
 COPY --from=ghcr.io/astral-sh/uv:0.9 /uv /usr/local/bin/uv

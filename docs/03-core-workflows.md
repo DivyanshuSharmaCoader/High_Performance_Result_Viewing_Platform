@@ -148,7 +148,7 @@ Upload ─► Store raw file (immutable, hashed) ─► Parse (worker) ─► Ma
 - **Single-step (Free/Starter):** an admin approves.
 - **Two-step maker-checker (Growth+):** the person who processed cannot approve; a second admin with `results.approve` must approve. Configurable per tenant.
 - Approval **freezes** the input: marks for that exam are locked; computed results are hashed (`content_hash`) so we can prove later that what was published equals what was approved.
-- On approval, workers **pre-render marksheet PDFs** and create verification records (status `pending`) — so result day does no heavy work.
+- When results are **published** (or scheduled), the `pdf` worker renders marksheet PDFs and every student gets a verification code. A scheduled release renders ahead of go-live, so result day does no heavy work. *(As built, P11.2: rendering starts at publication rather than at approval. A PDF prints the snapshot the student sees and its verification code, and both exist only once a publication is created. Approval-time rendering would mean rendering twice whenever a schedule changes.)*
 
 Audit: `results.processed`, `results.approved` (with content hash), `results.rejected` (with reason).
 

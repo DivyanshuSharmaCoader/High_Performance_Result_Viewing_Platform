@@ -73,12 +73,18 @@ jobs:
         with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
       - name: Start PostgreSQL, Redis, S3 (SeaweedFS), Mailpit
         run: docker compose up -d --build --wait postgres redis s3 mailpit
-      - run: uv sync --frozen
+      - name: WeasyPrint system libraries and fonts (marksheet PDFs)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends \
+            libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libharfbuzz-subset0 fontconfig fonts-dejavu-core fonts-noto-core
+      - run: uv sync --frozen --extra pdf
         working-directory: backend
       - name: pytest (all suites) with coverage
         working-directory: backend
         env:
           SCORECODE_TEST_REQUIRE_SERVICES: "1"  # never silently skip integration tests in CI
+          SCORECODE_TEST_REQUIRE_PDF: "1"  # nor the marksheet PDF tests
         run: uv run pytest -q --cov=app --cov-report=term-missing:skip-covered --cov-report=xml
       - name: Container logs on failure
         if: failure()

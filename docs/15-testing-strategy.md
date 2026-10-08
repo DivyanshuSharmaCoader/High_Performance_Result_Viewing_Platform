@@ -72,7 +72,7 @@ Plan and validity rules in [11 §4](11-performance-architecture.md#4-benchmark-p
 1. Sign-up → verify email → onboarding checklist.
 2. Admin: structure → import students → create exam → faculty enters marks → import marks with errors → fix → process → approve → publish.
 3. Student: activate → login → view result → download marksheet → history.
-4. Verifier: scan code → verified page; after correction → superseded.
+4. Verifier: scan code → verified page; after correction → superseded. *(As built, `e2e/verify.spec.ts`: the student downloads the PDF, the verify page shows that file's SHA-256 with the student masked and passes axe, and a withdrawal shows at once. "Superseded" is covered by an integration test until the correction workflow ships.)*
 5. Isolation demo: Thapar student tries Demo School resource → 404.
 6. Plan limit: Free tenant imports 151st student → limit error with upgrade prompt.
 7. Platform admin: suspend tenant → tenant portal shows unavailable page.

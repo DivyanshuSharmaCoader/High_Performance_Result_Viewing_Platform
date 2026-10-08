@@ -170,6 +170,25 @@ QR on marksheet → https://verify.scorecode.in/v/7KQ3-M9XD-PA2F-8RTC-WV6H-Q (co
 | Abuse | Per-IP rate limit, generic "not found" for bad codes, CDN caching of *not-found* responses briefly. |
 | V2 | Offline-verifiable signed payload: QR includes an Ed25519 signature over a canonical summary, verifiable with ScoreCode's published public key even without network; key rotation via `kid`. |
 
+**As built (P11.1–P11.5):**
+- **Lookup.** The verify host has no tenant, so a code is the only key. `verification_lookup(code)` (SECURITY DEFINER) returns the tenant id and status and nothing else; the record is then read under that tenant's RLS. Status is derived from the publication, so it can't drift.
+- **Disclosure.**
+  - Shown: masked name (`Aa*** Gu***`), masked enrollment no. (`10*****01`), institution, exam, issue date, version, status with its date, and the PDF's SHA-256.
+  - Never shown: marks, or the revocation reason.
+  - Codes from scheduled or cancelled publications look exactly like unknown codes. An institution that has left shows nothing about the student.
+- **Page.** Server-rendered with no scripts.
+  - CSP `default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'`.
+  - `X-Robots-Tag: noindex, nofollow, noarchive` and `Referrer-Policy: no-referrer`, because the code is in the URL.
+  - `no-store` when a statement is found; `public, max-age=60` for not-found, so a CDN can absorb repeated bad lookups.
+  - Per-IP limit of 60/min with a burst of 30, answered with an HTML 429 page and `Retry-After`.
+  - Autoescaped, so tenant-controlled names are printed, never interpreted (tested with a `<script>` institution name).
+- **PDF generation (SSRF).**
+  - Jinja `SandboxedEnvironment` with autoescape and StrictUndefined.
+  - WeasyPrint gets a fetcher that serves only `data:` URIs (the logo, from sniffed PNG/JPEG/WebP bytes, never SVG; and the QR code). `http(s)`, `file:` and everything else are refused.
+  - Tested against a live local HTTP server: stylesheets, `@import`, fonts, images, `file:///etc/passwd`, objects and iframes all produce zero requests. A control request proves the server was reachable.
+- **Downloads.** Signed object-storage URLs that expire in 120 s, with `Content-Disposition: attachment` and a sanitised filename. A student's marksheet is located through the student linked to the session only.
+- **Revocation.** Per student, with re-authentication, a reason and an audit entry. It can't be undone; issue a corrected result instead.
+
 ---
 
 ## 11. Privacy & compliance (India)

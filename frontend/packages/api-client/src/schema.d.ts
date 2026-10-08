@@ -512,6 +512,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/marksheets/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Marksheets */
+        post: operations["retry_marksheets_api_v1_admin_exams__exam_id__publications__publication_id__marksheets_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/marksheets/{student_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Student Marksheet */
+        get: operations["student_marksheet_api_v1_admin_exams__exam_id__publications__publication_id__marksheets__student_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/verification/{student_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke Verification */
+        post: operations["revoke_verification_api_v1_admin_exams__exam_id__publications__publication_id__verification__student_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/withdraw": {
         parameters: {
             query?: never;
@@ -1665,6 +1716,23 @@ export interface paths {
         };
         /** My Result */
         get: operations["my_result_api_v1_me_results__publication_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/results/{publication_id}/marksheet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Marksheet */
+        get: operations["my_marksheet_api_v1_me_results__publication_id__marksheet_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3145,6 +3213,35 @@ export interface components {
             /** Sheet Name */
             sheet_name?: string | null;
         };
+        /** MarksheetOut */
+        MarksheetOut: {
+            /** Expires In */
+            expires_in?: number | null;
+            /** Filename */
+            filename?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "rendered" | "failed";
+            /**
+             * Url
+             * @description Signed download link; expires after expires_in seconds
+             */
+            url?: string | null;
+            verification?: components["schemas"]["VerificationOut"] | null;
+        };
+        /** MarksheetProgressOut */
+        MarksheetProgressOut: {
+            /** Failed */
+            failed: number;
+            /** Pending */
+            pending: number;
+            /** Rendered */
+            rendered: number;
+            /** Total */
+            total: number;
+        };
         /** MeOut */
         MeOut: {
             /** Email */
@@ -3561,6 +3658,7 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            marksheets?: components["schemas"]["MarksheetProgressOut"] | null;
             /** Published At */
             published_at: string | null;
             /** Scheduled At */
@@ -3883,10 +3981,28 @@ export interface components {
             /** Unsubmitted */
             unsubmitted: components["schemas"]["ResultUnsubmitted"][];
         };
+        /** RetryOut */
+        RetryOut: {
+            /** Queued */
+            queued: number;
+        };
         /** ReturnIn */
         ReturnIn: {
             /** Reason */
             reason: string;
+        };
+        /** RevokeIn */
+        RevokeIn: {
+            /** Reason */
+            reason: string;
+        };
+        /** RevokedOut */
+        RevokedOut: {
+            /**
+             * Revoked
+             * @default true
+             */
+            revoked: boolean;
         };
         /** RoleIn */
         RoleIn: {
@@ -4694,6 +4810,16 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /** VerificationOut */
+        VerificationOut: {
+            /**
+             * Code
+             * @description Grouped for display, e.g. 7KQ3-M9XD-…
+             */
+            code: string;
+            /** Url */
+            url: string;
         };
         /** VerifyIn */
         VerifyIn: {
@@ -6112,6 +6238,108 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_marksheets_api_v1_admin_exams__exam_id__publications__publication_id__marksheets_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                publication_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    student_marksheet_api_v1_admin_exams__exam_id__publications__publication_id__marksheets__student_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                publication_id: string;
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarksheetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_verification_api_v1_admin_exams__exam_id__publications__publication_id__verification__student_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+                publication_id: string;
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevokeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokedOut"];
                 };
             };
             /** @description Validation Error */
@@ -8516,6 +8744,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_marksheet_api_v1_me_results__publication_id__marksheet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                publication_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MarksheetOut"];
                 };
             };
             /** @description Validation Error */

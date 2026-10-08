@@ -308,6 +308,10 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("POST", "/api/v1/admin/exams/{exam_id}/results/reject"): {"run_id": str(uuid.uuid4()), "reason": "xyz"},
     ("POST", "/api/v1/admin/exams/{exam_id}/results/revoke"): {"reason": "xyz"},
     ("POST", "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/withdraw"): {"reason": "xyz"},
+    (
+        "POST",
+        "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/verification/{student_id}/revoke",
+    ): {"reason": "xyz"},
     ("POST", "/api/v1/admin/grading-schemes/{scheme_id}/versions"): {
         "config": {"strategy": "marks_only"},
         "based_on": 1,
@@ -386,7 +390,11 @@ async def _b_fingerprint(infra: Any, t: TenantFixture) -> tuple[Any, ...]:
                     " || (SELECT count(*)::text FROM approvals)"
                     " || (SELECT count(*)::text FROM student_exam_results)"
                     " || (SELECT coalesce(string_agg(id::text || status, ',' ORDER BY id), '') FROM publications)"
-                    " || (SELECT count(*)::text FROM published_results) FROM result_runs"
+                    " || (SELECT count(*)::text FROM published_results)"
+                    " || (SELECT coalesce(string_agg(code || coalesce(revoked_at::text, '') ||"
+                    " verify_count::text, ',' ORDER BY code), '') FROM verification_records)"
+                    " || (SELECT coalesce(string_agg(student_id::text || status, ',' ORDER BY student_id), '')"
+                    " FROM marksheet_documents) FROM result_runs"
                 )
             )
         ).scalar_one()

@@ -86,6 +86,27 @@ async def _drop_database() -> None:
         await conn.close()
 
 
+def _weasyprint_available() -> bool:
+    try:
+        import weasyprint  # noqa: F401
+    except (ImportError, OSError):  # OSError: the package is there but Pango isn't
+        return False
+    return True
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """``pdf`` tests need WeasyPrint's system libraries. Locally they're skipped without them (say so in
+    reports); CI sets SCORECODE_TEST_REQUIRE_PDF so a missing library fails instead of skipping."""
+    if not any(item.get_closest_marker("pdf") for item in items) or _weasyprint_available():
+        return
+    if os.environ.get("SCORECODE_TEST_REQUIRE_PDF"):
+        raise pytest.UsageError("WeasyPrint (with Pango) is required for pdf tests but can't be imported")
+    skip = pytest.mark.skip(reason="WeasyPrint/Pango not installed: run in the Docker test image or CI")
+    for item in items:
+        if item.get_closest_marker("pdf"):
+            item.add_marker(skip)
+
+
 def _services_available() -> bool:
     async def probe() -> bool:
         try:

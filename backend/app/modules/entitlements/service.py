@@ -161,9 +161,12 @@ class EntitlementService:
         ).scalar_one()
         return int(value)
 
-    async def consume(self, uow: UnitOfWork, limit_key: str, delta: int = 1) -> None:
+    async def consume(self, uow: UnitOfWork, limit_key: str, delta: int = 1, *, enforce: bool = True) -> None:
         """Check ``limit_key`` and add ``delta`` to its usage counter, atomically with the caller's
-        transaction. Raises ``LimitExceeded`` (HTTP 402) with current/max when over the limit."""
+        transaction. Raises ``LimitExceeded`` (HTTP 402) with current/max when over the limit.
+
+        ``enforce=False`` only records the usage: for work that other limits already bound and that must
+        not fail on the day it matters (marksheets of a publication the plan allowed; docs/12 §4)."""
         if delta <= 0:
             return
         metric = LIMIT_TO_USAGE_METRIC[limit_key]
@@ -171,7 +174,7 @@ class EntitlementService:
         # Limit values come from the DB inside this transaction — never from cache — for correctness.
         limit = (await _resolve(uow, uow.require_tenant(), utcnow())).limit(limit_key)
         scale = 1024 * 1024 if limit_key == F.MAX_STORAGE_MB else 1
-        if limit is not None and current + delta > limit * scale:
+        if enforce and limit is not None and current + delta > limit * scale:
             raise LimitExceeded(
                 _limit_message(limit_key, current // scale, delta // scale or delta, limit),
                 limit=limit_key,

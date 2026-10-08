@@ -1,4 +1,4 @@
-import { api, type MyResult, type MyResultItem, type MyStats } from "@scorecode/api-client";
+import { api, type Marksheet, type MyResult, type MyResultItem, type MyStats } from "@scorecode/api-client";
 import { useQuery } from "@tanstack/react-query";
 
 // Personal results: never cached by the browser (the server sends no-store), and kept in memory only
@@ -27,4 +27,18 @@ export const useMyStats = (id: string) =>
     queryFn: () => api.get<MyStats>(`/api/v1/me/results/${id}/stats`),
     staleTime: 5 * 60_000,
     retry: false,
+  });
+
+export const myMarksheetKey = (id: string) => [...myResultsKey, id, "marksheet"] as const;
+export const fetchMyMarksheet = (id: string) => api.get<Marksheet>(`/api/v1/me/results/${id}/marksheet`);
+
+/** The PDF is prepared right after publication; poll gently until it's ready. */
+export const useMyMarksheet = (id: string) =>
+  useQuery({
+    queryKey: myMarksheetKey(id),
+    queryFn: () => fetchMyMarksheet(id),
+    staleTime: 30_000,
+    gcTime: 60_000,
+    retry: false,
+    refetchInterval: (q) => (q.state.data?.status === "pending" ? 4000 : false),
   });

@@ -173,7 +173,7 @@
 | ID | Step | Details | Done when |
 |---|---|---|---|
 | P11.1 | Template system | Sandboxed Jinja HTML/CSS template, default template, tenant logo/name, QR code; external fetches blocked | Security test: template cannot fetch external URL |
-| P11.2 | Render jobs | Pre-render on approval in chunks to object storage, sha256, retries, `pdf` queue | Tests + timing measured per PDF |
+| P11.2 | Render jobs | Pre-render at publication (ahead of go-live when scheduled; see docs/03 W9) in chunks of 50 to object storage, sha256, retries, `pdf` queue | Tests + timing measured per PDF |
 | P11.3 | Download | Signed URL endpoint for own marksheet; admin download | Isolation tests |
 | P11.4 | Verification records | 128-bit codes, status lifecycle tied to publication events | State tests |
 | P11.5 | Verify page | Server-rendered page on verify host, masked data, status, hash, rate limit, noindex | E2E-4 |

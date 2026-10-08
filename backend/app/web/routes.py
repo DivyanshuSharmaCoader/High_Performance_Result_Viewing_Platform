@@ -8,6 +8,8 @@ from app.modules.academics.router import router as academics_router
 from app.modules.audit.router import router as audit_router
 from app.modules.branding.router import router as branding_router
 from app.modules.directory.router import router as students_router
+from app.modules.documents.router import admin_router as marksheets_admin_router
+from app.modules.documents.router import student_router as my_marksheets_router
 from app.modules.entitlements.router import router as plans_router
 from app.modules.examinations.router import router as exams_router
 from app.modules.grading.router import router as grading_router
@@ -22,6 +24,7 @@ from app.modules.publishing.router import student_router as my_results_router
 from app.modules.results.router import router as results_router
 from app.modules.tenancy.router import router as settings_router
 from app.modules.tenancy.signup_router import router as signup_router
+from app.modules.verification.router import router as verification_router
 from app.web.jobs_router import router as jobs_router
 
 
@@ -45,6 +48,9 @@ def include_routers(app: FastAPI) -> None:
         results_router,
         publications_router,
         my_results_router,
+        marksheets_admin_router,
+        my_marksheets_router,
         plans_router,
+        verification_router,
     ):
         app.include_router(router)

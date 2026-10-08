@@ -204,3 +204,5 @@ export type MyResult = Schemas["MyResultOut"];
 export type MyResultItem = Schemas["MyResultItem"];
 export type MyStats = Schemas["MyStatsOut"];
 export type Publication = Schemas["PublicationOut"];
+export type MarksheetProgress = Schemas["MarksheetProgressOut"];
+export type Marksheet = Schemas["MarksheetOut"];

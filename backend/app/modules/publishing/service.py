@@ -28,6 +28,7 @@ from app.modules.academics.models import AcademicSession, Cohort, Course, Progra
 from app.modules.audit.service import Actor, record
 from app.modules.branding.models import TenantBranding
 from app.modules.directory.models import Student
+from app.modules.documents.service import MarksheetService
 from app.modules.entitlements.catalogue import F
 from app.modules.entitlements.service import EntitlementService
 from app.modules.examinations.models import Examination, ExamPaper
@@ -199,7 +200,11 @@ class PublishingService:
             pub.supersedes_id = await self._supersede(uow, exam.id)
         uow.session.add(pub)
         await uow.flush()
-        pub.students = await self._snapshots(uow, exam, run, pub)
+        students = await self._snapshots(uow, exam, run, pub)
+        pub.students = len(students)
+        # A marksheet and a verification code per student, rendered by the pdf worker from now on (ahead
+        # of go-live for a scheduled release), so result day itself does no PDF work.
+        await MarksheetService(self.infra).prepare(uow, pub.id, students, principal.user_id)
         uow.session.add(
             ExamStatistics(tenant_id=pub.tenant_id, publication_id=pub.id, stats=dict(run.stats or {}))
         )
@@ -258,8 +263,10 @@ class PublishingService:
         await uow.flush()
         return live.id
 
-    async def _snapshots(self, uow: UnitOfWork, exam: Examination, run: ResultRun, pub: Publication) -> int:
-        """One payload per student, written in chunks; returns how many."""
+    async def _snapshots(
+        self, uow: UnitOfWork, exam: Examination, run: ResultRun, pub: Publication
+    ) -> list[uuid.UUID]:
+        """One payload per student, written in chunks; returns the students."""
         settings = (await uow.session.scalars(select(TenantSettings))).one()
         branding = (await uow.session.scalars(select(TenantBranding))).one_or_none()
         institution = Institution(
@@ -366,7 +373,7 @@ class PublishingService:
                 }
             )
         await self._insert(uow, rows)
-        return len(rows)
+        return [r["student_id"] for r in rows]
 
     @staticmethod
     async def _insert(uow: UnitOfWork, rows: list[dict[str, Any]]) -> None:

@@ -266,3 +266,40 @@ export const marksCsv = (lines: string[], name = "ucs310-marks.csv") => ({
   mimeType: "text/csv",
   buffer: Buffer.from(["Enrollment No,Internal,External", ...lines].join("\n")),
 });
+
+/** A fresh quiz for one cohort with marks entered (``marks`` per enrollment no., the rest generated),
+ *  processed and approved: ready to publish. The signed-in page must be an administrator. */
+export async function approvedQuiz(
+  page: Page,
+  cohortCode: string,
+  marks: Record<string, { INT: string; EXT: string }> = {},
+): Promise<{ examId: string; paperId: string; cohortId: string }> {
+  const exam = await openMarksExam(page, cohortCode);
+  const base = `/api/v1/exams/${exam.examId}/papers/${exam.paperId}/cohorts/${exam.cohortId}/marks`;
+  const sheet = await apiAs<{ students: { student_id: string; enrollment_no: string }[] }>(page, "GET", base);
+  await apiAs(page, "PUT", base, {
+    changes: sheet.students.map((s, i) => ({
+      student_id: s.student_id,
+      attendance: "present",
+      components: marks[s.enrollment_no] ?? { INT: String(15 + (i % 25)), EXT: String(25 + (i % 35)) },
+      version: null,
+    })),
+  });
+  const results = `/api/v1/admin/exams/${exam.examId}/results`;
+  await apiAs(page, "POST", `/api/v1/admin/exams/${exam.examId}/transitions`, { action: "close_entry" });
+  await apiAs(
+    page,
+    "POST",
+    `${results}/process`,
+    { override_reason: "E2E" },
+    { "Idempotency-Key": crypto.randomUUID() },
+  );
+  await expect
+    .poll(async () => (await apiAs<{ run: { status: string } }>(page, "GET", results)).run.status, {
+      timeout: 30_000,
+    })
+    .toBe("completed");
+  const run = await apiAs<{ run: { id: string } }>(page, "GET", results);
+  await apiAs(page, "POST", `${results}/approve`, { run_id: run.run.id });
+  return { examId: exam.examId, paperId: exam.paperId, cohortId: exam.cohortId };
+}

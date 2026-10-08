@@ -93,7 +93,7 @@ COMMIT;
 |---|---|
 | `max_students` | student create, student import commit, un-archive |
 | `max_staff`, `max_admins` | invite, role grant |
-| `max_storage_mb` | upload (file size), PDF generation (projected) |
+| `max_storage_mb` | upload (file size). Marksheet PDFs are **counted but never blocked** (P11.2): they're bounded by the student and publication caps already, and failing marksheets on result day would punish students for a plan matter. Uploads are refused once usage is over the cap |
 | `history_years` | student/admin read of old publications → read-only archive notice beyond retention (data kept until retention policy says otherwise) |
 | `max_published_exams_per_year` | publish |
 | `custom_domain` | domain add & **every request on a custom host** (expired plan → redirect to subdomain) |
