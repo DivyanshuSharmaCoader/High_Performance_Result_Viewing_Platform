@@ -35,6 +35,7 @@
   h1 { margin: 0; font-size: 1.35rem; line-height: 1.25; letter-spacing: -.01em; }
   .ok h1 { color: var(--ok); } .warn h1 { color: var(--warn); } .bad h1 { color: var(--bad); }
   .lead { margin: .25rem 0 0; color: var(--muted); }
+  .plain { font-weight: 400; }
   dl { margin: 1.25rem 0 0; display: grid; grid-template-columns: 1fr; gap: .75rem; }
   @media (min-width: 30rem) { dl { grid-template-columns: 1fr 1fr; } dl .wide { grid-column: 1 / -1; } }
   dt { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
@@ -72,7 +73,7 @@
       <div class="wide"><dt>Issued by</dt><dd>{{ v.institution }}</dd></div>
       <div><dt>Student</dt><dd>{{ v.student_name }}</dd></div>
       <div><dt>Enrollment no.</dt><dd class="mono">{{ v.enrollment_no }}</dd></div>
-      <div class="wide"><dt>Exam</dt><dd>{{ v.exam }}<br><span class="lead" style="font-weight:400">{{ v.term }} · {{ v.session }}</span></dd></div>
+      <div class="wide"><dt>Exam</dt><dd>{{ v.exam }}<br><span class="lead plain">{{ v.term }} · {{ v.session }}</span></dd></div>
       <div><dt>Issued on</dt><dd>{{ issued_on or "—" }}</dd></div>
       <div><dt>Version</dt><dd>{{ v.version }}{% if v.version > 1 %} (revised){% endif %}</dd></div>
       <div class="wide"><dt>Verification code</dt><dd class="mono">{{ v.code }}</dd></div>

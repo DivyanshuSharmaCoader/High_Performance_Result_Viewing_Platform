@@ -7,6 +7,8 @@ Unknown codes and publications that never went live look exactly the same.
 
 from __future__ import annotations
 
+import base64
+import hashlib
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -30,11 +32,27 @@ _env = SandboxedEnvironment(
     autoescape=True,
     undefined=StrictUndefined,
 )
+
+
+def _style_hash() -> str:
+    """The CSP hash of the page's one ``<style>`` element, so the policy needs no ``'unsafe-inline'``
+    (ZAP 10055). The page has no ``style`` attributes; test_security_hardening checks both."""
+    if _env.loader is None:  # pragma: no cover - configured above
+        raise RuntimeError("verification templates are not configured")
+    source = _env.loader.get_source(_env, "verify.html.j2")[0]
+    css = source.split("<style>", 1)[1].split("</style>", 1)[0]
+    return "'sha256-" + base64.b64encode(hashlib.sha256(css.encode()).digest()).decode() + "'"
+
+
 HEADERS = {
     "Content-Security-Policy": (
-        "default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'; "
+        f"default-src 'none'; style-src {_style_hash()}; img-src data:; form-action 'self'; "
         "base-uri 'none'; frame-ancestors 'none'"
     ),
+    # Its own browsing context group, and not embeddable as another site's resource (ZAP 90004).
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp",
     "X-Robots-Tag": "noindex, nofollow, noarchive",
     "Referrer-Policy": "no-referrer",  # the code is in the address: never pass it on
 }

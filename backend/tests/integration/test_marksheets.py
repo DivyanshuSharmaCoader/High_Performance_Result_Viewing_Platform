@@ -7,6 +7,7 @@ publish → render jobs → stored files → downloads → verification.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import re
 import uuid
@@ -381,6 +382,18 @@ async def test_the_public_verify_page(app, infra, fake_pdf) -> None:
         assert "default-src 'none'" in r.headers["content-security-policy"]
         assert "script-src" not in r.headers["content-security-policy"]  # no scripts at all
         page = r.text
+        # No inline styles allowed: the one stylesheet is pinned by its hash, and nothing uses style="".
+        csp = r.headers["content-security-policy"]
+        css = page.split("<style>", 1)[1].split("</style>", 1)[0]
+        digest = base64.b64encode(hashlib.sha256(css.encode()).digest()).decode()
+        assert f"style-src 'sha256-{digest}';" in csp and "unsafe-inline" not in csp
+        assert " style=" not in page and page.count("<style>") == 1
+        assert (
+            r.headers["cross-origin-opener-policy"]
+            == r.headers["cross-origin-resource-policy"]
+            == "same-origin"
+        )
+        assert r.headers["cross-origin-embedder-policy"] == "require-corp"
         assert ">Valid<" in page and grouped(code) in page and "Finals" in page
         assert full_name not in page and "A001" not in page  # masked
         assert "<script" not in page and "&lt;script&gt;alert(1)&lt;/script&gt; Academy" in page

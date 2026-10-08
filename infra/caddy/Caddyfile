@@ -16,11 +16,17 @@
 	encode zstd gzip
 	header {
 		X-Content-Type-Options "nosniff"
-		Referrer-Policy "strict-origin-when-cross-origin"
 		X-Frame-Options "DENY"
-		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
 		-Server
 	}
+	# Defaults: `?` fills a field in only when the response didn't set it, so a page that sets its own (the
+	# verify page: no referrer at all) keeps it. One directive each: `?` fields in one block form a single
+	# condition (all absent), so one field set upstream would drop the others.
+	header ?Referrer-Policy "strict-origin-when-cross-origin"
+	header ?Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+	# Each page in its own browsing context group; nothing here is another site's subresource (ZAP 90004).
+	header ?Cross-Origin-Opener-Policy "same-origin"
+	header ?Cross-Origin-Resource-Policy "same-origin"
 	@api path /api/* /v/*
 	handle @api {
 		reverse_proxy {
@@ -41,10 +47,28 @@
 }
 
 (spa) {
+	# A hashed asset that no longer exists (an old tab after a deploy) is a 404, not index.html cached for
+	# a year under an asset's name. Not cached either: a rollback may bring that name back.
+	@gone {
+		path /assets/*
+		not file {
+			root /srv/{args[0]}
+		}
+	}
+	handle @gone {
+		header Cache-Control "no-store"
+		respond 404
+	}
 	handle {
 		root * /srv/{args[0]}
+		# style-src keeps 'unsafe-inline': toasts (sonner) and dialogs' scroll lock (react-style-singleton)
+		# insert <style> elements at run time. Scripts stay 'self' only (docs/10 §8, accepted risk R-CSP).
 		header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: {$FILES_ORIGIN:http://files.localhost:8080}; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
-		header /index.html Cache-Control "no-cache"
+		# Cross-origin images (logos from the files host, by signed URL) load without credentials.
+		header Cross-Origin-Embedder-Policy "credentialless"
+		# Hashed assets are immutable (above); everything else, i.e. index.html under any app route
+		# (/, /login, /me/...), is revalidated, so a deploy is picked up and never meets stale HTML.
+		header ?Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server
 	}

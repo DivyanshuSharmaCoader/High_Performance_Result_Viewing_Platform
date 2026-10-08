@@ -40,7 +40,7 @@ Each row below names the threat, the attack we expect against ScoreCode, the con
 | D · trial/sign-up abuse | Scripted sign-ups, repeat trials | Honeypot, per-IP limits, hashed identity signals with advisory locks | `test_trials.py`; sign-up honeypot in `test_admin_flows.py` |
 | E · faculty → admin | Faculty calls admin routes; mass-assigns `role` | Per-route permissions; `extra="forbid"` schemas; authz matrix over every route × role | `test_authz_matrix.py`, `test_mass_assignment_is_rejected` |
 
-**Open (tracked):** email bounce webhooks (provider choice, Phase 16); DAST against a deployed staging host (P15.4 runs ZAP against the CI stack instead); per-tenant policy to *require* two-step for administrators (today: available + nudged); WebAuthn/passkeys (V1).
+**Open (tracked):** email bounce webhooks (provider choice, Phase 16); DAST against a deployed staging host (P15.4 runs ZAP against the CI stack instead: [results](security/zap-baseline-2026-10-08.md)); `style-src 'unsafe-inline'` on the SPAs (accepted risk R-CSP, §5); per-tenant policy to *require* two-step for administrators (today: available + nudged); WebAuthn/passkeys (V1).
 
 ---
 
@@ -112,6 +112,20 @@ allowed = role_has_permission(principal.roles, "marks.enter")         # RBAC
 - SameSite=Lax cookie + **double-submit CSRF token** (`X-CSRF-Token` header must match a non-HttpOnly cookie) on POST/PUT/PATCH/DELETE.
 - CORS: not needed for same-origin SPA; no wildcard origins ever.
 - Headers: `Strict-Transport-Security` (preload after stabilising), `Content-Security-Policy` (`default-src 'self'`; images from our CDN/object store; no inline scripts except hashed bootstrap), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` minimal, `frame-ancestors 'none'`.
+- **As built (edge, `infra/caddy/Caddyfile`; checked by `e2e/edge.spec.ts`).**
+  - **SPAs:**
+    - CSP is `default-src 'self'; script-src 'self'`, with no inline or evaluated script at all, plus `frame-ancestors 'none'` and `object-src 'none'`.
+    - Images may come from the files origin.
+    - Isolation headers: `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin` and `Cross-Origin-Embedder-Policy: credentialless`, so the pages are cross-origin isolated. Logos still load from the files host, by signed URL and without credentials.
+  - **Accepted risk R-CSP:** `style-src` keeps `'unsafe-inline'` on the SPAs.
+    - Why: toasts (sonner) and the dialogs' scroll lock (react-style-singleton) insert `<style>` elements at run time.
+    - Exposure: an attacker would first need an HTML-injection bug (React escapes all text), and then could only restyle the page or probe attributes with selectors. Script execution stays impossible under `script-src 'self'`.
+    - What removes it: nonces, which need per-request HTML, i.e. the SPA's `index.html` rendered by the edge.
+  - **Defaults, never overrides:** `Referrer-Policy`, `Permissions-Policy`, COOP and CORP are set by the edge only when the response didn't set them.
+    - Before 2026-10-09 the edge overwrote them, which replaced the verify page's `no-referrer` with `strict-origin-when-cross-origin`. Found while analysing the ZAP baseline.
+    - `X-Content-Type-Options`, `X-Frame-Options` and the removal of `Server` are always applied.
+  - **Caching:** `index.html` is revalidated under every app route (`no-cache`), and hashed assets are immutable.
+    - An asset name a deploy removed answers 404 `no-store`, rather than `index.html` cached for a year under that name.
 
 ## 6. File upload security
 - Allow-list: `.csv`, `.xlsx` (imports); `.png`, `.jpg`, `.webp`, `.svg`→ **rasterised or rejected** (SVG can carry scripts) for logos.
@@ -201,7 +215,8 @@ QR on marksheet → https://verify.scorecode.in/v/7KQ3-M9XD-PA2F-8RTC-WV6H-Q (co
   - Never shown: marks, or the revocation reason.
   - Codes from scheduled or cancelled publications look exactly like unknown codes. An institution that has left shows nothing about the student.
 - **Page.** Server-rendered with no scripts.
-  - CSP `default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action 'self'`.
+  - CSP `default-src 'none'; style-src 'sha256-…'; img-src data:; form-action 'self'`. The hash is that of the page's one stylesheet, computed from the template at start-up. There are no `style` attributes, so no `'unsafe-inline'`.
+  - `Cross-Origin-Opener-Policy` and `Cross-Origin-Resource-Policy: same-origin`, plus `Cross-Origin-Embedder-Policy: require-corp`.
   - `X-Robots-Tag: noindex, nofollow, noarchive` and `Referrer-Policy: no-referrer`, because the code is in the URL.
   - `no-store` when a statement is found; `public, max-age=60` for not-found, so a CDN can absorb repeated bad lookups.
   - Per-IP limit of 60/min with a burst of 30, answered with an HTML 429 page and `Retry-After`.

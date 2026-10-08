@@ -146,11 +146,12 @@ Gaps are listed with their next step, not hidden.
 | 14.2.1 | Dependencies up to date, no known vulnerabilities | Met | CI audits fail on high/critical |
 | 14.3.2 | No debug modes in production | Met | Production refuses development secrets, insecure cookies, http and public API docs; `test_production_rejects_dev_secret_and_insecure_cookies` |
 | 14.4.1 | Content-Type with charset on every response | Met | Starlette/Caddy |
-| 14.4.3 | Content-Security-Policy | Met | SPA: `script-src 'self'`, `frame-ancestors 'none'`. API: `default-src 'none'`. Verify page: no scripts at all |
+| 14.4.3 | Content-Security-Policy | Met | SPA: `script-src 'self'`, `frame-ancestors 'none'`; `style-src 'unsafe-inline'` is accepted risk R-CSP (docs/10 §5). API: `default-src 'none'`. Verify page: no scripts, its stylesheet pinned by hash, no `'unsafe-inline'`. `e2e/edge.spec.ts` checks for no violations in Chromium |
 | 14.4.4 | `X-Content-Type-Options: nosniff` | Met | `test_security_headers_present` |
 | 14.4.5 | HSTS | Met | Sent when `cookie_secure`; preload once the domain is final (Phase 16) |
-| 14.4.6 | Referrer-Policy | Met | `strict-origin-when-cross-origin`; `no-referrer` on the verify page |
+| 14.4.6 | Referrer-Policy | Met | `strict-origin-when-cross-origin`; `no-referrer` on the verify page. Until 2026-10-09 the edge overwrote the verify page's value; it is now a default only (`e2e/edge.spec.ts`) |
 | 14.4.7 | Framing restricted | Met | `X-Frame-Options: DENY` plus `frame-ancestors 'none'` |
+| 14.4.x | Cross-origin isolation (not an ASVS 4 requirement; ZAP 90004) | Met | COOP `same-origin` and CORP `same-origin` everywhere; COEP `credentialless` on the SPAs, `require-corp` on the verify page |
 | 14.5.3 | CORS allow-list | Met | No CORS: every app is same-origin with its API |
 
 ## Gaps to close, by priority
