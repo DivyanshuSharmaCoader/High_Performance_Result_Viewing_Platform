@@ -93,7 +93,7 @@ services:
     profiles: [app]
     build: { context: ./backend, target: runtime }
     environment: *backend-env
-    command: ["scorecode", "api", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+    command: ["scorecode", "api", "--host", "0.0.0.0", "--port", "8000", "--workers", "${API_WORKERS:-2}"]
     depends_on:
       migrate: { condition: service_completed_successfully }
       redis: { condition: service_healthy }

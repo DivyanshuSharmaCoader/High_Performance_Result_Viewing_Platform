@@ -23,7 +23,14 @@
 	}
 	@api path /api/* /v/*
 	handle @api {
-		reverse_proxy {$API_UPSTREAM:api:8000} {
+		reverse_proxy {
+			# Every address the name resolves to (`docker compose up --scale api=N`, or N nodes in DNS),
+			# re-resolved every few seconds; new requests go to the least busy one.
+			dynamic a {$API_HOST:api} {$API_PORT:8000} {
+				refresh 5s
+			}
+			lb_policy least_conn
+			lb_try_duration 3s
 			header_up X-Request-ID {http.request.uuid}
 			# Overwritten, never passed through: the API trusts this header for rate limits and audit.
 			header_up X-Real-IP {client_ip}
@@ -51,7 +58,12 @@ http://admin.{$BASE_DOMAIN:localhost}:8080 {
 http://verify.{$BASE_DOMAIN:localhost}:8080 {
 	import common
 	handle {
-		reverse_proxy {$API_UPSTREAM:api:8000} {
+		reverse_proxy {
+			dynamic a {$API_HOST:api} {$API_PORT:8000} {
+				refresh 5s
+			}
+			lb_policy least_conn
+			lb_try_duration 3s
 			header_up X-Real-IP {client_ip}
 		}
 	}

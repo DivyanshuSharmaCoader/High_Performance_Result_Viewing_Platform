@@ -1,0 +1,118 @@
+# Load tests on a GitHub-hosted runner (Phase 14, docs/11 §4). Started by hand:
+#
+#   gh workflow run perf.yml -f runs="A:preauth:3 B:preauth:3 A:cold:1 B:cold:1" -f api_replicas=1
+#
+# The runner hosts the stack and the load generator together (co-located: results are pessimistic), on
+# the same documented hardware each time, so runs are comparable and don't depend on a laptop's power
+# state. Every run's k6 summary, raw data and docker stats, the top queries from pg_stat_statements,
+# EXPLAIN plans of the read path and a py-spy profile of the API are uploaded as an artifact.
+name: Performance
+
+on:
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "Space-separated scenario:variant:repetitions (scenarios A, B, smoke; variants preauth, cold)"
+        default: "A:preauth:3 B:preauth:3 A:cold:1 B:cold:1"
+      api_replicas:
+        description: "API containers behind Caddy (P14.4: 1 vs 2)"
+        default: "1"
+      api_workers:
+        description: "Uvicorn worker processes per API container"
+        default: "2"
+      profile:
+        description: "Record a py-spy profile of the API during the first B run"
+        type: boolean
+        default: true
+
+concurrency:
+  group: perf
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  k6:
+    name: k6 · ${{ inputs.runs }} · ${{ inputs.api_replicas }}×${{ inputs.api_workers }} API
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      API_WORKERS: ${{ inputs.api_workers }}
+      RUNS: ${{ inputs.runs }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
+      - name: Machine
+        run: |
+          {
+            echo "### Machine"
+            echo '```'
+            echo "commit $(git rev-parse --short HEAD)"; nproc; free -m | head -2; lscpu | grep -E 'Model name|^CPU\(s\)|Thread'
+            docker version --format 'docker {{.Server.Version}}'
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Start the stack
+        run: |
+          docker compose --profile app up -d --build --wait --scale api=${{ inputs.api_replicas }}
+          docker compose ps
+      - name: Synthetic result-day data (8,000 students, published)
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run python scripts/loadtest_data.py --students 8000 --sessions 1000 --out ../benchmarks/data
+      - name: Reset query statistics
+        run: |
+          docker compose exec -T postgres psql -U postgres -d scorecode -c "SELECT pg_stat_statements_reset()"
+          mkdir -p benchmarks/results/runs && chmod 777 benchmarks/results/runs  # k6 and py-spy write as other users
+      - name: k6 runs
+        run: |
+          set -euo pipefail
+          first_b=1
+          for spec in $RUNS; do
+            IFS=: read -r scenario variant times <<< "$spec"
+            for i in $(seq 1 "$times"); do
+              if [ "${{ inputs.profile }}" = "true" ] && [ "$scenario" = B ] && [ "$first_b" = 1 ]; then
+                first_b=0
+                # Sample the API's processes for 2 minutes during the hold phase.
+                ( sleep 90; docker run --rm --pid=container:scorecode-api-1 --cap-add SYS_PTRACE \
+                    -v "$PWD/benchmarks/results/runs:/out" python:3.12-slim sh -c \
+                    "pip install -q py-spy && py-spy record --pid 1 --subprocesses --duration 120 \
+                     --format raw -o /out/py-spy-$scenario-$variant-$i.txt --nonblocking" ) &
+              fi
+              benchmarks/k6/run.sh "$scenario" "$variant" "$i"
+              sleep 20
+            done
+          done
+          wait
+      - name: Hot queries and plans
+        if: always()
+        run: |
+          docker compose exec -T postgres psql -U postgres -d scorecode -c \
+            "SELECT calls, round(total_exec_time::numeric, 1) AS total_ms, round(mean_exec_time::numeric, 3) AS mean_ms,
+                    rows, left(regexp_replace(query, '\s+', ' ', 'g'), 160) AS query
+               FROM pg_stat_statements WHERE dbid = (SELECT oid FROM pg_database WHERE datname = 'scorecode')
+              ORDER BY total_exec_time DESC LIMIT 20" > benchmarks/results/runs/pg_stat_statements.txt
+          (cd backend && uv run python scripts/explain_hot_queries.py) > benchmarks/results/runs/explain.txt
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Runs"
+            for f in benchmarks/results/runs/*-*-*.txt; do
+              case "$f" in *py-spy*) continue;; esac
+              echo '```'; cat "$f"; echo '```'
+            done
+            echo "### Top queries by total time"
+            echo '```'; head -30 benchmarks/results/runs/pg_stat_statements.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: perf-${{ github.run_id }}
+          path: benchmarks/results/runs
+          retention-days: 30
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose --profile app logs --tail 200 api worker proxy

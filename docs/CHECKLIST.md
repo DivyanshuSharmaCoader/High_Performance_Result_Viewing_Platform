@@ -20,8 +20,8 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 13 — Analytics (basic) & audit viewer** (Phases 0–12 complete; Gates M1–M5 passed) |
-| Next step | **P13.1** statistics snapshot: add standard deviation and per-paper median; hand-computed fixture tests |
+| Current phase | **Phase 14 — Performance engineering** (Phases 0–13 complete; Gates M1–M5 passed) |
+| Next step | **P14.1** full scenario runs on the GitHub runner (`perf.yml`), then bottleneck analysis |
 | Last updated | 2026-10-08 |
 | Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
 
@@ -41,7 +41,7 @@
 | 10 | Publication, read model, student portal | 6 | 6 |
 | 11 | Marksheet PDFs & verification | 5 | 5 |
 | 12 | Notifications | 3 | 3 |
-| 13 | Analytics (basic) & audit viewer | 5 | 0 |
+| 13 | Analytics (basic) & audit viewer | 5 | 5 |
 | 14 | Performance engineering (measure → optimise → re-measure) | 5 | 0 |
 | 15 | Security review & hardening | 5 | 0 |
 | 16 | Deployment, backups, monitoring, runbooks | 6 | 0 |
@@ -185,11 +185,11 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 ### Phase 13 — Analytics (basic) & audit viewer
 
-- [ ] **P13.1** Exam statistics snapshot · Done when: Unit tests vs hand-computed fixtures
-- [ ] **P13.2** Admin analytics UI · Done when: Playwright
-- [ ] **P13.3** Student stats view · Done when: Tests
-- [ ] **P13.4** Audit log viewer · Done when: Tests + UI
-- [ ] **P13.5** Platform metrics overview · Done when: E2E
+- [x] **P13.1** Exam statistics snapshot · Done when: Unit tests vs hand-computed fixtures
+- [x] **P13.2** Admin analytics UI · Done when: Playwright
+- [x] **P13.3** Student stats view · Done when: Tests
+- [x] **P13.4** Audit log viewer · Done when: Tests + UI
+- [x] **P13.5** Platform metrics overview · Done when: E2E
 
 ### Phase 14 — Performance engineering (measure → optimise → re-measure)
 
@@ -237,6 +237,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-08 | P13.1–P13.5 ticked; Phase 14 tooling written | Verified by CI for ad93769 (all 7 jobs, including analytics.spec). Phase 14: the laptop is on battery (22%) with Low Power Mode, so load tests move to a GitHub runner through a manual workflow `perf.yml`. It runs the stack plus synthetic data plus k6, with docker stats, pg_stat_statements, EXPLAIN plans and a py-spy profile, all uploaded as an artifact. Also: `API_WORKERS` is configurable, and Caddy balances across every API address (`dynamic a`, least_conn), which enables `--scale api=N` for P14.4. First evidence for P14.2, from local EXPLAIN on 8,000 students: all seven read-path queries are index lookups under 1 ms, so the database is not the bottleneck. |
 | 2026-10-08 | P12.1–P12.3 ticked | Verified by CI for d2bc101 (all 7 jobs, including the P10 E2E with the phone student's notification). e3e3077 had failed the frontend typecheck: a local `pnpm -s` run had hidden the error. That's fixed, and checks now run without `-s`. **Next:** Phase 13. |
 | 2026-10-08 | P12.1–P12.3 written (not ticked; CI pending) | Backend (b2044e1): migration 0012 (inbox with idempotent fan-out; per-channel deliveries; `users.notify_email`); a fan-out job when a publication goes live; email in throttled batches of 50 with retries; inbox, read, read-all and preferences API; email counts per publication. Six integration tests; five mutations caught (opt-out ignored, withdrawn still notified, read not scoped to the user, tenant switch ignored, duplicate fan-out). UI: a bell with an unread badge in the student header (count read on load and focus, never polled), the inbox panel, a result-email switch on the account page, and an email summary on the publication panel. Student bundle 141.0 kB. The P10 E2E now also checks the student's notification; it passes locally against the stack, as does E2E-4. SPF, DKIM and DMARC are documented in docs/14 §R. **Not built:** provider bounce webhooks (Phase 16, once the provider is chosen). |
 | 2026-10-08 | P11.2 and Gate M5 ticked | Verified by CI for b64ff96 (all 7 jobs). Render time on the CI runner (run 37714377613): p50 202 ms, p95 292 ms per six-paper PDF on one thread, 20.7 KiB each; the laptop on battery measured p50 172 ms. Both are in benchmarks/results/2026-10-08-marksheet-render.md. The gate's demo, publish → view → download → verify, is E2E-4: CI checks the downloaded PDF's SHA-256 on the verify page. Carried into Phase 14: a process pool for rendering (one process takes about 25–28 min for 8,000 students). |
