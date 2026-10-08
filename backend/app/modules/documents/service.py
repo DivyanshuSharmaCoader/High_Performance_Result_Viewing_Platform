@@ -14,6 +14,7 @@ short-lived signed URLs (docs/03 W10, W12; P11.2–P11.3).
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import re
 import uuid
@@ -35,7 +36,14 @@ from app.core.jobs import enqueue
 from app.core.logging import get_logger
 from app.modules.branding.models import TenantBranding
 from app.modules.documents.models import MarksheetDocument
-from app.modules.documents.render import TEMPLATE_CODE, TEMPLATE_VERSION, Branding, render_marksheet
+from app.modules.documents.pool import pool as pdf_pool
+from app.modules.documents.render import (
+    TEMPLATE_CODE,
+    TEMPLATE_VERSION,
+    Branding,
+    RenderResult,
+    render_marksheet,
+)
 from app.modules.files.service import PDF, FileService
 from app.modules.publishing.models import Publication, PublishedResult
 from app.modules.tenancy.models import Tenant, TenantSettings
@@ -167,21 +175,27 @@ class MarksheetService:
             branding = await self._branding(uow)
             timezone = (await uow.session.scalars(select(Tenant.timezone))).one()
         issued_at: datetime = pub.published_at or pub.scheduled_at or utcnow()
-        rendered = failed = 0
-        for student_id, payload, code in work:
+        processes = self.infra.settings.pdf_processes
+        outcome = {"rendered": 0, "failed": 0}
+
+        async def layout(payload: dict[str, Any], code: str) -> RenderResult:
+            job = partial(
+                render_marksheet,
+                payload,
+                branding=branding,
+                verify_url=verify_url(self.infra, code),
+                code_display=grouped(code),
+                version=pub.version,
+                issued_at=issued_at,
+                timezone=timezone,
+            )
+            if processes > 0:
+                return await asyncio.get_running_loop().run_in_executor(pdf_pool(processes), job)
+            return await anyio.to_thread.run_sync(job)
+
+        async def one(student_id: uuid.UUID, payload: dict[str, Any], code: str) -> None:
             try:
-                result = await anyio.to_thread.run_sync(
-                    partial(
-                        render_marksheet,
-                        payload,
-                        branding=branding,
-                        verify_url=verify_url(self.infra, code),
-                        code_display=grouped(code),
-                        version=pub.version,
-                        issued_at=issued_at,
-                        timezone=timezone,
-                    )
-                )
+                result = await layout(payload, code)
                 if result.refused:  # the built-in template never asks for one; worth knowing if it does
                     log.warning("marksheet_external_resource_refused", count=len(result.refused))
                 async with self.infra.db.uow(tenant_id) as uow:
@@ -204,9 +218,9 @@ class MarksheetService:
                             last_error=None,
                         )
                     )
-                rendered += 1
+                outcome["rendered"] += 1
             except Exception as exc:
-                failed += 1
+                outcome["failed"] += 1
                 log.exception("marksheet_render_failed", publication_id=str(publication_id))
                 async with self.infra.db.uow(tenant_id) as uow:
                     await uow.session.execute(
@@ -216,6 +230,18 @@ class MarksheetService:
                             last_error=type(exc).__name__,  # no message: it could quote student data
                         )
                     )
+
+        # As many at once as there are layout processes; each is stored as soon as it's ready.
+        limiter = anyio.CapacityLimiter(max(1, processes))
+
+        async def limited(student_id: uuid.UUID, payload: dict[str, Any], code: str) -> None:
+            async with limiter:
+                await one(student_id, payload, code)
+
+        async with anyio.create_task_group() as tg:
+            for student_id, payload, code in work:
+                tg.start_soon(limited, student_id, payload, code)
+        rendered, failed = outcome["rendered"], outcome["failed"]
         if failed and not final_attempt:
             raise RuntimeError(f"{failed} of {len(work)} marksheets failed; the job will retry them")
         return {"rendered": rendered, "failed": failed}

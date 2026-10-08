@@ -89,7 +89,7 @@ jobs:
       - name: Marksheet render time per PDF (informational, P11.2)
         working-directory: backend
         continue-on-error: true
-        run: uv run python scripts/measure_marksheets.py --count 100 --papers 6
+        run: uv run python scripts/measure_marksheets.py --count 100 --papers 6 --processes 4
       - name: Container logs on failure
         if: failure()
         run: docker compose logs --tail 200

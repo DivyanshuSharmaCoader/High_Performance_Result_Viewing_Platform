@@ -52,7 +52,7 @@ jobs:
             echo "commit $(git rev-parse --short HEAD)"; nproc; free -m | head -2; lscpu | grep -E 'Model name|^CPU\(s\)|Thread'
             docker version --format 'docker {{.Server.Version}}'
             echo '```'
-          } | tee -a "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY" > /tmp/machine.txt
       - name: Start the stack
         run: |
           docker compose --profile app up -d --build --wait --scale api=${{ inputs.api_replicas }}
@@ -62,6 +62,24 @@ jobs:
         run: |
           uv sync --frozen
           uv run python scripts/loadtest_data.py --students 8000 --sessions 1000 --out ../benchmarks/data
+      - name: Let publication's background work finish (marksheets, notifications)
+        run: |
+          set -euo pipefail
+          mkdir -p benchmarks/results/runs && chmod 777 benchmarks/results/runs
+          q() { docker compose exec -T postgres psql -U postgres -d scorecode -Atc "$1"; }
+          started=$(date +%s)
+          until [ "$(q "SELECT count(*) FROM jobs WHERE status IN ('queued','running')")" = 0 ]; do
+            [ $(( $(date +%s) - started )) -gt 2700 ] && { echo "background work still running after 45 min"; break; }
+            sleep 10
+          done
+          {
+            echo "background work after publishing 8,000 results: $(( $(date +%s) - started )) s (measured from data load end)"
+            echo "pdf processes per worker: $(docker compose exec -T worker printenv SCORECODE_PDF_PROCESSES || echo default)"
+            q "SELECT status, count(*) FROM marksheet_documents GROUP BY status"
+            q "SELECT 'marksheet render span (s): ' || round(extract(epoch FROM max(rendered_at) - min(created_at))) FROM marksheet_documents"
+            q "SELECT 'notifications: ' || count(*) FROM notifications"
+            q "SELECT kind, status, count(*) FROM jobs GROUP BY kind, status ORDER BY kind"
+          } | tee benchmarks/results/runs/background.txt
       - name: Reset query statistics
         run: |
           docker compose exec -T postgres psql -U postgres -d scorecode -c "SELECT pg_stat_statements_reset()"
@@ -89,6 +107,7 @@ jobs:
       - name: Hot queries and plans
         if: always()
         run: |
+          cp /tmp/machine.txt benchmarks/results/runs/machine.txt || true
           docker compose exec -T postgres psql -U postgres -d scorecode -c \
             "SELECT calls, round(total_exec_time::numeric, 1) AS total_ms, round(mean_exec_time::numeric, 3) AS mean_ms,
                     rows, left(regexp_replace(query, '\s+', ' ', 'g'), 160) AS query

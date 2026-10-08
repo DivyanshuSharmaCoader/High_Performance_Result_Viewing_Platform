@@ -85,6 +85,9 @@ def main() -> None:
     parser.add_argument("--count", type=int, default=200)
     parser.add_argument("--papers", type=int, default=6)
     parser.add_argument("--seed", type=int, default=2026)
+    parser.add_argument(
+        "--processes", type=int, default=0, help="also time the same PDFs through a pool of N processes"
+    )
     args = parser.parse_args()
     rng = random.Random(args.seed)  # noqa: S311 - synthetic data
     branding = Branding(color="#8b1a1a", address="Patiala, Punjab", footer_text="Controller of Examinations")
@@ -123,6 +126,38 @@ def main() -> None:
     )
     print(f"throughput: {args.count / wall:.1f} PDFs/s on one thread")
     print(f"size: mean {statistics.mean(sizes) / 1024:.1f} KiB · max {max(sizes) / 1024:.1f} KiB")
+    if args.processes:
+        from functools import partial
+
+        from app.modules.documents.pool import pool, shutdown
+
+        executor = pool(args.processes)
+        jobs = []
+        for i in range(args.count):
+            code = new_code()
+            jobs.append(
+                partial(
+                    render_marksheet,
+                    payload(rng, i, args.papers),
+                    branding=branding,
+                    verify_url=f"https://verify.scorecode.in/v/{code}",
+                    code_display=grouped(code),
+                    version=1,
+                    issued_at=issued,
+                    timezone="Asia/Kolkata",
+                )
+            )
+        for f in [executor.submit(j) for j in jobs[: args.processes]]:  # warm every process (fonts)
+            f.result()
+        started = time.perf_counter()
+        for f in [executor.submit(j) for j in jobs]:
+            f.result()
+        pooled = time.perf_counter() - started
+        shutdown()
+        print(
+            f"pool of {args.processes} processes: {args.count / pooled:.1f} PDFs/s "
+            f"({args.count / pooled / (args.count / wall):.2f}× one thread)"
+        )
 
 
 if __name__ == "__main__":

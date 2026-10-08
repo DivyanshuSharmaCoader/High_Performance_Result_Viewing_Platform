@@ -256,3 +256,22 @@ def test_a_marksheet_renders_with_logo_and_qr_code() -> None:
     assert result.pdf.startswith(b"%PDF-") and result.refused == []
     assert 5_000 < len(result.pdf) < 400_000
     # Timing per PDF is measured on the Docker image: scripts/measure_marksheets.py.
+
+
+@pytest.mark.pdf
+def test_marksheets_lay_out_in_spawned_processes() -> None:
+    """The worker's process pool (P14.3): arguments and results cross the process boundary intact."""
+    from functools import partial
+
+    from app.modules.documents.pool import pool, shutdown
+
+    try:
+        futures = [
+            pool(2).submit(partial(render_marksheet, PAYLOAD, **{**CONTEXT, "code_display": f"CODE-{i}"}))
+            for i in range(4)
+        ]
+        results = [f.result(timeout=120) for f in futures]
+    finally:
+        shutdown()
+    assert all(r.pdf.startswith(b"%PDF-") and r.refused == [] for r in results)
+    assert len({r.pdf for r in results}) == 4  # each one its own document
