@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     db_max_overflow: int = 5
     db_pool_timeout_s: float = 5.0
     db_statement_cache_size: int = 0  # 0 keeps asyncpg compatible with PgBouncer transaction pooling
+    # A pooled connection idle longer than this is pinged before use (core/db.py `_ping_if_idle`).
+    db_ping_after_idle_s: float = 1.0
 
     # --- Redis (optional, degradable; docs/11 §2.5) ----------------------------------------------
     redis_url: str | None = None

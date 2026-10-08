@@ -48,6 +48,10 @@ request log (`timeline.txt`), not how fast scenario B is. Speed is P14.1's quest
 - During the restart about 200 more requests than usual got **503 `service-unavailable` with
   `Retry-After: 5`**. There were no 500s and no hangs. Service was back in the next window on its own:
   the pool's pre-ping replaces dead connections.
+- *Later change (2026-10-09, P14.3):* the pool now pings only connections idle for more than 1 s
+  (`_ping_if_idle`). Under load the dead connections are found by the requests that use them. Those
+  requests get the same retryable 503, and SQLAlchemy then invalidates the rest of the pool. A re-run of
+  this injection on the new code is tracked in 2026-10-09-read-path.md §3.
 - Before c9f90f2 the same outage answered **500 `internal-error`**, found by stopping Postgres on the
   local stack. That's fixed and tested (`test_outages.py`).
 - **Pass** (quick 503s, automatic recovery).

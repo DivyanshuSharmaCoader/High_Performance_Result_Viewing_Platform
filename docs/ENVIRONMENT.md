@@ -42,6 +42,8 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_MAX_UPLOAD_BYTES` / `_MAX_LOGO_BYTES` | 10 MB / 1 MB | Upload size limits |
 | `SCORECODE_WORKER_QUEUES` / `_CONCURRENCY` / `_POLL_INTERVAL_S` / `SCORECODE_JOB_LEASE_S` | see code | Background worker |
 | `SCORECODE_PDF_PROCESSES` | `2` | Marksheet layout processes per worker (spawned; about 100 MB each). `0` lays out in a thread. Measured scaling: benchmarks/results/2026-10-08-marksheet-render.md |
+| `SCORECODE_STUDENT_READ_CACHE` | `true` | Caches the student read path's immutable rows (publishing/read_cache.py). `false` turns it off, as an escape hatch and for before/after runs (`perf.yml` `compare=cache`) |
+| `SCORECODE_DB_PING_AFTER_IDLE_S` | `1.0` | A pooled connection idle longer than this is pinged before use; busier ones are not (core/db.py `_ping_if_idle`) |
 | `API_WORKERS` (compose) | `2` | Uvicorn worker processes per API container; scale containers with `docker compose up --scale api=N` (Caddy balances across them) |
 | `SCORECODE_SENTRY_DSN` | unset | Error reporting (PII scrubbed) |
 | `SCORECODE_LOG_LEVEL` / `SCORECODE_LOG_JSON` | `INFO` / `true` | Structured logs; secrets and personal data are redacted |

@@ -15,6 +15,7 @@ Independently of RLS, the ORM adds ``tenant_id = :ctx`` to every statement on ``
 
 from __future__ import annotations
 
+import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -22,6 +23,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from sqlalchemy import Connection, event, text
+from sqlalchemy.exc import DisconnectionError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import ORMExecuteState, Session, SessionTransaction, with_loader_criteria
 
@@ -36,12 +38,11 @@ _SET_TENANT = text("SELECT set_config('app.tenant_id', :tid, true)")
 
 
 def _engine(url: str, settings: Settings, app_name: str, pool_size: int | None = None) -> AsyncEngine:
-    return create_async_engine(
+    engine = create_async_engine(
         url,
         pool_size=pool_size or settings.db_pool_size,
         max_overflow=settings.db_max_overflow,
         pool_timeout=settings.db_pool_timeout_s,
-        pool_pre_ping=True,
         pool_recycle=1800,
         connect_args={
             "statement_cache_size": settings.db_statement_cache_size,
@@ -49,6 +50,34 @@ def _engine(url: str, settings: Settings, app_name: str, pool_size: int | None =
             "timeout": 5,
         },
     )
+    _ping_if_idle(engine, settings.db_ping_after_idle_s)
+    return engine
+
+
+def _ping_if_idle(engine: AsyncEngine, idle_s: float) -> None:
+    """Check a pooled connection before use only if it has sat idle (P14.3).
+
+    SQLAlchemy's ``pool_pre_ping`` pings on every checkout, and with asyncpg a ping is three round trips
+    (BEGIN, ``;``, ROLLBACK): under scenario B that was half the statements Postgres ran and 2.6% of API
+    CPU. A connection returned moments ago was alive moments ago, so only one idle for longer than
+    ``idle_s`` (when a restart or an idle timeout could have closed it unseen) is pinged. A dead one is
+    replaced before the request uses it. One that dies mid-burst fails its request with a retryable 503,
+    and SQLAlchemy then invalidates the rest of the pool (test_outages.py).
+    """
+
+    @event.listens_for(engine.sync_engine, "checkin")
+    def _returned(dbapi_connection: Any, record: Any) -> None:
+        record.info["returned_at"] = time.monotonic()
+
+    @event.listens_for(engine.sync_engine, "checkout")
+    def _check(dbapi_connection: Any, record: Any, proxy: Any) -> None:
+        returned = record.info.get("returned_at")
+        if returned is None or time.monotonic() - returned < idle_s:
+            return  # new, or busy: no round trips
+        try:
+            dbapi_connection.ping()
+        except Exception as exc:
+            raise DisconnectionError("pooled connection was closed while idle") from exc  # pool retries
 
 
 @event.listens_for(Session, "do_orm_execute")
