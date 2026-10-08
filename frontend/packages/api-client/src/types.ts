@@ -206,3 +206,6 @@ export type MyStats = Schemas["MyStatsOut"];
 export type Publication = Schemas["PublicationOut"];
 export type MarksheetProgress = Schemas["MarksheetProgressOut"];
 export type Marksheet = Schemas["MarksheetOut"];
+export type Inbox = Schemas["InboxOut"];
+export type AppNotification = Schemas["NotificationOut"];
+export type Preferences = Schemas["PreferencesOut"];

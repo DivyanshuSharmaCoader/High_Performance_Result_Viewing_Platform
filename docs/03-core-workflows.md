@@ -170,6 +170,15 @@ Audit: `results.processed`, `results.approved` (with content hash), `results.rej
 - On publish: create one in-app notification per affected student (bulk insert) + enqueue email batches (provider batch API, throttled to provider limits).
 - Notification links to `https://<tenant-host>/results/<exam>`; the link does **not** contain the result (no marks in emails/SMS — privacy, and screenshots of emails spread).
 - Delivery status tracked per channel; failures retried with backoff; bounces mark the address invalid.
+- *As built (P12):*
+  - The fan-out runs as a job once a publication is live (publish now or a scheduled go-live) and
+    skips one withdrawn in the meantime. A retried job notifies nobody twice.
+  - Email goes only when the tenant setting is on, the plan includes it, the student has an address
+    and hasn't opted out, in throttled batches of 50.
+  - A revised version is announced as a revision.
+  - The inbox count is read on page load and focus, never polled, so result day isn't spent answering
+    "any news?".
+  - Bounce webhooks come with the provider choice (docs/14 §R).
 
 ---
 

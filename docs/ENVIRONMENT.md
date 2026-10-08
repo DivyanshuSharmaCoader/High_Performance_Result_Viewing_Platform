@@ -20,7 +20,8 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_S3_PUBLIC_ENDPOINT_URL` | unset | Endpoint browsers use for signed download URLs |
 | `SCORECODE_S3_BUCKET` / `_ACCESS_KEY` / `_SECRET_KEY` / `_REGION` | dev values | Object storage (private bucket) |
 | `SCORECODE_SMTP_HOST` / `_PORT` / `_USERNAME` / `_PASSWORD` / `_STARTTLS` | Mailpit | Outgoing email (SES/Postmark SMTP in production) |
-| `SCORECODE_MAIL_FROM` | `ScoreCode <no-reply@scorecode.localhost>` | Sender address |
+| `SCORECODE_MAIL_FROM` | `ScoreCode <no-reply@scorecode.localhost>` | Sender address (deliverability: docs/14 §R) |
+| `SCORECODE_MAIL_RATE_PER_SECOND` | `10` | Emails per second per sending job; keep the total under the provider's rate |
 | `SCORECODE_SECRET_KEY` | dev value | ≥ 32 chars; derives the field-encryption key (TOTP secrets) |
 | `SCORECODE_ABUSE_SIGNAL_KEY` | dev value | ≥ 32 chars, required outside development. Keys the hashes of trial identity signals (docs/12 §6). **Never rotate it**: a new key forgets every trial already taken. |
 | `SCORECODE_RATE_TRIAL_START_PER_HOUR` | 5 | Trial start attempts per client IP |

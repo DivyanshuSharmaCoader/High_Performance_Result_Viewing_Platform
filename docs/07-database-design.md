@@ -114,8 +114,8 @@ Roles → permissions mapping is **code** (`identity/permissions.py`), e.g. `fac
 ### 2.8 Notifications, audit, jobs
 | Table | Purpose | Key constraints |
 |---|---|---|
-| `notifications` | In-app inbox | index `(tenant_id, user_id, created_at DESC)`, partial index on unread |
-| `notification_deliveries` | Per-channel delivery | `channel` (`email`/`sms`/`whatsapp`), `status`, `provider_message_id`, `attempts`, `last_error` |
+| `notifications` | In-app inbox | composite FKs to `users` and `publications`; `kind`; `title`, `body`, `link`; partial UQ `(tenant_id, user_id, dedupe_key)` makes fan-out idempotent; index `(tenant_id, user_id, created_at DESC)`, partial index on unread, index by publication. App: SELECT, INSERT, and UPDATE of `read_at` only |
+| `notification_deliveries` | Per-channel delivery | UQ `(tenant_id, notification_id, channel)`; `channel` (`email` today); `status` (`queued`/`sent`/`failed`/`skipped`); `provider_message_id`, `attempts`, `last_error` (exception type only), `sent_at`. No address copied: it's read from the account at send time. `users.notify_email` is the opt-out for non-essential email |
 | `audit_logs` | Append-only audit trail | `id`, `tenant_id`, `occurred_at`, `actor_type` (`user`/`platform_user`/`system`/`api_key`), `actor_id`, `action` (`marks.updated`), `entity_type`, `entity_id`, `before jsonb`, `after jsonb` (diff), `request_id`, `ip`, `user_agent`, `prev_hash`/`hash` (V1 hash chain). **Range-partitioned by month**; index `(tenant_id, occurred_at DESC)`, `(tenant_id, entity_type, entity_id)`. App role: `INSERT` + `SELECT` only — no `UPDATE`/`DELETE`. |
 | `jobs` (queue library tables) | Background jobs | Managed by the queue library; each job payload includes `tenant_id` |
 | `idempotency_keys` | Safe retries of POSTs | PK `(tenant_id, key)`, `request_hash`, `response jsonb`, `expires_at` |

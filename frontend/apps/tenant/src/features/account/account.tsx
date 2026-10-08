@@ -23,6 +23,7 @@ import { useNavigate } from "react-router";
 import { z } from "zod";
 
 import { applyServerError } from "../../lib/forms";
+import { NotificationPreferences } from "../notifications/preferences";
 import { useSession } from "../../lib/session";
 
 interface SessionItem {
@@ -155,6 +156,7 @@ export default function AccountPage() {
             ]}
           />
         </Section>
+        {me.kind === "student" && <NotificationPreferences />}
         <Section title="Password" description="Use a long passphrase you don't use anywhere else.">
           <ChangePassword staff={me.kind === "staff"} />
         </Section>

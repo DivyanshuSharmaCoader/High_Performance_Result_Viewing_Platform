@@ -159,3 +159,45 @@ Redis failure → `readyz` stays **green** (degraded mode), reported in deep hea
 
 ### Runbooks
 `docs/runbooks/` (created during Phase 16): DB restore, Redis outage, stuck publication, rollback deploy, tenant data export/deletion, incident communication template.
+
+---
+
+## R. Email deliverability (P12.2)
+
+Results emails only help if they reach the inbox. They go from one sending domain, for example
+`mail.scorecode.in`, through a provider's SMTP relay (Amazon SES or Postmark; the adapter is plain SMTP,
+`SCORECODE_SMTP_*`).
+
+| Record | Where | Value (example) | Why |
+|---|---|---|---|
+| **SPF** | TXT on `mail.scorecode.in` | `v=spf1 include:amazonses.com -all` (or Postmark's `include:spf.mtasv.net`) | Only the provider may send for the domain |
+| **DKIM** | CNAME/TXT records the provider issues (2048-bit) | e.g. three `*._domainkey.mail.scorecode.in` CNAMEs for SES Easy DKIM | Messages are signed; receivers can tell tampering |
+| **DMARC** | TXT on `_dmarc.scorecode.in` | Start `v=DMARC1; p=none; rua=mailto:dmarc@scorecode.in; adkim=s; aspf=s`. Move to `p=quarantine`, then `p=reject`, once reports are clean for 2–4 weeks | Tells receivers to reject spoofed "ScoreCode" mail; the reports show who sends as us |
+| **Return-Path / MAIL FROM** | The provider's custom MAIL FROM subdomain (`bounce.mail.scorecode.in`) | MX and SPF the provider gives | SPF alignment for DMARC |
+
+**Sender.**
+- `SCORECODE_MAIL_FROM`, e.g. `"Thapar Results via ScoreCode" <results@mail.scorecode.in>`.
+- Institution replies go in `Reply-To` (the tenant's support email). Never send *From* an institution's
+  own domain: we can't sign for it.
+
+**Volume.**
+- `SCORECODE_MAIL_RATE_PER_SECOND` (default 10 per job) keeps each batch under the provider's sending
+  rate. A tenant runs at most 2 jobs at once, so the ceiling is 20 emails/s, or about 7 minutes for 8,000
+  students. That is arithmetic, not a measurement; it gets measured with the provider in Phase 16.
+- Raise the provider's quota before the first large result day (SES starts in a sandbox).
+
+**Content.**
+- Plain, short, a link to the tenant host and no marks: docs/03 W11 and a test.
+- Both a text and an HTML part.
+
+**Bounces and complaints (not built yet; Phase 16).**
+- The provider's webhook (SES via SNS, or Postmark) should mark the address undeliverable so it's
+  skipped.
+- Until then, failed sends are retried and then recorded as `failed` in `notification_deliveries`, and
+  administrators see the count on the publication.
+
+**Checks before launch.**
+- Send to Gmail, Outlook and a college Google Workspace inbox, and confirm `spf=pass dkim=pass
+  dmarc=pass` in the headers.
+- Check the domain on Google Postmaster Tools.
+

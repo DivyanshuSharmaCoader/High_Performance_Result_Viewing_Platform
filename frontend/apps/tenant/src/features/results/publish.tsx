@@ -16,7 +16,7 @@ import {
   toast,
 } from "@scorecode/ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Eye, EyeOff, FileCheck2, Lock, RefreshCw, Rocket, Undo2 } from "lucide-react";
+import { CalendarClock, Eye, EyeOff, FileCheck2, Lock, Mail, RefreshCw, Rocket, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 
@@ -58,8 +58,9 @@ export function PublishPanel({
   const pubs = useQuery({
     queryKey: ["publications", examId],
     queryFn: () => api.get<Publication[]>(pubsUrl(examId)),
-    // Follow marksheet rendering while it runs; stop polling once nothing is pending.
-    refetchInterval: (q) => (q.state.data?.some((p) => (p.marksheets?.pending ?? 0) > 0) ? 3000 : false),
+    // Follow marksheet rendering and email sending while they run; stop once nothing is pending.
+    refetchInterval: (q) =>
+      q.state.data?.some((p) => (p.marksheets?.pending ?? 0) + (p.emails?.queued ?? 0) > 0) ? 3000 : false,
   });
   const [action, setAction] = useState<null | "now" | "withdraw" | "cancel">(null);
   const [scheduling, setScheduling] = useState(false);
@@ -197,6 +198,7 @@ export function PublishPanel({
     >
       {body}
       {current && <Marksheets examId={examId} pub={current} canRetry={canPublish} onRetried={refresh} />}
+      {live?.emails && <Emails counts={live.emails} />}
       {!canSchedule && ready && !scheduled && canPublish && (
         <p className="mt-3 text-[13px] text-fg-subtle">
           Want results to go live at a set time, like 10:00 on result day?{" "}
@@ -352,6 +354,24 @@ function Marksheets({
     <p className="mt-4 flex items-center gap-2 text-[13px] text-fg-muted">
       <FileCheck2 className="size-4 text-success" aria-hidden />
       All {formatNumber(m.total)} marksheets are ready to download, each with a QR code anyone can verify.
+    </p>
+  );
+}
+
+/** Who was emailed that results are out (students with an account and an address who didn't opt out). */
+function Emails({ counts }: { counts: NonNullable<Publication["emails"]> }) {
+  const total = counts.queued + counts.sent + counts.failed + counts.skipped;
+  if (total === 0) return null;
+  const parts = [
+    counts.queued > 0 && `${formatNumber(counts.queued)} sending`,
+    counts.failed > 0 && `${formatNumber(counts.failed)} couldn't be delivered`,
+    counts.skipped > 0 && `${formatNumber(counts.skipped)} skipped`,
+  ].filter(Boolean);
+  return (
+    <p className="mt-2 flex items-center gap-2 text-[13px] text-fg-muted" aria-live="polite">
+      <Mail className="size-4 text-fg-subtle" aria-hidden />
+      Emailed {formatNumber(counts.sent)} of {formatNumber(total)} students
+      {parts.length > 0 && <span className="text-fg-subtle">· {parts.join(" · ")}</span>}
     </p>
   );
 }

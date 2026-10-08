@@ -28,6 +28,15 @@ test("P10: publish approved results; the student sees their own result on their 
   const phone = await context.newPage();
   await signIn(phone, THAPAR.slug, STUDENT, DEMO_PASSWORD);
   await expect(phone).toHaveURL(url(THAPAR.slug, "/me"));
+  // The worker tells them in the app as well (the count is read on load, never polled).
+  const bell = phone.getByRole("button", { name: /^Notifications, \d+ unread$/ });
+  await expect(async () => {
+    await phone.reload();
+    await expect(bell).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  await bell.click();
+  await expect(phone.getByRole("button", { name: /Quiz .+ results are available/ }).first()).toBeVisible();
+  await phone.keyboard.press("Escape");
   const latest = phone.getByRole("link", { name: /Latest result/ });
   await expect(latest).toContainText(/Quiz /);
   await expect(latest).toContainText("Passed");

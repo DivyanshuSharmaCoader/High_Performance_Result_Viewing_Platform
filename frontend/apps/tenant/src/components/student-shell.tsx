@@ -3,6 +3,7 @@ import { House, LogOut, UserRound } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 
+import { NotificationBell } from "../features/notifications/bell";
 import { useLogout, useSession } from "../lib/session";
 import { useTenant } from "../lib/tenant";
 
@@ -25,13 +26,16 @@ export function StudentShell({ children }: { children: ReactNode }) {
             />
             <span className="truncate text-sm font-semibold text-fg">{b.short_name ?? b.display_name}</span>
           </Link>
-          <AccountMenu
-            name={me.full_name}
-            loginId={me.login_id}
-            onHome={() => void navigate("/me")}
-            onAccount={() => void navigate("/me/account")}
-            onSignOut={() => logout.mutate()}
-          />
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <AccountMenu
+              name={me.full_name}
+              loginId={me.login_id}
+              onHome={() => void navigate("/me")}
+              onAccount={() => void navigate("/me/account")}
+              onSignOut={() => logout.mutate()}
+            />
+          </div>
         </div>
       </header>
       <main id="main" className="mx-auto max-w-3xl px-4 py-6 sm:py-8">
