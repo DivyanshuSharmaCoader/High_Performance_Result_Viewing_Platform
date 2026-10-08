@@ -2,6 +2,7 @@
  "institution_owner": [
   "academics.manage",
   "academics.view",
+  "account.mfa",
   "analytics.view",
   "audit.view",
   "branding.manage",
@@ -31,6 +32,7 @@
  "institution_admin": [
   "academics.manage",
   "academics.view",
+  "account.mfa",
   "analytics.view",
   "audit.view",
   "branding.manage",
@@ -56,6 +58,7 @@
   "subscription.view"
  ],
  "faculty": [
+  "account.mfa",
   "exams.view_assigned",
   "imports.marks_assigned",
   "jobs.view",

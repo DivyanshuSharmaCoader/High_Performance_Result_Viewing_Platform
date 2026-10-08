@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     ForeignKey,
@@ -16,6 +18,7 @@ from sqlalchemy import (
     func,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.models import Base, TenantScoped, Timestamps, UUIDPrimaryKey, tenant_fk, tenant_unique_id
@@ -52,8 +55,10 @@ class User(UUIDPrimaryKey, TenantScoped, Timestamps, Base):
     failed_login_count: Mapped[int] = mapped_column(Integer, server_default="0")
     locked_until: Mapped[datetime | None]
     password_changed_at: Mapped[datetime | None]
-    totp_secret_enc: Mapped[str | None] = mapped_column(Text)
+    totp_secret_enc: Mapped[str | None] = mapped_column(Text)  # set while enrolling, kept once enabled
     totp_enabled_at: Mapped[datetime | None]
+    totp_last_step: Mapped[int | None] = mapped_column(BigInteger)  # a code works once (ASVS V2.8.4)
+    totp_recovery_hashes: Mapped[list[Any] | None] = mapped_column(JSONB)  # SHA-256 of unused recovery codes
     # Non-essential email (e.g. "results are published"). Account email (resets, invites) always goes.
     notify_email: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
 

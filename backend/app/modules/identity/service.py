@@ -18,7 +18,14 @@ from app.core.breached import password_issues
 from app.core.clock import utcnow
 from app.core.container import Infra
 from app.core.db import UnitOfWork
-from app.core.errors import Conflict, InvalidCredentials, NotFound, ReauthRequired, ValidationFailed
+from app.core.errors import (
+    Conflict,
+    InvalidCredentials,
+    NotFound,
+    ReauthRequired,
+    TotpRequired,
+    ValidationFailed,
+)
 from app.core.http import Principal
 from app.core.metrics import LOGINS
 from app.core.ratelimit import (
@@ -33,6 +40,7 @@ from app.core.ratelimit import (
 from app.core.security import hash_token, new_token, normalise_human_code
 from app.core.tenant import TenantContext
 from app.modules.audit.service import Actor, record, record_platform
+from app.modules.identity.mfa import MfaService
 from app.modules.identity.models import AuthToken, PlatformUser, User, UserRole
 from app.modules.identity.sessions import SessionService
 from app.modules.notifications.emails import queue_email
@@ -88,7 +96,14 @@ class AuthService:
 
     # ---- login ----------------------------------------------------------------------------------
     async def login(
-        self, tenant: TenantContext, login_id: str, password: str, *, ip: str, user_agent: str | None
+        self,
+        tenant: TenantContext,
+        login_id: str,
+        password: str,
+        *,
+        ip: str,
+        user_agent: str | None,
+        totp_code: str | None = None,
     ) -> LoginResult:
         await self.infra.limiter.hit(login_ip_bucket(self.settings), f"{ip}")
         await self.infra.limiter.check(login_failure_bucket(self.settings), f"{ip}")
@@ -108,7 +123,19 @@ class AuthService:
                 raise InvalidCredentials(LOCKED_HINT)
             assert user is not None and user.password_hash is not None
             ok = await self.infra.passwords.verify(user.password_hash, password)
-            if not ok:
+            # Two-step sign-in: a right password alone isn't enough, and a wrong code counts as a failure.
+            needs_code = False
+            used_recovery = False
+            if ok and user.totp_enabled_at is not None:
+                if not totp_code:
+                    needs_code = True
+                else:
+                    method = MfaService(self.infra).verify(user, totp_code, now)
+                    ok = method is not None
+                    used_recovery = method == "recovery"
+            if needs_code:
+                failed = False
+            elif not ok:
                 user.failed_login_count += 1
                 lock = self._lockout_until(user.failed_login_count, now)
                 if lock is not None:
@@ -136,6 +163,16 @@ class AuthService:
                     ).all()
                 )
                 token = await self.sessions.create(uow, user, ip=ip, user_agent=user_agent)
+                if used_recovery:
+                    await record(
+                        uow,
+                        Actor("user", user.id, user.full_name),
+                        "auth.recovery_code_used",
+                        entity_type="user",
+                        entity_id=user.id,
+                        summary="Signed in with a recovery code",
+                        after={"recovery_codes_left": len(user.totp_recovery_hashes or [])},
+                    )
                 if user.kind == "staff":
                     await record(
                         uow,
@@ -144,6 +181,9 @@ class AuthService:
                         entity_type="user",
                         entity_id=user.id,
                     )
+        if needs_code:
+            LOGINS.labels("tenant", "totp_required").inc()
+            raise TotpRequired()
         if failed:
             await self.infra.limiter.consume(login_failure_bucket(self.settings), f"{ip}")
             LOGINS.labels("tenant", "failed").inc()
@@ -157,10 +197,17 @@ class AuthService:
     async def logout_everywhere(self, uow: UnitOfWork, principal: Principal) -> int:
         return await self.sessions.revoke_all_for_user(uow, principal.user_id)
 
-    async def reauthenticate(self, uow: UnitOfWork, principal: Principal, password: str) -> None:
+    async def reauthenticate(
+        self, uow: UnitOfWork, principal: Principal, password: str, totp_code: str | None = None
+    ) -> None:
         user = (await uow.session.scalars(select(User).where(User.id == principal.user_id))).one()
         if not await self.infra.passwords.verify(user.password_hash, password):
             raise InvalidCredentials("That password isn't right.")
+        if user.totp_enabled_at is not None:  # step-up means both factors again
+            if not totp_code:
+                raise TotpRequired()
+            if MfaService(self.infra).verify(user, totp_code) is None:
+                raise InvalidCredentials("That code didn't match.")
         await self.sessions.mark_reauthenticated(uow, principal.session_hash)
 
     def require_recent_auth(self, principal: Principal) -> None:

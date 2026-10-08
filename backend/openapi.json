@@ -3160,6 +3160,19 @@
             "minLength": 1,
             "title": "Password",
             "type": "string"
+          },
+          "totp_code": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Authenticator or recovery code, when the account uses one",
+            "title": "Totp Code"
           }
         },
         "required": [
@@ -3356,6 +3369,11 @@
             "title": "Login Id",
             "type": "string"
           },
+          "mfa_enabled": {
+            "default": false,
+            "title": "Mfa Enabled",
+            "type": "boolean"
+          },
           "permissions": {
             "items": {
               "type": "string"
@@ -3454,6 +3472,78 @@
           "program_code"
         ],
         "title": "MembershipOut",
+        "type": "object"
+      },
+      "MfaCodeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "maxLength": 20,
+            "minLength": 6,
+            "title": "Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "MfaCodeIn",
+        "type": "object"
+      },
+      "MfaSetupOut": {
+        "properties": {
+          "qr_svg": {
+            "description": "data: URI of the QR code",
+            "title": "Qr Svg",
+            "type": "string"
+          },
+          "secret": {
+            "description": "For typing into the app when the QR code can't be scanned",
+            "title": "Secret",
+            "type": "string"
+          },
+          "uri": {
+            "title": "Uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "secret",
+          "uri",
+          "qr_svg"
+        ],
+        "title": "MfaSetupOut",
+        "type": "object"
+      },
+      "MfaStatusOut": {
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "enabled_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled At"
+          },
+          "recovery_codes_left": {
+            "title": "Recovery Codes Left",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enabled",
+          "enabled_at",
+          "recovery_codes_left"
+        ],
+        "title": "MfaStatusOut",
         "type": "object"
       },
       "MyResultItem": {
@@ -4959,12 +5049,41 @@
             "minLength": 1,
             "title": "Password",
             "type": "string"
+          },
+          "totp_code": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totp Code"
           }
         },
         "required": [
           "password"
         ],
         "title": "ReauthIn",
+        "type": "object"
+      },
+      "RecoveryCodesOut": {
+        "properties": {
+          "recovery_codes": {
+            "description": "Shown once; store them somewhere safe",
+            "items": {
+              "type": "string"
+            },
+            "title": "Recovery Codes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "recovery_codes"
+        ],
+        "title": "RecoveryCodesOut",
         "type": "object"
       },
       "ResetIn": {
@@ -13011,6 +13130,50 @@
         ]
       }
     },
+    "/api/v1/admin/staff/{user_id}/mfa/reset": {
+      "post": {
+        "description": "A staff member lost their phone and recovery codes: they sign in with their password again, then\nset two-step sign-in up anew.",
+        "operationId": "reset_mfa_api_v1_admin_staff__user_id__mfa_reset_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "user_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "User Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reset Mfa",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/api/v1/admin/staff/{user_id}/profile": {
       "put": {
         "operationId": "update_profile_api_v1_admin_staff__user_id__profile_put",
@@ -14596,6 +14759,171 @@
           }
         },
         "summary": "Me",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/me/mfa": {
+      "get": {
+        "operationId": "mfa_status_api_v1_me_mfa_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaStatusOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Mfa Status",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/disable": {
+      "post": {
+        "operationId": "mfa_disable_api_v1_me_mfa_disable_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaCodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mfa Disable",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/enable": {
+      "post": {
+        "operationId": "mfa_enable_api_v1_me_mfa_enable_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaCodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mfa Enable",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/recovery-codes": {
+      "post": {
+        "operationId": "mfa_recovery_codes_api_v1_me_mfa_recovery_codes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MfaCodeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mfa Recovery Codes",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/me/mfa/setup": {
+      "post": {
+        "operationId": "mfa_setup_api_v1_me_mfa_setup_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MfaSetupOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Mfa Setup",
         "tags": [
           "auth"
         ]

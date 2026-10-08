@@ -25,7 +25,9 @@ from app.core.http import (
 )
 from app.core.tenant import Realm
 from app.modules.entitlements.service import EntitlementService
+from app.modules.identity.mfa import MfaService
 from app.modules.identity.models import User
+from app.modules.identity.permissions import P
 from app.modules.identity.service import AuthService
 
 router = APIRouter(prefix="/api/v1", tags=["auth"])
@@ -57,6 +59,9 @@ def clear_session_cookie(response: Response, settings: Settings) -> None:
 class LoginIn(Strict):
     login_id: str = Field(min_length=1, max_length=254)
     password: str = Field(min_length=1, max_length=256)
+    totp_code: str | None = Field(
+        default=None, max_length=20, description="Authenticator or recovery code, when the account uses one"
+    )
 
 
 class SessionOut(BaseModel):
@@ -85,6 +90,7 @@ async def login(
         body.password,
         ip=client_ip(request),
         user_agent=request.headers.get("user-agent"),
+        totp_code=body.totp_code,
     )
     set_session_cookie(response, infra.settings, result.token, svc.sessions.cookie_max_age(result.user_kind))
     return SessionOut(user_kind=result.user_kind, roles=result.roles)
@@ -188,11 +194,12 @@ async def accept_invitation(
 
 class ReauthIn(Strict):
     password: str = Field(min_length=1, max_length=256)
+    totp_code: str | None = Field(default=None, max_length=20)
 
 
 @router.post("/auth/reauth")
 async def reauth(body: ReauthIn, uow: UoW, infra: InfraDep, principal: Principal = require()) -> OkOut:
-    await AuthService(infra).reauthenticate(uow, principal, body.password)
+    await AuthService(infra).reauthenticate(uow, principal, body.password, body.totp_code)
     return OkOut()
 
 
@@ -224,6 +231,7 @@ class MeOut(BaseModel):
     features: dict[str, Any]
     plan: PlanSummary
     reauthenticated_at: datetime | None
+    mfa_enabled: bool = False
 
 
 @router.get("/me")
@@ -247,6 +255,7 @@ async def me(uow: UoW, tenant: TenantDep, infra: InfraDep, principal: Principal 
             "period_end": ent.period_end,
         },
         reauthenticated_at=principal.reauthenticated_at,
+        mfa_enabled=user.totp_enabled_at is not None,
     )
 
 
@@ -337,3 +346,73 @@ async def platform_me(principal: Annotated[Principal, require_platform()]) -> Pl
         roles=sorted(principal.roles),
         permissions=sorted(principal.permissions),
     )
+
+
+# ---- two-step sign-in (staff) -------------------------------------------------------------------------
+class MfaStatusOut(BaseModel):
+    enabled: bool
+    enabled_at: datetime | None
+    recovery_codes_left: int
+
+
+class MfaSetupOut(BaseModel):
+    secret: str = Field(description="For typing into the app when the QR code can't be scanned")
+    uri: str
+    qr_svg: str = Field(description="data: URI of the QR code")
+
+
+class MfaCodeIn(Strict):
+    code: str = Field(min_length=6, max_length=20)
+
+
+class RecoveryCodesOut(BaseModel):
+    recovery_codes: list[str] = Field(description="Shown once; store them somewhere safe")
+
+
+@router.get("/me/mfa")
+async def mfa_status(
+    response: Response, uow: UoW, infra: InfraDep, principal: Principal = require(P.ACCOUNT_MFA)
+) -> MfaStatusOut:
+    response.headers["Cache-Control"] = "private, no-store"
+    return MfaStatusOut(**await MfaService(infra).status(uow, principal))
+
+
+@router.post("/me/mfa/setup")
+async def mfa_setup(
+    response: Response, uow: UoW, infra: InfraDep, principal: Principal = require(P.ACCOUNT_MFA)
+) -> MfaSetupOut:
+    response.headers["Cache-Control"] = "private, no-store"
+    e = await MfaService(infra).begin(uow, principal)
+    return MfaSetupOut(secret=e.secret, uri=e.uri, qr_svg=e.qr_svg)
+
+
+@router.post("/me/mfa/enable")
+async def mfa_enable(
+    body: MfaCodeIn,
+    response: Response,
+    uow: UoW,
+    infra: InfraDep,
+    principal: Principal = require(P.ACCOUNT_MFA),
+) -> RecoveryCodesOut:
+    response.headers["Cache-Control"] = "private, no-store"
+    return RecoveryCodesOut(recovery_codes=await MfaService(infra).enable(uow, principal, body.code))
+
+
+@router.post("/me/mfa/disable")
+async def mfa_disable(
+    body: MfaCodeIn, uow: UoW, infra: InfraDep, principal: Principal = require(P.ACCOUNT_MFA)
+) -> OkOut:
+    await MfaService(infra).disable(uow, principal, body.code)
+    return OkOut()
+
+
+@router.post("/me/mfa/recovery-codes")
+async def mfa_recovery_codes(
+    body: MfaCodeIn,
+    response: Response,
+    uow: UoW,
+    infra: InfraDep,
+    principal: Principal = require(P.ACCOUNT_MFA),
+) -> RecoveryCodesOut:
+    response.headers["Cache-Control"] = "private, no-store"
+    return RecoveryCodesOut(recovery_codes=await MfaService(infra).regenerate(uow, principal, body.code))

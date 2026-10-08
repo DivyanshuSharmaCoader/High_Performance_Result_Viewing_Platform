@@ -1117,6 +1117,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/staff/{user_id}/mfa/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Mfa
+         * @description A staff member lost their phone and recovery codes: they sign in with their password again, then
+         *     set two-step sign-in up anew.
+         */
+        post: operations["reset_mfa_api_v1_admin_staff__user_id__mfa_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/staff/{user_id}/profile": {
         parameters: {
             query?: never;
@@ -1650,6 +1671,91 @@ export interface paths {
         get: operations["me_api_v1_me_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mfa Status */
+        get: operations["mfa_status_api_v1_me_mfa_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mfa Disable */
+        post: operations["mfa_disable_api_v1_me_mfa_disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mfa Enable */
+        post: operations["mfa_enable_api_v1_me_mfa_enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/recovery-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mfa Recovery Codes */
+        post: operations["mfa_recovery_codes_api_v1_me_mfa_recovery_codes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mfa Setup */
+        post: operations["mfa_setup_api_v1_me_mfa_setup_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3302,6 +3408,11 @@ export interface components {
             login_id: string;
             /** Password */
             password: string;
+            /**
+             * Totp Code
+             * @description Authenticator or recovery code, when the account uses one
+             */
+            totp_code?: string | null;
         };
         /** LogoutAllOut */
         LogoutAllOut: {
@@ -3364,6 +3475,11 @@ export interface components {
             kind: string;
             /** Login Id */
             login_id: string;
+            /**
+             * Mfa Enabled
+             * @default false
+             */
+            mfa_enabled: boolean;
             /** Permissions */
             permissions: string[];
             plan: components["schemas"]["PlanSummary"];
@@ -3400,6 +3516,35 @@ export interface components {
             session_id: string;
             /** Session Is Current */
             session_is_current: boolean;
+        };
+        /** MfaCodeIn */
+        MfaCodeIn: {
+            /** Code */
+            code: string;
+        };
+        /** MfaSetupOut */
+        MfaSetupOut: {
+            /**
+             * Qr Svg
+             * @description data: URI of the QR code
+             */
+            qr_svg: string;
+            /**
+             * Secret
+             * @description For typing into the app when the QR code can't be scanned
+             */
+            secret: string;
+            /** Uri */
+            uri: string;
+        };
+        /** MfaStatusOut */
+        MfaStatusOut: {
+            /** Enabled */
+            enabled: boolean;
+            /** Enabled At */
+            enabled_at: string | null;
+            /** Recovery Codes Left */
+            recovery_codes_left: number;
         };
         /** MyResultItem */
         MyResultItem: {
@@ -3847,6 +3992,16 @@ export interface components {
         ReauthIn: {
             /** Password */
             password: string;
+            /** Totp Code */
+            totp_code?: string | null;
+        };
+        /** RecoveryCodesOut */
+        RecoveryCodesOut: {
+            /**
+             * Recovery Codes
+             * @description Shown once; store them somewhere safe
+             */
+            recovery_codes: string[];
         };
         /** ResetIn */
         ResetIn: {
@@ -7772,6 +7927,37 @@ export interface operations {
             };
         };
     };
+    reset_mfa_api_v1_admin_staff__user_id__mfa_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_profile_api_v1_admin_staff__user_id__profile_put: {
         parameters: {
             query?: never;
@@ -8802,6 +8988,145 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeOut"];
+                };
+            };
+        };
+    };
+    mfa_status_api_v1_me_mfa_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaStatusOut"];
+                };
+            };
+        };
+    };
+    mfa_disable_api_v1_me_mfa_disable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaCodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mfa_enable_api_v1_me_mfa_enable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaCodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mfa_recovery_codes_api_v1_me_mfa_recovery_codes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaCodeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mfa_setup_api_v1_me_mfa_setup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaSetupOut"];
                 };
             };
         };

@@ -41,6 +41,7 @@ class P:
     JOBS_VIEW = "jobs.view"
     ME_RESULTS = "me.results"
     NOTIFICATIONS_SELF = "notifications.self"
+    ACCOUNT_MFA = "account.mfa"  # two-step sign-in for one's own staff account
 
 
 class PlatformP:
@@ -78,6 +79,7 @@ _ADMIN = frozenset(
         P.AUDIT_VIEW,
         P.JOBS_VIEW,
         P.NOTIFICATIONS_SELF,
+        P.ACCOUNT_MFA,
     }
 )
 
@@ -93,6 +95,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
             P.STATS_VIEW_ASSIGNED,
             P.JOBS_VIEW,
             P.NOTIFICATIONS_SELF,
+            P.ACCOUNT_MFA,
         }
     ),
     "student": frozenset({P.ME_RESULTS, P.NOTIFICATIONS_SELF}),

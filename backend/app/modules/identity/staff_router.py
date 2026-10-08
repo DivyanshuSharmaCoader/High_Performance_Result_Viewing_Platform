@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.core.http import InfraDep, Principal, TenantDep, UoW, require
+from app.modules.identity.mfa import MfaService
 from app.modules.identity.permissions import P
 from app.modules.identity.service import AuthService
 from app.modules.identity.staff import ProfileData, StaffService
@@ -160,4 +161,14 @@ async def transfer_ownership(
 ) -> OkOut:
     AuthService(infra).require_recent_auth(principal)
     await StaffService(infra).transfer_ownership(uow, principal, user_id)
+    return OkOut()
+
+
+@router.post("/{user_id}/mfa/reset")
+async def reset_mfa(
+    user_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = require(P.STAFF_MANAGE)
+) -> OkOut:
+    """A staff member lost their phone and recovery codes: they sign in with their password again, then
+    set two-step sign-in up anew."""
+    await MfaService(infra).reset_for(uow, principal, user_id)
     return OkOut()

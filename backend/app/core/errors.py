@@ -55,6 +55,14 @@ class InvalidCredentials(DomainError):
     title = "Incorrect login details"
 
 
+class TotpRequired(DomainError):
+    """The password was right; this account also needs the code from its authenticator app."""
+
+    status = 401
+    code = "totp-required"
+    title = "Enter the code from your authenticator app"
+
+
 class ReauthRequired(DomainError):
     status = 401
     code = "reauth-required"
