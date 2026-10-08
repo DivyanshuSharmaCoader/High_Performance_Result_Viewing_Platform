@@ -1,0 +1,24 @@
+# Alertmanager for the local and CI stack: every alert by email to Mailpit (http://localhost:58025).
+# Production: copy alertmanager.prod.example.yml, fill in SMTP and the pager, mount it instead.
+global:
+  smtp_smarthost: mailpit:1025
+  smtp_from: alerts@scorecode.localhost
+  smtp_require_tls: false
+
+route:
+  receiver: ops
+  group_by: [alertname]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 4h
+
+receivers:
+  - name: ops
+    email_configs:
+      - to: ops@scorecode.localhost
+        send_resolved: true
+
+inhibit_rules:
+  # Everything breaks when the API or the database is down: send the cause, not every symptom.
+  - source_matchers: [alertname=~"ScoreCodeAPIDown|ScoreCodePostgresDown"]
+    target_matchers: [alertname=~"ScoreCodeHigh5xxRate|ScoreCodeStudentReadsSlow|ScoreCodeLoginsSlow|ScoreCodeDatabasePoolExhausted|ScoreCodeDatabaseUnreachableFromAPI"]

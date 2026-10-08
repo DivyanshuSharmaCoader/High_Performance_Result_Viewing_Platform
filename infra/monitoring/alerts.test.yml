@@ -1,0 +1,139 @@
+# Unit tests for alerts.yml: `promtool test rules alerts.test.yml` (ops.yml runs it). Each test feeds
+# synthetic series and states which alerts fire, and when. Values are per scrape (every 15 s).
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 15s
+
+tests:
+  # The API disappears (DNS finds no container, so Prometheus marks its series stale at once): the page
+  # fires after its minute, not before.
+  - interval: 15s
+    input_series:
+      - series: 'up{job="api", instance="10.0.0.5:8000"}'
+        values: "1 1 1 1 stale"
+      - series: 'up{job="worker", instance="10.0.0.6:9100"}'
+        values: "1x16"
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ScoreCodeAPIDown
+        exp_alerts: []
+      - eval_time: 2m30s
+        alertname: ScoreCodeAPIDown
+        exp_alerts:
+          - exp_labels: { severity: page }
+            exp_annotations:
+              summary: No ScoreCode API process is up
+              runbook: docs/runbooks/api-down.md
+
+  # One of two replicas down: a warning for that instance, no page.
+  - interval: 15s
+    input_series:
+      - series: 'up{job="api", instance="a:8000"}'
+        values: "1x12"
+      - series: 'up{job="api", instance="b:8000"}'
+        values: "1 0x11"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: ScoreCodeAPIInstanceDown
+        exp_alerts:
+          - exp_labels: { severity: warn, job: api, instance: "b:8000" }
+            exp_annotations:
+              summary: "API instance b:8000 is not answering"
+              runbook: docs/runbooks/api-down.md
+      - eval_time: 3m
+        alertname: ScoreCodeAPIDown
+        exp_alerts: []
+
+  # 2% of requests failing for 5 minutes pages; the same share of almost no traffic doesn't.
+  - interval: 15s
+    input_series:
+      - series: 'scorecode_http_requests_total{route_class="student_read", method="GET", status="200"}'
+        values: "0+980x60"
+      - series: 'scorecode_http_requests_total{route_class="student_read", method="GET", status="503"}'
+        values: "0+20x60"
+      - series: 'scorecode_http_requests_total{route_class="admin", method="GET", status="200", instance="quiet"}'
+        values: "0x60"
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ScoreCodeHigh5xxRate
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: ScoreCodeHigh5xxRate
+        exp_alerts:
+          - exp_labels: { severity: page }
+            exp_annotations:
+              summary: "2% of API requests fail with 5xx"
+              runbook: docs/runbooks/result-day.md
+
+  - interval: 15s
+    input_series:
+      - series: 'scorecode_http_requests_total{route_class="admin", method="GET", status="500"}'
+        values: "0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: ScoreCodeHigh5xxRate
+        exp_alerts: []  # one error and nothing else: below the traffic floor
+
+  # A scheduled go-live still waiting 2 minutes after its time pages; a long PDF backlog only warns.
+  - interval: 15s
+    input_series:
+      - series: 'scorecode_jobs_oldest_seconds{queue="publishing", status="queued", instance="w1"}'
+        values: "0 15 30 45 60 75 90 105 120 135 150"
+      - series: 'scorecode_jobs_oldest_seconds{queue="pdf", status="queued", instance="w1"}'
+        values: "600+15x80"
+    alert_rule_test:
+      - eval_time: 1m45s
+        alertname: ScoreCodeScheduledPublicationLate
+        exp_alerts: []
+      - eval_time: 2m30s
+        alertname: ScoreCodeScheduledPublicationLate
+        exp_alerts:
+          - exp_labels: { severity: page }
+            exp_annotations:
+              summary: "A publication is 2m 30s past its go-live time"
+              runbook: docs/runbooks/stuck-publication.md
+      - eval_time: 2m30s
+        alertname: ScoreCodeQueueFallingBehind
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: ScoreCodeQueueFallingBehind
+        exp_alerts:
+          - exp_labels: { severity: warn, queue: pdf }
+            exp_annotations:
+              summary: "pdf: the oldest due job has waited 22m 0s"
+              runbook: docs/runbooks/stuck-publication.md
+
+  # The last backup reported at time 0 (promtool's clock starts there): fine at 25 h, a page at 27 h.
+  - interval: 1h
+    input_series:
+      - series: 'scorecode_backup_last_success_timestamp_seconds{job="scorecode_backup"}'
+        values: "0x30"
+    alert_rule_test:
+      - eval_time: 25h
+        alertname: ScoreCodeBackupStale
+        exp_alerts: []
+      - eval_time: 27h
+        alertname: ScoreCodeBackupStale
+        exp_alerts:
+          - exp_labels: { severity: page }
+            exp_annotations:
+              summary: "The last successful backup is 1d 3h 0m 0s old"
+              runbook: docs/runbooks/backup-and-restore.md
+
+  # Dead letters warn per queue.
+  - interval: 15s
+    input_series:
+      - series: 'scorecode_jobs_in_state{queue="notifications", status="dead", instance="w1"}'
+        values: "0 0 2 2"
+    alert_rule_test:
+      - eval_time: 0m
+        alertname: ScoreCodeDeadJobs
+        exp_alerts: []
+      - eval_time: 45s
+        alertname: ScoreCodeDeadJobs
+        exp_alerts:
+          - exp_labels: { severity: warn, queue: notifications }
+            exp_annotations:
+              summary: "notifications: 2 jobs failed every attempt"
+              runbook: docs/runbooks/stuck-publication.md

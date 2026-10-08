@@ -1,0 +1,38 @@
+# Production Alertmanager (P16.5). Copy to alertmanager.prod.yml (not committed), fill in, and mount it.
+# Pages go to email AND a phone (Telegram here, as an example of a free pager); warnings to email only.
+global:
+  smtp_smarthost: email-smtp.ap-south-1.amazonaws.com:587
+  smtp_from: alerts@YOUR-DOMAIN
+  smtp_auth_username: SMTP_USERNAME
+  smtp_auth_password_file: /run/secrets/alert_smtp_password
+  smtp_require_tls: true
+
+route:
+  receiver: ops-email
+  group_by: [alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="page"]
+      receiver: ops-page
+      group_wait: 10s
+      repeat_interval: 1h
+
+receivers:
+  - name: ops-email
+    email_configs:
+      - to: ops@YOUR-DOMAIN
+        send_resolved: true
+  - name: ops-page
+    email_configs:
+      - to: ops@YOUR-DOMAIN
+        send_resolved: true
+    telegram_configs:
+      - bot_token_file: /run/secrets/alert_telegram_token
+        chat_id: -1001234567890  # placeholder: your on-call group's chat id
+        send_resolved: true
+
+inhibit_rules:
+  - source_matchers: [alertname=~"ScoreCodeAPIDown|ScoreCodePostgresDown"]
+    target_matchers: [alertname=~"ScoreCodeHigh5xxRate|ScoreCodeStudentReadsSlow|ScoreCodeLoginsSlow|ScoreCodeDatabasePoolExhausted|ScoreCodeDatabaseUnreachableFromAPI"]

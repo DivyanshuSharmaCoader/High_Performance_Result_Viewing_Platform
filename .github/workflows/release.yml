@@ -1,0 +1,179 @@
+# Releases and deploys (P16.3, docs/14 §P).
+#
+#   git tag v1.2.3 && git push origin v1.2.3     → build, scan, push to GHCR, deploy to production after
+#                                                   approval (GitHub Environment "production")
+#   gh workflow run release.yml                   → the rehearsal only: nothing is pushed or deployed
+#
+# The rehearsal runs the production compose file and infra/ops/deploy.sh on this runner, as on a server:
+# first install, an upgrade with a backup, then a release that fails, which must roll back on its own.
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]  # path filters don't apply to tag pushes
+    branches: ["**"]
+    paths:
+      - "compose.prod.yml"
+      - "infra/ops/**"
+      - "infra/caddy/**"
+      - "infra/backup/**"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rehearsal:
+    name: Deploy rehearsal · install, upgrade with backup, failed release rolls back
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      COMPOSE_FILES: compose.prod.yml:infra/ops/rehearsal/compose.override.yml
+      SMOKE_CACERT: certs/origin.pem
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the four images as rehearsal-1 (what a tag would push)
+        run: |
+          set -euo pipefail
+          docker build -q --target runtime -t rehearsal/scorecode-backend:rehearsal-1 backend
+          docker build -q -f frontend/Dockerfile -t rehearsal/scorecode-proxy:rehearsal-1 .
+          docker build -q -t rehearsal/scorecode-postgres:rehearsal-1 infra/postgres
+          docker build -q -t rehearsal/scorecode-backup:rehearsal-1 infra/backup
+          docker build -q -t scorecode/seaweedfs:dev infra/seaweedfs
+          for name in backend proxy postgres backup; do
+            docker tag "rehearsal/scorecode-$name:rehearsal-1" "rehearsal/scorecode-$name:rehearsal-2"
+          done
+          # A broken release: its migrate step fails, so the deploy must roll back.
+          printf 'FROM rehearsal/scorecode-backend:rehearsal-1\nENTRYPOINT ["sh", "-c", "echo broken release >&2; exit 1"]\n' \
+            | docker build -q -t rehearsal/scorecode-backend:rehearsal-bad -
+          for name in proxy postgres backup; do
+            docker tag "rehearsal/scorecode-$name:rehearsal-1" "rehearsal/scorecode-$name:rehearsal-bad"
+          done
+      - name: Server files (env/, certs/) as an operator would create them
+        run: python3 infra/ops/rehearsal/make-env.py
+      - name: First install (rehearsal-1)
+        run: |
+          set -euo pipefail
+          SKIP_PULL=1 SKIP_BACKUP=1 SMOKE_TENANT= infra/ops/deploy.sh rehearsal-1
+          SCORECODE_VERSION=rehearsal-1 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
+            --env-file env/deploy.env exec -T api scorecode seed --students 20
+          test "$(cat .deployed-version)" = rehearsal-1
+      - name: Upgrade (rehearsal-2), with a backup taken first
+        run: |
+          set -euo pipefail
+          SCORECODE_VERSION=rehearsal-1 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
+            --env-file env/deploy.env run --rm --entrypoint aws backup --endpoint-url http://s3:8333 s3 mb s3://scorecode-backups
+          SKIP_PULL=1 infra/ops/deploy.sh rehearsal-2
+          test "$(cat .deployed-version)" = rehearsal-2
+          grep -q '"backup":"s3://scorecode-backups/rehearsal/db/' deploy.log
+      - name: A failed release rolls back on its own
+        run: |
+          set -euo pipefail
+          if SKIP_PULL=1 SKIP_BACKUP=1 infra/ops/deploy.sh rehearsal-bad; then
+            echo "the broken release was reported as deployed"; exit 1
+          fi
+          grep -q "rolled back to rehearsal-2" deploy.log
+          test "$(cat .deployed-version)" = rehearsal-2
+          SMOKE_BASE_DOMAIN=scorecode.test SMOKE_SCHEME=https SMOKE_PORT=443 SMOKE_CONNECT_TO=127.0.0.1:443 infra/ops/smoke.sh
+      - name: Hardening as deployed
+        run: |
+          set -euo pipefail
+          for c in $(docker ps --filter label=com.docker.compose.project=scorecode --format '{{.Names}}'); do
+            docker inspect -f '{{.Name}} user={{.Config.User}} readonly={{.HostConfig.ReadonlyRootfs}} capdrop={{.HostConfig.CapDrop}} nonewpriv={{.HostConfig.SecurityOpt}}' "$c"
+          done | tee hardening.txt
+          for svc in api worker backup redis; do
+            grep -E "scorecode-$svc-1 " hardening.txt | grep -q "readonly=true" || { echo "$svc is not read-only"; exit 1; }
+            grep -E "scorecode-$svc-1 " hardening.txt | grep -qv "user= " || { echo "$svc runs as root"; exit 1; }
+          done
+      - name: Deploy log
+        if: always()
+        run: |
+          { echo "### Deploy rehearsal"; echo '```'; cat deploy.log 2>/dev/null | grep -v '^{' | tail -40; echo '```'
+            echo '```'; cat hardening.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Logs on failure
+        if: failure()
+        run: |
+          SCORECODE_VERSION=rehearsal-2 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
+            --env-file env/deploy.env logs --tail 80 migrate api worker proxy backup
+
+  images:
+    name: Build, scan and push images (tags only)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: rehearsal
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        id: build
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          prefix="ghcr.io/$owner/scorecode"
+          docker build -q --target runtime -t "$prefix-backend:$VERSION" backend
+          docker build -q -f frontend/Dockerfile -t "$prefix-proxy:$VERSION" .
+          docker build -q -t "$prefix-postgres:$VERSION" infra/postgres
+          docker build -q -t "$prefix-backup:$VERSION" infra/backup
+          echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
+      - name: Trivy · backend (fixable critical vulnerabilities stop the release)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "${{ steps.build.outputs.prefix }}-backend:${{ github.ref_name }}", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - name: Trivy · proxy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "${{ steps.build.outputs.prefix }}-proxy:${{ github.ref_name }}", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - name: Trivy · postgres
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "${{ steps.build.outputs.prefix }}-postgres:${{ github.ref_name }}", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - name: Trivy · backup
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "${{ steps.build.outputs.prefix }}-backup:${{ github.ref_name }}", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - name: Push
+        run: |
+          for name in backend proxy postgres backup; do
+            docker push "${{ steps.build.outputs.prefix }}-$name:${{ github.ref_name }}"
+          done
+
+  deploy:
+    name: Deploy to production (after approval)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: images
+    runs-on: ubuntu-24.04
+    environment: production  # required reviewers are configured in the repository settings
+    steps:
+      - uses: actions/checkout@v7
+      - name: Deploy over SSH, with the server's deploy script
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER_: ${{ secrets.DEPLOY_USER }}
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [ -z "$HOST" ]; then
+            echo "::notice::No production server is configured (DEPLOY_HOST); images are pushed, nothing deployed."
+            exit 0
+          fi
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh_() { ssh -i ~/.ssh/deploy -o BatchMode=yes "$USER_@$HOST" "$@"; }
+          # The release's compose file, scripts and monitoring config; the server keeps env/, certs/, secrets/.
+          tar czf - compose.prod.yml infra/ops infra/monitoring | ssh_ "tar xzf - -C /opt/scorecode"
+          ssh_ "cd /opt/scorecode && infra/ops/deploy.sh $VERSION"
+      - name: Smoke test through Cloudflare, with real certificates
+        env:
+          DOMAIN: ${{ vars.PRODUCTION_DOMAIN }}
+        run: |
+          if [ -z "$DOMAIN" ]; then echo "::notice::PRODUCTION_DOMAIN not set"; exit 0; fi
+          SMOKE_BASE_DOMAIN="$DOMAIN" SMOKE_SCHEME=https infra/ops/smoke.sh

@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "scorecode-rehearsal",
+      "credentials": [{ "accessKey": "rehearsal", "secretKey": "rehearsal-object-storage-secret-0123456789" }],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}

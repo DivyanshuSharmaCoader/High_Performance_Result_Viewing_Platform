@@ -3,6 +3,10 @@
 #   scorecode_migrator  owns the schema; runs Alembic. Never used by the running app.
 #   scorecode_app       runtime role for API and workers: NOBYPASSRLS, DML only, subject to RLS.
 #   scorecode_platform  platform console role: BYPASSRLS, used only by the platform module.
+# Optional operations roles, created when their password is set (P16.4, P16.5):
+#   scorecode_backup    pg_dump: reads everything (pg_read_all_data) and BYPASSRLS, because every tenant
+#                       table forces RLS and pg_dump refuses to dump rows a policy would filter. No writes.
+#   scorecode_monitor   postgres-exporter: pg_monitor statistics only, no table data.
 # Runs once, on first container start, as the postgres superuser.
 set -euo pipefail
 
@@ -35,6 +39,18 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 SQL
 done
+
+if [ -n "${SCORECODE_BACKUP_PASSWORD:-}" ]; then
+  psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres -v pw="$SCORECODE_BACKUP_PASSWORD" <<'SQL'
+CREATE ROLE scorecode_backup LOGIN PASSWORD :'pw' NOSUPERUSER BYPASSRLS NOCREATEDB NOCREATEROLE IN ROLE pg_read_all_data;
+ALTER ROLE scorecode_backup SET default_transaction_read_only = on;
+SQL
+fi
+if [ -n "${SCORECODE_MONITOR_PASSWORD:-}" ]; then
+  psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres -v pw="$SCORECODE_MONITOR_PASSWORD" <<'SQL'
+CREATE ROLE scorecode_monitor LOGIN PASSWORD :'pw' NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE IN ROLE pg_monitor;
+SQL
+fi
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$DB" <<'SQL'
 REVOKE ALL ON SCHEMA public FROM PUBLIC;

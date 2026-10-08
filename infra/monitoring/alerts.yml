@@ -1,0 +1,137 @@
+# Alert rules from docs/14 §Q ("start small, actionable only"). Thresholds are initial: tune them on real
+# traffic. Every alert names its runbook (docs/runbooks/). `promtool check rules` runs in CI (ops.yml).
+groups:
+  - name: availability
+    rules:
+      - alert: ScoreCodeAPIDown
+        # No API process answering a scrape (all down, or none left to discover).
+        expr: absent(up{job="api"} == 1)
+        for: 1m
+        labels: { severity: page }
+        annotations:
+          summary: No ScoreCode API process is up
+          runbook: docs/runbooks/api-down.md
+      - alert: ScoreCodeAPIInstanceDown
+        expr: up{job="api"} == 0
+        for: 2m
+        labels: { severity: warn }
+        annotations:
+          summary: "API instance {{ $labels.instance }} is not answering"
+          runbook: docs/runbooks/api-down.md
+      - alert: ScoreCodeWorkerDown
+        # Publication, marksheets and notifications stop without a worker.
+        expr: absent(up{job="worker"} == 1)
+        for: 2m
+        labels: { severity: page }
+        annotations:
+          summary: No background worker is up
+          runbook: docs/runbooks/stuck-publication.md
+      - alert: ScoreCodePostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels: { severity: page }
+        annotations:
+          summary: PostgreSQL is unreachable from the exporter
+          runbook: docs/runbooks/database-outage.md
+      - alert: ScoreCodeDatabaseUnreachableFromAPI
+        expr: sum(increase(scorecode_db_unavailable_total[2m])) > 0
+        labels: { severity: page }
+        annotations:
+          summary: "API requests are failing because the database can't be reached ({{ $value | humanize }} in 2 min)"
+          runbook: docs/runbooks/database-outage.md
+
+  - name: result-day
+    rules:
+      - alert: ScoreCodeHigh5xxRate
+        expr: |
+          sum(rate(scorecode_http_requests_total{status=~"5.."}[5m]))
+            / sum(rate(scorecode_http_requests_total[5m])) > 0.01
+          and sum(rate(scorecode_http_requests_total[5m])) > 0.2
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: "{{ $value | humanizePercentage }} of API requests fail with 5xx"
+          runbook: docs/runbooks/result-day.md
+      - alert: ScoreCodeStudentReadsSlow
+        # NFR-3: latest result p95 < 150 ms server-side.
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(scorecode_http_request_duration_seconds_bucket{route_class="student_read"}[5m]))) > 0.15
+          and sum(rate(scorecode_http_request_duration_seconds_count{route_class="student_read"}[5m])) > 0.2
+        for: 10m
+        labels: { severity: page }
+        annotations:
+          summary: "Student result reads p95 is {{ $value | humanizeDuration }} (target 150 ms)"
+          runbook: docs/runbooks/result-day.md
+      - alert: ScoreCodeLoginsSlow
+        # NFR-4: login p95 < 500 ms.
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(scorecode_http_request_duration_seconds_bucket{route_class="login"}[5m]))) > 0.5
+          and sum(rate(scorecode_http_request_duration_seconds_count{route_class="login"}[5m])) > 0.2
+        for: 10m
+        labels: { severity: warn }
+        annotations:
+          summary: "Login p95 is {{ $value | humanizeDuration }} (target 500 ms)"
+          runbook: docs/runbooks/result-day.md
+      - alert: ScoreCodeDatabasePoolExhausted
+        expr: sum(increase(scorecode_db_pool_exhausted_total[5m])) > 0
+        labels: { severity: warn }
+        annotations:
+          summary: "{{ $value | humanize }} requests waited too long for a database connection (503 overloaded)"
+          runbook: docs/runbooks/result-day.md
+      - alert: ScoreCodeDatabaseConnectionsHigh
+        expr: sum(pg_stat_activity_count) / max(pg_settings_max_connections) > 0.8
+        for: 10m
+        labels: { severity: warn }
+        annotations:
+          summary: "PostgreSQL connections at {{ $value | humanizePercentage }} of max_connections"
+          runbook: docs/runbooks/database-outage.md
+
+  - name: background-work
+    rules:
+      - alert: ScoreCodeScheduledPublicationLate
+        # A due go-live job still waiting 2 minutes after its time (docs/14: page).
+        expr: max(scorecode_jobs_oldest_seconds{queue="publishing", status="queued"}) > 120
+        labels: { severity: page }
+        annotations:
+          summary: "A publication is {{ $value | humanizeDuration }} past its go-live time"
+          runbook: docs/runbooks/stuck-publication.md
+      - alert: ScoreCodeQueueFallingBehind
+        # Due work waiting more than 15 minutes (8,000 marksheets take about 20 min on 2 processes: tune).
+        expr: max by (queue) (scorecode_jobs_oldest_seconds{status="queued"}) > 900
+        for: 5m
+        labels: { severity: warn }
+        annotations:
+          summary: "{{ $labels.queue }}: the oldest due job has waited {{ $value | humanizeDuration }}"
+          runbook: docs/runbooks/stuck-publication.md
+      - alert: ScoreCodeDeadJobs
+        expr: max by (queue) (scorecode_jobs_in_state{status="dead"}) > 0
+        labels: { severity: warn }
+        annotations:
+          summary: "{{ $labels.queue }}: {{ $value }} jobs failed every attempt"
+          runbook: docs/runbooks/stuck-publication.md
+
+  - name: data-safety
+    rules:
+      - alert: ScoreCodeBackupStale
+        expr: time() - max(scorecode_backup_last_success_timestamp_seconds) > 26 * 3600
+        labels: { severity: page }
+        annotations:
+          summary: "The last successful backup is {{ $value | humanizeDuration }} old"
+          runbook: docs/runbooks/backup-and-restore.md
+      - alert: ScoreCodeBackupNeverReported
+        expr: absent(scorecode_backup_last_success_timestamp_seconds)
+        for: 26h
+        labels: { severity: page }
+        annotations:
+          summary: No backup has reported success since monitoring started
+          runbook: docs/runbooks/backup-and-restore.md
+
+  - name: security
+    rules:
+      - alert: ScoreCodeLoginFailureSpike
+        expr: sum(rate(scorecode_logins_total{outcome=~"failed|rejected"}[5m])) * 60 > 120
+        for: 10m
+        labels: { severity: warn }
+        annotations:
+          summary: "{{ $value | humanize }} failed sign-ins per minute (credential stuffing?)"
+          runbook: docs/runbooks/security-incident.md

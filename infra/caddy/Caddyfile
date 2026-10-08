@@ -1,5 +1,8 @@
-# Production-style edge for the container stack: serves the three SPAs by Host and proxies the API.
-# TLS is terminated in front of this (Cloudflare / a TLS Caddy in Phase 16); this listens on :8080.
+# The edge: serves the three SPAs by Host and proxies the API. One file for every environment:
+#   local / CI   (defaults)  http://*.localhost:8080, no TLS
+#   production   SCHEME=https LISTEN_PORT=443 TLS_MODE=files TLS_CERT_FILE=... TLS_KEY_FILE=...
+#                (a Cloudflare origin certificate for *.domain and domain; Cloudflare proxies with
+#                "Full (strict)", and TRUSTED_PROXIES lists Cloudflare's ranges: docs/runbooks/deploy.md)
 {
 	auto_https off
 	admin off
@@ -46,6 +49,15 @@
 	header @hashed Cache-Control "public, max-age=31536000, immutable"
 }
 
+# TLS from certificate files (production), or none (behind localhost). HSTS only where TLS is real; the API
+# sets its own when cookies are secure, so this is a default.
+(tls_none) {
+}
+(tls_files) {
+	tls {$TLS_CERT_FILE} {$TLS_KEY_FILE}
+	header ?Strict-Transport-Security "max-age=31536000; includeSubDomains"
+}
+
 (spa) {
 	# A hashed asset that no longer exists (an old tab after a deploy) is a 404, not index.html cached for
 	# a year under an asset's name. Not cached either: a rollback may bring that name back.
@@ -74,12 +86,14 @@
 	}
 }
 
-http://admin.{$BASE_DOMAIN:localhost}:8080 {
+{$SCHEME:http}://admin.{$BASE_DOMAIN:localhost}:{$LISTEN_PORT:8080} {
+	import tls_{$TLS_MODE:none}
 	import common
 	import spa platform
 }
 
-http://verify.{$BASE_DOMAIN:localhost}:8080 {
+{$SCHEME:http}://verify.{$BASE_DOMAIN:localhost}:{$LISTEN_PORT:8080} {
+	import tls_{$TLS_MODE:none}
 	import common
 	handle {
 		reverse_proxy {
@@ -93,16 +107,19 @@ http://verify.{$BASE_DOMAIN:localhost}:8080 {
 	}
 }
 
-http://files.{$BASE_DOMAIN:localhost}:8080 {
+{$SCHEME:http}://files.{$BASE_DOMAIN:localhost}:{$LISTEN_PORT:8080} {
+	import tls_{$TLS_MODE:none}
 	reverse_proxy {$S3_UPSTREAM:s3:8333}
 }
 
-http://{$BASE_DOMAIN:localhost}:8080, http://www.{$BASE_DOMAIN:localhost}:8080 {
+{$SCHEME:http}://{$BASE_DOMAIN:localhost}:{$LISTEN_PORT:8080}, {$SCHEME:http}://www.{$BASE_DOMAIN:localhost}:{$LISTEN_PORT:8080} {
+	import tls_{$TLS_MODE:none}
 	import common
 	import spa site
 }
 
-http://*.{$BASE_DOMAIN:localhost}:8080 {
+{$SCHEME:http}://*.{$BASE_DOMAIN:localhost}:{$LISTEN_PORT:8080} {
+	import tls_{$TLS_MODE:none}
 	import common
 	import spa tenant
 }

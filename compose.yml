@@ -39,6 +39,8 @@ services:
       SCORECODE_MIGRATOR_PASSWORD: migrator-dev-pw
       SCORECODE_APP_PASSWORD: app-dev-pw
       SCORECODE_PLATFORM_PASSWORD: platform-dev-pw
+      SCORECODE_BACKUP_PASSWORD: backup-dev-pw    # optional roles (infra/postgres/init/01-roles.sh)
+      SCORECODE_MONITOR_PASSWORD: monitor-dev-pw
     ports: ["127.0.0.1:55432:5432"]
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -126,6 +128,70 @@ services:
     depends_on:
       api: { condition: service_healthy }
 
+  # ---- operations (profile "ops"): nightly encrypted backups (P16.4) ------------------------------
+  backup:
+    profiles: [ops]
+    build: { context: ./infra/backup }
+    image: scorecode/backup:dev
+    environment:
+      PGHOST: postgres
+      PGDATABASE: scorecode
+      PGUSER: scorecode_backup
+      PGPASSWORD: backup-dev-pw
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:-}  # age public key (age-keygen -y key.txt)
+      BACKUP_S3_URI: s3://scorecode-backups/dev
+      BACKUP_S3_ENDPOINT: http://s3:8333  # production: a different provider or region
+      BACKUP_FILES_S3_URI: s3://scorecode-dev
+      AWS_ACCESS_KEY_ID: scorecode
+      AWS_SECRET_ACCESS_KEY: scorecode-dev-secret
+      AWS_DEFAULT_REGION: us-east-1
+      PUSHGATEWAY_URL: http://pushgateway:9091
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # ---- monitoring (profile "monitoring"): Prometheus, Alertmanager → Mailpit, Grafana (P16.5) -------
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v3.4.1
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=15d"]
+    volumes:
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - promdata:/prometheus
+    ports: ["127.0.0.1:59090:9090"]
+
+  alertmanager:
+    profiles: [monitoring]
+    image: prom/alertmanager:v0.28.1
+    volumes:
+      - ./infra/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports: ["127.0.0.1:59093:9093"]
+
+  pushgateway:
+    profiles: [monitoring]
+    image: prom/pushgateway:v1.11.1
+
+  postgres-exporter:
+    profiles: [monitoring]
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+    environment:
+      DATA_SOURCE_NAME: postgresql://scorecode_monitor:monitor-dev-pw@postgres:5432/scorecode?sslmode=disable
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana-oss:12.0.2
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: grafana-dev-pw
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    volumes:
+      - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["127.0.0.1:53000:3000"]
+
 volumes:
   pgdata:
   s3data:
+  promdata:

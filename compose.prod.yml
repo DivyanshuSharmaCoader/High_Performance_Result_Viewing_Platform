@@ -1,0 +1,156 @@
+# ScoreCode on one VM: the demo / first-customer topology (docs/14 N2, P16.2).
+#
+#   SCORECODE_VERSION=v1.2.3 docker compose -f compose.prod.yml --env-file env/deploy.env up -d --wait
+#
+# The images are the ones CI built and scanned (release.yml), pulled from GHCR by version. Nothing builds
+# here. Settings and secrets live in env/*.env on the server (dir 700, files 600, never committed;
+# templates in infra/ops/env/). Each container gets only its own file: the API never sees the backup
+# keys, and the database server never sees the mail password.
+# Deploys go through infra/ops/deploy.sh: back up, migrate (expand-only), restart, smoke test, roll back
+# on failure.
+#
+# Hardening (x-hardened): read-only root filesystem with a private /tmp, no Linux capabilities, no
+# privilege escalation. The API, worker, backup, Redis and monitoring run as non-root users. PostgreSQL
+# keeps its image's own entrypoint (it starts as root to fix ownership, then drops to postgres). Only the
+# edge publishes a port: 443. HTTP is redirected by Cloudflare ("Always Use HTTPS"), and HSTS keeps
+# browsers on HTTPS.
+name: scorecode
+
+x-hardened: &hardened
+  restart: unless-stopped
+  read_only: true
+  tmpfs: ["/tmp"]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: ["ALL"]
+  logging:
+    driver: json-file
+    options: { max-size: "20m", max-file: "5" }
+
+x-backend: &backend
+  <<: *hardened
+  image: ${REGISTRY:-ghcr.io/divyanshusharmacoader}/scorecode-backend:${SCORECODE_VERSION:?set SCORECODE_VERSION}
+  env_file: [env/app.env]
+  environment:
+    SCORECODE_ENV: production
+
+services:
+  # Self-hosted for the demo VM. With managed PostgreSQL (small production, docs/14 N3), remove this
+  # service and point the SCORECODE_DATABASE_URL_* settings at the managed instance.
+  postgres:
+    image: ${REGISTRY:-ghcr.io/divyanshusharmacoader}/scorecode-postgres:${SCORECODE_VERSION:?}
+    restart: unless-stopped
+    command: ["postgres", "-c", "shared_preload_libraries=pg_stat_statements", "-c", "max_connections=200"]
+    env_file: [env/db.env]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    shm_size: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d scorecode"]
+      interval: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  # Holds no truth (docs/11 §2.5): sessions and caches fall back to the database without it.
+  redis:
+    <<: *hardened
+    image: redis:7-alpine
+    user: "999:999"  # the image's redis user, so its entrypoint needs no capabilities to switch
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+
+  migrate:
+    <<: *backend
+    restart: "no"
+    command: ["scorecode", "migrate"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api:
+    <<: *backend
+    command: ["scorecode", "api", "--host", "0.0.0.0", "--port", "8000", "--workers", "${API_WORKERS:-2}"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/readyz', timeout=2).status==200 else 1)"]
+      interval: 5s
+      retries: 30
+
+  worker:
+    <<: *backend
+    command: ["scorecode", "worker"]
+    environment:
+      SCORECODE_ENV: production
+      SCORECODE_PDF_PROCESSES: ${PDF_PROCESSES:-2}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  proxy:
+    <<: *hardened
+    image: ${REGISTRY:-ghcr.io/divyanshusharmacoader}/scorecode-proxy:${SCORECODE_VERSION:?}
+    read_only: false  # Caddy keeps its state (OCSP staples) under /data; nothing else is written
+    cap_add: ["NET_BIND_SERVICE"]
+    ports: ["443:443"]
+    environment:
+      SCHEME: https
+      LISTEN_PORT: "443"
+      TLS_MODE: files
+      TLS_CERT_FILE: /certs/origin.pem
+      TLS_KEY_FILE: /certs/origin-key.pem
+      BASE_DOMAIN: ${BASE_DOMAIN:?set BASE_DOMAIN}
+      FILES_ORIGIN: https://files.${BASE_DOMAIN}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-private_ranges}
+    volumes:
+      - ./certs:/certs:ro
+      - caddydata:/data
+    depends_on:
+      api: { condition: service_healthy }
+
+  # Nightly encrypted dump to the second storage (P16.4); `docker compose run --rm backup backup.sh` now.
+  backup:
+    <<: *hardened
+    image: ${REGISTRY:-ghcr.io/divyanshusharmacoader}/scorecode-backup:${SCORECODE_VERSION:?}
+    env_file: [env/backup.env]
+    environment:
+      HOME: /tmp
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # ---- monitoring (profile "monitoring"; or use a hosted Grafana/Prometheus) -------------------------
+  prometheus:
+    profiles: [monitoring]
+    <<: *hardened
+    image: prom/prometheus:v3.4.1
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=30d"]
+    volumes:
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - promdata:/prometheus
+  alertmanager:
+    profiles: [monitoring]
+    <<: *hardened
+    image: prom/alertmanager:v0.28.1
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
+    volumes:
+      - ./infra/monitoring/alertmanager.prod.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./secrets:/run/secrets:ro
+      - amdata:/alertmanager
+  pushgateway:
+    profiles: [monitoring]
+    <<: *hardened
+    image: prom/pushgateway:v1.11.1
+  postgres-exporter:
+    profiles: [monitoring]
+    <<: *hardened
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.17.1
+    env_file: [env/monitoring.env]  # DATA_SOURCE_NAME with the scorecode_monitor role
+
+volumes:
+  pgdata:
+  caddydata:
+  promdata:
+  amdata:

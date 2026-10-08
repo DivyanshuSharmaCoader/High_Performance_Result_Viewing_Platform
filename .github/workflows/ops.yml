@@ -1,0 +1,215 @@
+# Operations checks on a GitHub runner (Phase 16): the alert pipeline end to end, and a backup → disaster →
+# restore drill with a measured RTO. Manual, weekly, and when the operations files change.
+#
+#   gh workflow run ops.yml
+name: Ops
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 2 * * 2"  # Tuesdays, 02:41 UTC
+  push:
+    paths:
+      - "infra/monitoring/**"
+      - "infra/backup/**"
+      - "infra/ops/**"
+      - "infra/postgres/**"
+      - ".github/workflows/ops.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  alerts:
+    name: Monitoring · a real alert reaches the inbox (P16.5)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check the configuration and unit-test the alert rules
+        run: |
+          set -euo pipefail
+          m="$PWD/infra/monitoring"
+          docker run --rm -v "$m:/etc/prometheus:ro" --entrypoint promtool prom/prometheus:v3.4.1 \
+            check config /etc/prometheus/prometheus.yml
+          docker run --rm -v "$m:/etc/prometheus:ro" -w /etc/prometheus --entrypoint promtool prom/prometheus:v3.4.1 \
+            test rules alerts.test.yml
+          for f in alertmanager.yml alertmanager.prod.example.yml; do
+            docker run --rm -v "$m:/etc/alertmanager:ro" --entrypoint amtool prom/alertmanager:v0.28.1 \
+              check-config "/etc/alertmanager/$f"
+          done
+          python3 -c "import json; json.load(open('$m/grafana/dashboards/scorecode-overview.json'))"
+      - name: Start the stack with monitoring
+        run: |
+          docker compose --profile app --profile monitoring up -d --build --wait
+          docker compose exec -T api scorecode seed --students 20
+      - name: Every target is scraped, and the API's workers report as one
+        run: |
+          set -euo pipefail
+          q() { curl -fsS --get --data-urlencode "query=$1" http://127.0.0.1:59090/api/v1/query | python3 -c "import json,sys; r=json.load(sys.stdin)['data']['result']; print(r[0]['value'][1] if r else '')"; }
+          for i in $(seq 1 30); do curl -fsS -o /dev/null -H 'Host: thapar.localhost:8080' http://127.0.0.1:8080/api/v1/tenant/config; done
+          for i in $(seq 1 40); do
+            [ "$(q 'count(up == 1)')" -ge 5 ] 2>/dev/null && break
+            sleep 5
+          done
+          curl -fsS http://127.0.0.1:59090/api/v1/targets | python3 -c "
+          import json, sys
+          for t in json.load(sys.stdin)['data']['activeTargets']:
+              print(t['labels']['job'], t['scrapeUrl'], t['health'], t.get('lastError', ''))
+          " | tee targets.txt
+          for job in api worker postgres pushgateway prometheus; do
+            grep -q "^$job .* up" targets.txt || { echo "target $job is not up"; exit 1; }
+          done
+          for i in $(seq 1 20); do [ -n "$(q 'scorecode_jobs_in_state')" ] && break; sleep 5; done
+          echo "config requests counted: $(q 'sum(scorecode_http_requests_total{route_class="config"})')"
+          [ "$(q 'sum(scorecode_http_requests_total{route_class="config"})' | cut -d. -f1)" -ge 30 ]
+          [ -n "$(q 'scorecode_jobs_in_state')" ] || { echo "worker queue gauges missing"; exit 1; }
+          curl -fsS -u admin:grafana-dev-pw "http://127.0.0.1:53000/api/search?query=ScoreCode%20overview" | grep -q scorecode-overview
+          echo "Grafana dashboard provisioned"
+      - name: Stop the API and wait for the alert email
+        run: |
+          set -euo pipefail
+          stopped=$(date +%s)
+          docker compose stop api
+          echo "API stopped at $(date -u +%T)"
+          for i in $(seq 1 60); do
+            n=$(curl -fsS --get --data-urlencode 'query=subject:"ScoreCodeAPIDown"' http://127.0.0.1:58025/api/v1/search | python3 -c "import json,sys; print(json.load(sys.stdin)['messages_count'])")
+            [ "$n" -gt 0 ] && break
+            sleep 10
+          done
+          [ "$n" -gt 0 ] || { echo "no alert email within 10 minutes"; curl -s http://127.0.0.1:59093/api/v2/alerts; exit 1; }
+          received=$(date +%s)
+          mkdir -p evidence
+          id=$(curl -fsS --get --data-urlencode 'query=subject:"ScoreCodeAPIDown"' http://127.0.0.1:58025/api/v1/search | python3 -c "import json,sys; print(json.load(sys.stdin)['messages'][0]['ID'])")
+          curl -fsS "http://127.0.0.1:58025/api/v1/message/$id" | python3 -c "
+          import json, sys
+          m = json.load(sys.stdin)
+          print('From:', m['From']['Address']); print('To:', ', '.join(t['Address'] for t in m['To'])); print('Subject:', m['Subject']); print(); print(m['Text'][:3000])
+          " | tee evidence/alert-email.txt
+          {
+            echo "### Alert received"
+            echo "ScoreCodeAPIDown: API stopped at $(date -u -d @$stopped +%T), email in Mailpit at $(date -u -d @$received +%T) ($(( received - stopped )) s: 1 min 'for', scrape and evaluation intervals, group wait)."
+            echo '```'; head -12 evidence/alert-email.txt; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "$(( received - stopped ))" > evidence/seconds-to-email.txt
+      - name: Start it again and wait for the resolved email
+        run: |
+          set -euo pipefail
+          docker compose --profile app start api
+          for i in $(seq 1 60); do
+            n=$(curl -fsS --get --data-urlencode 'query=subject:"RESOLVED" subject:"ScoreCodeAPIDown"' http://127.0.0.1:58025/api/v1/search | python3 -c "import json,sys; print(json.load(sys.stdin)['messages_count'])")
+            [ "$n" -gt 0 ] && break
+            sleep 10
+          done
+          [ "$n" -gt 0 ] || { echo "no resolved email within 10 minutes"; exit 1; }
+          echo "Resolved email received." | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: alerts-${{ github.run_id }}
+          path: |
+            evidence
+            targets.txt
+          retention-days: 30
+      - name: Logs on failure
+        if: failure()
+        run: docker compose --profile app --profile monitoring logs --tail 100 prometheus alertmanager api worker
+
+  restore-drill:
+    name: Backups · encrypted backup, lose the database, restore, measure RTO (P16.4)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      AGE_DIR: ${{ runner.temp }}/age
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+        with: { enable-cache: true, cache-dependency-glob: backend/uv.lock }
+      - name: Start the stack
+        run: |
+          docker compose --profile app --profile ops up -d --build --wait
+          docker compose exec -T api scorecode seed
+      - name: Realistic data (8,000 students, published), then quiesce the worker
+        working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run python scripts/loadtest_data.py --students 8000 --sessions 50 --out ../benchmarks/data
+          docker compose stop worker  # a still database, so before/after can be compared exactly
+      - name: A key pair for this drill (the private key stays on the runner)
+        run: |
+          mkdir -p "$AGE_DIR" && chmod 700 "$AGE_DIR"
+          docker run --rm --entrypoint age-keygen scorecode/backup:dev > "$AGE_DIR/key.txt" 2>/dev/null
+          chmod 600 "$AGE_DIR/key.txt"
+          grep -o 'age1[0-9a-z]*' "$AGE_DIR/key.txt" | head -1 > "$AGE_DIR/recipient.txt"
+          test -s "$AGE_DIR/recipient.txt"
+      - name: Fingerprint the database
+        run: infra/ops/db-fingerprint.sh > before.txt && wc -l before.txt && head -5 before.txt
+      - name: Backup
+        run: |
+          set -euo pipefail
+          docker compose run --rm --entrypoint aws backup --endpoint-url http://s3:8333 s3 mb s3://scorecode-backups || true
+          docker compose run --rm -e BACKUP_AGE_RECIPIENT="$(cat "$AGE_DIR/recipient.txt")" backup backup.sh | tee backup.json
+          # What the second storage holds is ciphertext: an age header, no pg_dump header, no names.
+          key=$(python3 -c "import json; print(json.load(open('backup.json'))['backup'])")
+          docker compose run --rm --entrypoint aws backup --endpoint-url http://s3:8333 s3 cp "$key" - > stored.bin
+          head -c 21 stored.bin | grep -q '^age-encryption.org/v1' || { echo "stored object is not age ciphertext"; exit 1; }
+          ! grep -aq 'PGDMP' stored.bin || { echo "stored object contains a plain pg_dump"; exit 1; }
+          echo "stored object: $(wc -c < stored.bin) bytes of age ciphertext"; rm stored.bin
+      - name: Disaster — the database server and its volume are gone
+        run: |
+          date +%s > disaster.txt
+          docker compose stop api proxy
+          docker compose rm -sf postgres
+          docker volume rm scorecode_pgdata
+          echo "database destroyed at $(date -u +%T)"
+      - name: Restore from the second storage
+        run: |
+          set -euo pipefail
+          docker compose up -d --wait postgres  # a fresh server: roles and an empty database (init script)
+          docker compose run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -e PGUSER=scorecode_migrator -e PGPASSWORD=migrator-dev-pw \
+            -e BACKUP_AGE_IDENTITY=/key/key.txt -v "$AGE_DIR:/key:ro" \
+            backup restore.sh | tee restore.json
+          infra/ops/db-fingerprint.sh > after.txt
+          if diff -u before.txt after.txt > fingerprint.diff; then echo "fingerprints match: $(wc -l < before.txt) lines"; else cat fingerprint.diff; exit 1; fi
+      - name: Service back — the application starts on the restored database and passes the smoke test
+        run: |
+          set -euo pipefail
+          docker compose --profile app up -d --wait --no-build
+          infra/ops/smoke.sh
+          date +%s > recovered.txt
+      - name: Drill log
+        if: always()
+        run: |
+          python3 - <<'PY' | tee drill-log.md >> "$GITHUB_STEP_SUMMARY"
+          import json, pathlib, datetime, subprocess
+          def read(p): return pathlib.Path(p).read_text().strip() if pathlib.Path(p).exists() else ""
+          b = json.loads(read("backup.json") or "{}"); r = json.loads(read("restore.json") or "{}")
+          t0, t1 = read("disaster.txt"), read("recovered.txt")
+          fmt = lambda s: datetime.datetime.fromtimestamp(int(s), datetime.UTC).strftime("%H:%M:%S UTC") if s else "—"
+          print("### Restore drill")
+          print(f"- Commit {subprocess.run(['git','rev-parse','--short','HEAD'],capture_output=True,text=True).stdout.strip()}, run ${{ github.run_id }}")
+          print(f"- Data: {read('before.txt').count(chr(10)) + 1 if read('before.txt') else 0} fingerprint lines (row counts per table, checksums of results, statistics, verification records)")
+          print(f"- Backup: {b.get('bytes', 0) / 1e6:.1f} MB encrypted with age, {b.get('seconds', '?')} s, `{b.get('backup', '?')}`")
+          print(f"- Disaster at {fmt(t0)}: database container and volume removed")
+          print(f"- Restore (download, decrypt, pg_restore): {r.get('seconds', '?')} s")
+          print(f"- Fingerprints after restore: {'identical' if read('fingerprint.diff') == '' and read('after.txt') else 'DIFFERENT (see fingerprint.diff)'}")
+          print(f"- Service back (application up, smoke test passed) at {fmt(t1)}")
+          if t0 and t1: print(f"- **Measured RTO: {int(t1) - int(t0)} s** (from losing the database to passing the smoke test)")
+          print("- RPO on this setup: up to 24 h (nightly dumps). Managed PostgreSQL with PITR: about 5 min (docs/10 §12).")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: restore-drill-${{ github.run_id }}
+          path: |
+            drill-log.md
+            backup.json
+            restore.json
+            before.txt
+            after.txt
+            fingerprint.diff
+          retention-days: 90
+      - name: Logs on failure
+        if: failure()
+        run: docker compose --profile app --profile ops logs --tail 100 postgres backup api migrate
