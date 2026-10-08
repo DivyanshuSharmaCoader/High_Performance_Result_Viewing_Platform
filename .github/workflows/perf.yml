@@ -28,9 +28,8 @@ on:
         description: "Failure to inject (P14.5): none, redis, postgres (during the first B run) or worker (while marksheets render)"
         default: "none"
 
-concurrency:
-  group: perf
-  cancel-in-progress: false
+# No concurrency group: each run gets its own runner VM, so runs don't disturb each other (and a group
+# would cancel queued runs).
 
 permissions:
   contents: read
