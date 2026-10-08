@@ -166,3 +166,33 @@ async def test_students_and_faculty_without_permission_get_no_two_step_controls(
             await c.post("/api/v1/me/mfa/setup")
         ).status_code == 200  # any staff member may protect themselves
         assert (await c.post(f"/api/v1/admin/staff/{faculty}/mfa/reset")).status_code in (403, 422)
+
+
+async def test_reencrypting_after_a_secret_key_change_keeps_two_step_working(app, infra) -> None:
+    """docs/runbooks/security-incident.md: rotate SCORECODE_SECRET_KEY without locking anyone out."""
+    from sqlalchemy import text
+
+    from app.core.security import FieldCipher
+    from app.modules.identity.key_rotation import reencrypt_secrets
+
+    old_key = "the-previous-secret-key-0123456789abcdef"
+    t = await make_tenant(infra)
+    async with infra.db.uow(t.id) as uow:
+        user_id = (await uow.session.execute(text("SELECT id FROM users LIMIT 1"))).scalar_one()
+        await uow.session.execute(
+            text("UPDATE users SET totp_secret_enc = :v WHERE id = :id"),
+            {"v": FieldCipher(old_key).encrypt("JBSWY3DPEHPK3PXP"), "id": user_id},
+        )
+    dry = await reencrypt_secrets(infra, old_key, dry_run=True)
+    assert dry.reencrypted >= 1 and not dry.unreadable
+    report = await reencrypt_secrets(infra, old_key)
+    assert report.reencrypted == dry.reencrypted
+    async with infra.db.uow(t.id) as uow:
+        stored = (
+            await uow.session.execute(
+                text("SELECT totp_secret_enc FROM users WHERE id = :id"), {"id": user_id}
+            )
+        ).scalar_one()
+    assert infra.cipher.decrypt(stored) == "JBSWY3DPEHPK3PXP"  # readable with the current key now
+    again = await reencrypt_secrets(infra, old_key)
+    assert again.reencrypted == 0 and again.already_new >= 1  # safe to run twice

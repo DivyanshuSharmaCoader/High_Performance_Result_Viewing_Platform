@@ -117,6 +117,30 @@ def cmd_jobs(args: argparse.Namespace) -> None:
     asyncio.run(_jobs(args))
 
 
+async def _reencrypt(dry_run: bool) -> int:
+    from app.core.container import Infra
+    from app.modules.identity.key_rotation import reencrypt_secrets
+
+    old = os.environ.get("SCORECODE_OLD_SECRET_KEY", "")
+    if len(old) < 32:
+        print("set SCORECODE_OLD_SECRET_KEY to the previous secret key (SCORECODE_SECRET_KEY is the new one)")
+        return 2
+    infra = Infra.build(get_settings(), app_name="scorecode-cli")
+    try:
+        report = await reencrypt_secrets(infra, old, dry_run=dry_run)
+    finally:
+        await infra.close()
+    verb = "would re-encrypt" if dry_run else "re-encrypted"
+    print(f"{verb} {report.reencrypted}; already on the new key {report.already_new}")
+    for item in report.unreadable:
+        print(f"unreadable with either key (left as is): {item}")
+    return 1 if report.unreadable else 0
+
+
+def cmd_reencrypt_secrets(args: argparse.Namespace) -> None:
+    sys.exit(asyncio.run(_reencrypt(args.dry_run)))
+
+
 def cmd_worker(_: argparse.Namespace) -> None:
     from app.worker import main as worker_main
 
@@ -182,6 +206,13 @@ def main(argv: list[str] | None = None) -> None:
     retry = jobs_sub.add_parser("retry", help="run dead jobs again from attempt 0")
     retry.add_argument("job_ids", nargs="+")
     jobs.set_defaults(fn=cmd_jobs)
+
+    rotate = sub.add_parser(
+        "reencrypt-secrets",
+        help="after changing SCORECODE_SECRET_KEY: re-encrypt two-step secrets from SCORECODE_OLD_SECRET_KEY",
+    )
+    rotate.add_argument("--dry-run", action="store_true")
+    rotate.set_defaults(fn=cmd_reencrypt_secrets)
 
     args = parser.parse_args(argv)
     args.fn(args)

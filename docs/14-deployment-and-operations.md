@@ -158,7 +158,16 @@ Redis failure → `readyz` stays **green** (degraded mode), reported in deep hea
 | Security | spike in login failures; RLS policy violation errors (should be zero) | warn/page |
 
 ### Runbooks
-`docs/runbooks/` (created during Phase 16): DB restore, Redis outage, stuck publication, rollback deploy, tenant data export/deletion, incident communication template.
+[docs/runbooks/](runbooks/README.md) (P16.6) covers: API down, database outage, Redis outage, stuck publication and background work, result day, backup and restore (with the drill log), deploy and roll back (including installing a server), security incident (rotation of every secret), tenant offboarding, and incident templates. Every alert names its runbook.
+
+### As built (Phase 16)
+| Piece | Where | Verified |
+|---|---|---|
+| Monitoring | `compose.yml` profile `monitoring`: Prometheus (API and worker found by DNS), Alertmanager, Pushgateway, postgres-exporter, Grafana with a provisioned dashboard | `ops.yml` `alerts` job: rule unit tests (promtool); every target up; the API is stopped and the real ScoreCodeAPIDown email arrives in Mailpit, then the resolved one |
+| Metrics with several workers | prometheus_client multiprocess mode when `--workers > 1`; queue gauges from `jobs_stats()` | `test_metrics_multiprocess.py`, `test_kernel.py` |
+| Backups | `infra/backup`: `pg_dump` → age (public key) → second storage, nightly, success pushed for the alert | `ops.yml` `restore-drill`: destroy the database, restore, compare fingerprints (data and isolation posture), measure RTO |
+| Production topology | `compose.prod.yml`: GHCR images by version, one env file per role, read-only and capability-free containers; edge TLS from a Cloudflare origin certificate | `release.yml` rehearsal: install, upgrade with a backup, a broken release rolls back by itself, hardening checked |
+| CD | `release.yml` on `v*` tags: build, Trivy, push to GHCR, deploy after approval with `infra/ops/deploy.sh` | Rehearsal on CI; **a real server and domain are not verified** (D23) |
 
 ---
 
