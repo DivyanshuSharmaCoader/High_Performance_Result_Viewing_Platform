@@ -6,7 +6,7 @@
 // which wraps: docker run --rm --network scorecode_default -v "$PWD/benchmarks:/bench" grafana/k6 run \
 //                -e SCENARIO=A -e VARIANT=preauth /bench/k6/student-journey.js
 //
-// SCENARIO: A (100 VUs: ramp 1 min, hold 5 min) | B (1,000 VUs: 0→1,000 in 60 s, hold 5 min)
+// SCENARIO: A (100 VUs: ramp 1 min, hold 5 min) | B (1,000 VUs, or VUS: 0→1,000 in 60 s, hold 5 min)
 // VARIANT:  preauth (sessions made beforehand) | cold (each VU signs in first: the Argon2 path)
 import http from "k6/http";
 import { check, sleep } from "k6";
@@ -24,7 +24,8 @@ const users = new SharedArray("users", () => JSON.parse(open(__ENV.USERS_FILE ||
 const SHAPES = {
   smoke: { executor: "constant-vus", vus: 10, duration: "20s" },
   A: { executor: "ramping-vus", startVUs: 0, stages: [{ duration: "1m", target: 100 }, { duration: "5m", target: 100 }], gracefulRampDown: "15s" },
-  B: { executor: "ramping-vus", startVUs: 0, stages: [{ duration: "60s", target: 1000 }, { duration: "5m", target: 1000 }], gracefulRampDown: "15s" },
+  // VUS raises B's users (P14.4 needs a load that saturates one API container).
+  B: { executor: "ramping-vus", startVUs: 0, stages: [{ duration: "60s", target: Number(__ENV.VUS || 1000) }, { duration: "5m", target: Number(__ENV.VUS || 1000) }], gracefulRampDown: "15s" },
 };
 const ENDPOINTS = ["config", "me", "latest", "stats", "history", "csrf", "login"];
 
