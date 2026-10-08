@@ -235,3 +235,11 @@ def test_template_formats_identifier_columns_as_text_and_offers_cohort_choices()
     assert ws["A2"].number_format == "@"
     assert any('"CSE-G1,CSE-G2"' in (dv.formula1 or "") for dv in ws.data_validations.dataValidation)
     assert "How to fill" in wb.sheetnames
+
+
+def test_spreadsheets_are_parsed_with_defused_xml() -> None:
+    """XXE and entity-expansion protection (ASVS 5.5.2): openpyxl uses defusedxml when it's installed,
+    so it must be a runtime dependency (it used to arrive only through a dev tool)."""
+    import openpyxl.xml
+
+    assert openpyxl.xml.DEFUSEDXML is True

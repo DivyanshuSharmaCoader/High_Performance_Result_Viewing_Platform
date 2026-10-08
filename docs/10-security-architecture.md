@@ -11,12 +11,36 @@
 
 | Threat | Example | Primary controls |
 |---|---|---|
-| **S**poofing | Credential stuffing on student logins; phishing admin | Argon2id, rate limits + lockout, breached-password check, 2FA for admins (V1, mandatory for owners), host-only cookies |
+| **S**poofing | Credential stuffing on student logins; phishing admin | Argon2id, rate limits + lockout, breached-password check, two-step sign-in for staff (built in P15.5; see §1.1), host-only cookies |
 | **T**ampering | Faculty changes marks after approval; insider edits DB; forged marksheet | State-machine locks, maker–checker, append-only audit, content hashes, QR verification, immutable publications |
 | **R**epudiation | "I never published that" | Audit log with actor, IP, request id, before/after; hash chain (V1) |
 | **I**nformation disclosure | IDOR across students/tenants; results before publication; PII in logs; public S3 bucket | 5-layer tenant isolation, `/me` APIs, publication gate on read model, private buckets + signed URLs, log scrubbing |
 | **D**enial of service | Result-day flood; huge upload; expensive export loops | CDN, rate limits, upload size/row caps, per-tenant job concurrency, statement timeouts |
 | **E**levation of privilege | Faculty calls admin endpoint; student mass-assigns `role` | Server-side permission checks per route, explicit Pydantic input schemas (no mass assignment), RBAC tests |
+
+### 1.1 As built (P15.1 review, 2026-10-08)
+Each row below names the threat, the attack we expect against ScoreCode, the control that exists *in code*, and the evidence: a test, a measurement or a CI job. "Open" items are tracked below the table.
+
+| Threat | Concrete attack | Control as built | Evidence |
+|---|---|---|---|
+| S · credential stuffing on result day | Botnet replays leaked passwords against student logins | Argon2id (t=2, m=19 MiB) with bounded concurrency; failure bucket 60/min per **real client address** (Caddy-resolved `X-Real-IP`, never a CDN edge); per-account limit + progressive lockout; **breached-password check** (HIBP k-anonymity) on every new password | `test_auth.py` rate-limit/lockout tests; `test_client_address_comes_only_from_the_header_our_proxy_overwrites`; `test_breached_passwords.py`; k6 B-cold found and fixed shared-bucket bug |
+| S · admin account takeover | Phished owner password | **Two-step sign-in** for staff (TOTP, single-use codes, recovery codes); re-auth with both factors for publish/withdraw/role/ownership/revocation; owner's second factor not resettable by admins | `test_mfa.py` (4 mutations caught) |
+| S · forged marksheet / verifier fooled | Edited PDF, fake QR to look-alike domain | 128-bit random codes; verify page shows DB truth + PDF SHA-256; never data from the QR; status derived from the publication | `test_marksheets.py` lifecycle; E2E-4 compares the downloaded file's hash |
+| T · marks changed after approval | Faculty/admin edits marks once results are approved | Exam state machine; marks writers lock the exam row; approval rechecks the input hash; maker-checker | `test_results.py`, `test_marks.py` |
+| T · snapshot edited in the DB | Insider `UPDATE published_results` | App role lacks UPDATE; trigger refuses UPDATE/DELETE for **every** role incl. owner | `test_snapshots_cannot_be_changed_by_anyone` |
+| T · audit trail edited | Cover-up after a bad change | App role SELECT/INSERT only on `audit_logs`; written in the same transaction as the change | `test_kernel.py` append-only tests; `test_audit.py` (UPDATE refused) |
+| R · "I never did that" | Disputed publication/withdrawal/revocation | Audit with actor, IP (real client), request id, before/after, reason | Audit viewer filters + `test_audit.py` |
+| I · cross-tenant read | IDOR with another tenant's ids; replayed session cookie on another host | Host-bound tenant; RLS forced + fail-closed; composite FKs; ORM tenant criteria; isolation suite generated from the live route table | `test_isolation.py` (every route), `test_kernel.py` RLS coverage |
+| I · another student's result | Student swaps a publication id | Student APIs take identity from the session only; `no-store` | `test_publishing.py`, `test_marksheets.py` (same id → own marksheet) |
+| I · results before publication | Guess scheduled publication ids; verify a scheduled code | Read model gated by publication status; verify lookup treats scheduled/cancelled as unknown | `test_a_scheduled_publication_cannot_be_verified_until_it_goes_live` |
+| I · SSRF / local file read via PDFs | Name or template pointing at `http://169.254.169.254` or `file:///etc/passwd` | Sandboxed Jinja + autoescape; WeasyPrint fetcher serves `data:` only | `test_rendering_never_fetches_external_urls` (live server + control) |
+| I · PII in logs/emails | Marks in notification emails; secrets in logs | Emails carry links only; structured logging redacts secrets; delivery errors store exception type only | `test_notifications.py` (no marks in email), `test_core.py` redaction |
+| D · result-day overload | 1,000 students at once | Measured baselines; pool exhaustion → retryable 503; DB outage → retryable 503; SPA jittered retries; no polling of inbox counts | `benchmarks/results/2026-10-08-k6-*.md`; `test_connection_usage.py`; `test_outages.py` |
+| D · hostile uploads | Zip bomb XLSX, 1 M-row CSV, polyglot files | Magic-byte sniffing, size/row/column/uncompressed caps, streamed parsing, markup refused | `test_import_engine.py`, `test_imports.py` |
+| D · trial/sign-up abuse | Scripted sign-ups, repeat trials | Honeypot, per-IP limits, hashed identity signals with advisory locks | `test_trials.py`; sign-up honeypot in `test_admin_flows.py` |
+| E · faculty → admin | Faculty calls admin routes; mass-assigns `role` | Per-route permissions; `extra="forbid"` schemas; authz matrix over every route × role | `test_authz_matrix.py`, `test_mass_assignment_is_rejected` |
+
+**Open (tracked):** email bounce webhooks (provider choice, Phase 16); DAST against a deployed staging host (P15.4 runs ZAP against the CI stack instead); per-tenant policy to *require* two-step for administrators (today: available + nudged); WebAuthn/passkeys (V1).
 
 ---
 

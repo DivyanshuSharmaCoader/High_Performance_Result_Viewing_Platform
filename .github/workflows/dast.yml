@@ -1,0 +1,56 @@
+# OWASP ZAP baseline (passive) scan of the running stack (P15.4, docs/15 §4). Manual and weekly.
+#
+#   gh workflow run dast.yml
+#
+# Caddy routes by Host, so ZAP is given the hostnames (thapar.localhost, verify.localhost, ...) pointing at
+# the proxy container. Reports (HTML + JSON) for every host are uploaded; the summary lists alerts by risk.
+name: DAST
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"  # Mondays, 03:17 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  zap:
+    name: ZAP baseline · tenant, verify, site, console
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start the stack and seed demo tenants
+        run: |
+          docker compose --profile app up -d --build --wait
+          docker compose --profile app exec -T api scorecode seed
+      - name: Scan
+        run: |
+          set -euo pipefail
+          mkdir -p zap && chmod 777 zap
+          ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' scorecode-proxy-1)
+          hosts="--add-host thapar.localhost:$ip --add-host verify.localhost:$ip --add-host localhost:$ip --add-host admin.localhost:$ip"
+          for target in thapar.localhost:8080/login verify.localhost:8080/v localhost:8080/ admin.localhost:8080/login; do
+            name=$(echo "$target" | cut -d. -f1 | cut -d: -f1)
+            docker run --rm --network scorecode_default $hosts -v "$PWD/zap:/zap/wrk:rw" \
+              ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t "http://$target" -m 3 -I \
+              -r "$name.html" -J "$name.json" || true
+          done
+      - name: Summary
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import glob, json
+          print("### ZAP baseline alerts")
+          for f in sorted(glob.glob("zap/*.json")):
+              data = json.load(open(f))
+              for site in data.get("site", []):
+                  print(f"\n**{site.get('@name')}**\n")
+                  print("| Risk | Alert | Instances |\n|---|---|---|")
+                  for a in sorted(site.get("alerts", []), key=lambda a: -int(a.get("riskcode", 0))):
+                      print(f"| {a.get('riskdesc')} | {a.get('alert')} | {len(a.get('instances', []))} |")
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with: { name: zap-${{ github.run_id }}, path: zap, retention-days: 30 }
