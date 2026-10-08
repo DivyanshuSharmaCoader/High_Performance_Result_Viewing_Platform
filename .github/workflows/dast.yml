@@ -53,4 +53,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v7
         if: always()
-        with: { name: zap-${{ github.run_id }}, path: zap, retention-days: 30 }
+        with:
+          name: zap-${{ github.run_id }}
+          path: zap
+          retention-days: 30
