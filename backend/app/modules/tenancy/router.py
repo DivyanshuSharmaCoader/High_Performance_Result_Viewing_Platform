@@ -19,6 +19,7 @@ from app.modules.entitlements.catalogue import FEATURES, LIMIT_TO_USAGE_METRIC, 
 from app.modules.entitlements.service import EntitlementService
 from app.modules.entitlements.trial import TrialService
 from app.modules.identity.permissions import P
+from app.modules.publishing.read_cache import StudentReads
 from app.modules.tenancy import onboarding
 from app.modules.tenancy.models import TenantSettings
 
@@ -114,6 +115,8 @@ async def update_settings(
             after=d_after,
         )
         await BrandingService(infra).invalidate(uow, tenant)
+        if "student_stats" in d_after:
+            StudentReads(infra).forget_stats_level(uow)
     await uow.flush()
     return _out(s)
 

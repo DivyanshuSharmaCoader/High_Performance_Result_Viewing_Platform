@@ -46,6 +46,7 @@ from app.modules.documents.render import (
 )
 from app.modules.files.service import PDF, FileService
 from app.modules.publishing.models import Publication, PublishedResult
+from app.modules.publishing.read_cache import LivePublication
 from app.modules.tenancy.models import Tenant, TenantSettings
 from app.modules.verification.codes import grouped, new_code
 from app.modules.verification.models import VerificationRecord
@@ -313,7 +314,11 @@ class MarksheetService:
         return len(failed)
 
     async def link(
-        self, uow: UnitOfWork, publication: Publication, student_id: uuid.UUID, payload: dict[str, Any]
+        self,
+        uow: UnitOfWork,
+        publication: Publication | LivePublication,
+        student_id: uuid.UUID,
+        payload: dict[str, Any],
     ) -> MarksheetLink:
         doc = (
             await uow.session.scalars(

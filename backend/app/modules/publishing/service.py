@@ -37,6 +37,7 @@ from app.modules.grading.models import GradingScheme, GradingSchemeVersion
 from app.modules.identity.service import AuthService
 from app.modules.notifications.service import Notifier
 from app.modules.publishing.models import ExamStatistics, Publication, PublishedResult
+from app.modules.publishing.read_cache import LivePublication, StudentReads
 from app.modules.publishing.snapshot import (
     ExamInfo,
     Institution,
@@ -57,7 +58,7 @@ MIN_LEAD = timedelta(minutes=2)  # a scheduled time must be at least this far ah
 
 @dataclass
 class MyResult:
-    publication: Publication
+    publication: LivePublication
     payload: dict[str, Any]
     revised: bool  # an earlier version of this exam was published before
 
@@ -213,6 +214,7 @@ class PublishingService:
             self._move(exam, ExamAction.PUBLISH)
             run.status = "published"
             await Notifier.schedule_publication(uow, pub.id)
+            StudentReads(self.infra).forget_live(uow)
         else:
             self._move(exam, ExamAction.SCHEDULE)
             await enqueue(
@@ -400,6 +402,7 @@ class PublishingService:
                 update(ResultRun).where(ResultRun.id == pub.result_run_id).values(status="published")
             )
             await Notifier.schedule_publication(uow, pub.id)
+            StudentReads(self.infra).forget_live(uow)
             await uow.flush()
             await record(
                 uow,
@@ -448,6 +451,7 @@ class PublishingService:
             raise InvalidState("Only live results can be withdrawn.")
         t = transition_for(exam.status, ExamAction.WITHDRAW, reason)
         pub.status, pub.withdrawn_at, pub.withdraw_reason = "withdrawn", utcnow(), reason.strip()
+        StudentReads(self.infra).forget_live(uow)
         exam.status, exam.version = t.target.value, exam.version + 1
         # The approval still stands: the same results can be published again as a new version.
         await uow.session.execute(
@@ -468,48 +472,33 @@ class PublishingService:
         return pub
 
     # ---- students -------------------------------------------------------------------------------
-    @staticmethod
-    async def me(uow: UnitOfWork, principal: Principal) -> Student:
-        student = (
-            await uow.session.scalars(select(Student).where(Student.user_id == principal.user_id))
-        ).one_or_none()
-        if student is None:
+    # Every read goes through StudentReads: immutable rows are cached per tenant and student, the list of
+    # live publications for 5 s at most (read_cache.py). Identity comes only from the session.
+    async def student_id(self, uow: UnitOfWork, principal: Principal) -> uuid.UUID:
+        sid = await StudentReads(self.infra).student_id(uow, principal.user_id)
+        if sid is None:
             raise NotFound("No student record is linked to this account.")
-        return student
+        return sid
 
     async def my_results(self, uow: UnitOfWork, principal: Principal) -> list[MyResult]:
         """The live version of every published exam of this student, newest first."""
-        student = await self.me(uow, principal)
-        rows = (
-            await uow.session.execute(
-                select(Publication, PublishedResult.payload)
-                .join(
-                    PublishedResult,
-                    (PublishedResult.publication_id == Publication.id)
-                    & (PublishedResult.student_id == student.id),
-                )
-                .where(Publication.status == "published")
-                .order_by(Publication.published_at.desc(), Publication.id)
-            )
-        ).all()
-        return [MyResult(pub, payload, pub.version > 1) for pub, payload in rows]
+        reads = StudentReads(self.infra)
+        sid = await self.student_id(uow, principal)
+        out = []
+        for pub in await reads.live(uow):
+            payload = await reads.payload(uow, pub.id, sid)
+            if payload is not None:
+                out.append(MyResult(pub, payload, pub.version > 1))
+        return out
 
     async def my_result(self, uow: UnitOfWork, principal: Principal, publication_id: uuid.UUID) -> MyResult:
-        student = await self.me(uow, principal)
-        row = (
-            await uow.session.execute(
-                select(Publication, PublishedResult.payload)
-                .join(PublishedResult, PublishedResult.publication_id == Publication.id)
-                .where(
-                    Publication.id == publication_id,
-                    Publication.status == "published",
-                    PublishedResult.student_id == student.id,
-                )
-            )
-        ).first()
-        if row is None:
+        reads = StudentReads(self.infra)
+        sid = await self.student_id(uow, principal)
+        pub = next((p for p in await reads.live(uow) if p.id == publication_id), None)
+        payload = await reads.payload(uow, publication_id, sid) if pub is not None else None
+        if pub is None or payload is None:
             raise NotFound("Result not found")
-        return MyResult(row[0], row[1], row[0].version > 1)
+        return MyResult(pub, payload, pub.version > 1)
 
     async def my_stats(
         self, uow: UnitOfWork, principal: Principal, publication_id: uuid.UUID
@@ -517,10 +506,7 @@ class PublishingService:
         from app.modules.publishing.snapshot import student_stats
 
         mine = await self.my_result(uow, principal, publication_id)  # 404 unless it's this student's
-        level = (await uow.session.scalars(select(TenantSettings.student_stats))).one()
-        stats = (
-            await uow.session.scalars(
-                select(ExamStatistics.stats).where(ExamStatistics.publication_id == mine.publication.id)
-            )
-        ).one_or_none()
+        reads = StudentReads(self.infra)
+        level = await reads.stats_level(uow)
+        stats = await reads.stats(uow, mine.publication.id)
         return student_stats(stats or {}, level)

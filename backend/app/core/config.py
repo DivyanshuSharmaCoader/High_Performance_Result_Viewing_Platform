@@ -117,6 +117,7 @@ class Settings(BaseSettings):
     # --- Jobs -------------------------------------------------------------------------------------
     worker_queues: str = "imports,processing,pdf,publishing,notifications,maintenance"
     worker_concurrency: int = 4
+    student_read_cache: bool = True  # cache immutable student reads (P14.3); off for before/after runs
     pdf_processes: int = 2  # marksheet layout processes per worker; 0 = in a thread (P14.3)
     worker_poll_interval_s: float = 1.0
     job_lease_s: int = 120

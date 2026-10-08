@@ -16,9 +16,16 @@ from tests.integration.test_results import Exam
 pytestmark = pytest.mark.integration
 
 
-async def _stats_level(infra, e: Exam, level: str) -> None:
-    async with infra.db.uow(e.x.t.id) as uow:
-        await uow.session.execute(text("UPDATE tenant_settings SET student_stats = :l"), {"l": level})
+async def _stats_level(app, e: Exam, level: str) -> None:
+    """Through the settings API, as an institution would (it also refreshes the read cache)."""
+    from app.modules.tenancy.router import SETTINGS_FIELDS
+
+    async with Client(app, e.x.t.host) as c:
+        await c.login(e.x.t.owner_email)
+        current = (await c.get("/api/v1/admin/settings")).json()
+        body = {k: current[k] for k in (*SETTINGS_FIELDS, "version")} | {"student_stats": level}
+        r = await c.put("/api/v1/admin/settings", json=body)
+        assert r.status_code == 200, r.text
 
 
 async def test_statistics_compare_sections_and_are_frozen_with_the_publication(app, infra) -> None:
@@ -55,11 +62,11 @@ async def test_students_see_only_the_aggregates_the_institution_allows(app, infr
         default = (await a1.get(url)).json()
         assert default["available"] is True and set(default["stats"]) == {"average_percentage", "papers"}
 
-    await _stats_level(infra, e, "none")
+    await _stats_level(app, e, "none")
     async with await _as_student(app, e, "A001") as a1:
         assert (await a1.get(url)).json() == {"available": False, "stats": None}
 
-    await _stats_level(infra, e, "full")
+    await _stats_level(app, e, "full")
     async with await _as_student(app, e, "A001") as a1:
         full = (await a1.get(url)).json()["stats"]
     assert {"histogram", "median_percentage", "stdev_percentage", "pass_percentage", "grades"} <= set(full)

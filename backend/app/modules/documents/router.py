@@ -78,9 +78,9 @@ async def my_marksheet(
     response.headers["Cache-Control"] = NO_STORE
     publishing = PublishingService(infra)
     mine = await publishing.my_result(uow, principal, publication_id)  # 404 unless live and this student's
-    student = await publishing.me(uow, principal)
-    link = await MarksheetService(infra).link(uow, mine.publication, student.id, mine.payload)
-    code = await VerificationService.code_for(uow, publication_id, student.id)
+    student_id = await publishing.student_id(uow, principal)
+    link = await MarksheetService(infra).link(uow, mine.publication, student_id, mine.payload)
+    code = await VerificationService.code_for(uow, publication_id, student_id)
     return _out(link, code, infra)
 
 
