@@ -21,13 +21,14 @@
 | | |
 |---|---|
 | Current phase | **Phases 14, 16, 17 — closing** (Phases 0–13 and 15 complete; Gates M1–M5 passed) |
-| Next step | **P14.4** closes on the one-worker scaling run (37866472727). P17.4 is ticked when CI is green for the reports. **Owner actions:** D23 domain, then P16.1–P16.3 on a real server; P17.3 review of the user guides; P17.5 presentation dry run |
+| Next step | **P14.4** closes on the one-worker scaling run (37866472727). **Owner actions:** D23 domain, then P16.1–P16.3 on a real server; P17.3 review of the user guides; P17.5 presentation dry run |
 | Last updated | 2026-10-09 |
 | Open blockers | P16.1–P16.3 need a domain (D23) and a server: everything up to that is built and rehearsed in CI (`release.yml`). D24 (licence), D25 (Thapar branding) await owner action; safe defaults in place |
 
 ## 📊 Phase progress
 | Phase | Name | Steps | Done |
 |---|---|---|---|
+| 2026-10-09 | P17.4 ticked; ASVS gaps closed | P17.4: [reports](reports/README.md) verified by CI for bec0a0b (all 7 jobs; E2E 36 passed including the new accessibility spec, with the 8 demo steps skipped there and run by `demo.yml`). Also built after the reports, each tested with a caught mutant:<br>- **Accessibility (NFR-13, automated part):** axe on 15 screens. It found an unlabelled file input, off-screen save bars reachable by Tab (now `inert`), and unnamed selects.<br>- **Retention (ASVS 8.3.4):** `ops_purge()` every 6 h, per tenant under RLS. It also keeps audit partitions ahead, which before this only an API restart did.<br>- **Security notices (ASVS 2.2.3):** password and two-step changes are emailed to the person.<br>Remaining in 2.2.3: new-device sign-in. |
 | 2026-10-09 | P14.3, P14.5, P16.4, P16.5, P16.6, P17.1, P17.2 ticked | Verified by CI for ed958d9 (all 7 jobs) and the runs named.
 
 **P14.3:** same-runner comparison, 1e3b76b against 22d2b73 (perf run 37838765271). 322–327 → 573–593 req/s; 3.3–3.6% → 0% failed; p95 4.4 s → 0.24–0.28 s; SQL 6.86 → 1.65 per request. Plus the per-change in-process measurements ([read-path report](../benchmarks/results/2026-10-09-read-path.md)).
@@ -66,7 +67,7 @@
 | 14 | Performance engineering (measure → optimise → re-measure) | 5 | 4 |
 | 15 | Security review & hardening | 5 | 5 |
 | 16 | Deployment, backups, monitoring, runbooks | 6 | 3 |
-| 17 | Thapar & demo tenants, documentation, presentation (MVP complete) | 5 | 2 |
+| 17 | Thapar & demo tenants, documentation, presentation (MVP complete) | 5 | 3 |
 
 _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHECKLIST.md` for the overall count)._
 
@@ -242,7 +243,7 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [x] **P17.1** Thapar tenant polish · Done when: Demo script runs end-to-end
 - [x] **P17.2** Demo School & Demo Coaching · Done when: Demo script
 - [ ] **P17.3** User documentation · Done when: Reviewed
-- [ ] **P17.4** Test & benchmark reports · Done when: `docs/reports/` merged
+- [x] **P17.4** Test & benchmark reports · Done when: `docs/reports/` merged
 - [ ] **P17.5** Presentation · Done when: Dry run completed
 - [ ] 🚩 **Gate M6 — **MVP**** · Done when: All MVP checklist items ticked
 
