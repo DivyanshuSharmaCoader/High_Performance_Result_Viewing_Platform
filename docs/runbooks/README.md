@@ -15,6 +15,7 @@ What to do when something breaks, written before it breaks. Each alert in
 | [security-incident.md](security-incident.md) | Credential stuffing, a leaked secret, a suspected cross-tenant exposure |
 | [tenant-offboarding.md](tenant-offboarding.md) | An institution leaves, or asks for its data |
 | [incident-template.md](incident-template.md) | Status updates, messages to institutions, the post-incident review |
+| [credentials.md](credentials.md) | What deployment needs from the owner, the one secrets file, and how it's used without being seen |
 
 ## Ground rules
 - **Severity.** `page`: students or institutions are affected now, so act within 15 minutes. `warn`: act
