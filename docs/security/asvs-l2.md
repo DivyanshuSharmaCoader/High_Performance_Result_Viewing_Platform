@@ -31,7 +31,7 @@ Gaps are listed with their next step, not hidden.
 | 2.1.9 | No composition rules | Met | NIST-style rules only |
 | 2.1.12 | Masked password with a reveal option | Met | `PasswordInput` |
 | 2.2.1 | Anti-automation (rate limits, lockout) | Met | Per real client address, per account, progressive lockout. `test_auth.py`; client-address tests |
-| 2.2.3 | Notify users of security events | Partial | Password reset and changes are emailed. **Gap:** no email on sign-in from a new device, or when two-step is reset or turned off. Next: notifications for those events |
+| 2.2.3 | Notify users of security events | Partial | Since 2026-10-09 a security notice is emailed for: a password changed or reset; two-step turned on or off; two-step reset by an administrator, naming who; new recovery codes; a recovery code used to sign in, with how many are left. It is sent in the change's own transaction, can't be turned off, and links to the account page (`identity/security_notices.py`; `test_mfa.py`, `test_admin_flows.py`, `test_auth.py`; the missing-notice mutant is caught). **Gap:** sign-in from a new device or location |
 | 2.3.1 | Initial or recovery secrets random and short-lived | Met | Invitations, resets and activation use random tokens with expiry, hashed at rest |
 | 2.4.1 | Passwords stored with an approved, salted, slow hash | Met | Argon2id t=2, m=19 MiB, p=1 (OWASP baseline); rehashed on parameter change |
 | 2.5.1 | Recovery doesn't reveal the current password | Met | Emailed one-time link |
@@ -155,7 +155,7 @@ Gaps are listed with their next step, not hidden.
 | 14.5.3 | CORS allow-list | Met | No CORS: every app is same-origin with its API |
 
 ## Gaps to close, by priority
-1. **Security event notifications (2.2.3)**: email the person when two-step is turned off or reset, or after a sign-in from a new device. Next in Phase 15 follow-ups.
+1. **New-device sign-in notices (2.2.3)**: the other security notices are built (2026-10-09). This one needs a record of known devices per user.
 2. ~~**Automated retention (8.3.4)**~~: done (`ops_purge()`, 2026-10-09). Remaining: uploaded import *files* in object storage are not yet purged with their staging rows.
 3. **TLS verification (9.x)**: verified when deploying (Phase 16).
 4. **WebAuthn and passkeys (2.9)**: V1 roadmap.

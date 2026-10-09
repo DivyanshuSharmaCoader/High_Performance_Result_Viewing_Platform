@@ -286,3 +286,30 @@ async def test_mass_assignment_is_rejected(app, infra) -> None:
         )
     assert r.status_code == 422
     assert r.json()["errors"][0]["message"] == "Unexpected field"
+
+
+async def test_changing_a_password_ends_other_sessions_and_tells_the_person(app, infra) -> None:
+    """ASVS 2.2.3: a security notice by email; a wrong current password changes nothing and sends nothing."""
+    from tests.integration.test_mfa import _notices
+
+    t = await make_tenant(infra)
+    async with Client(app, t.host) as other, Client(app, t.host) as c:
+        await other.login(t.owner_email)
+        await c.login(t.owner_email)
+        wrong = await c.put(
+            "/api/v1/me/password",
+            json={"current_password": "not-my-password", "new_password": "a-brand-new-long-passphrase"},
+        )
+        assert wrong.status_code == 422
+        assert await _notices(infra, t.id) == []
+        ok = await c.put(
+            "/api/v1/me/password",
+            json={"current_password": DEFAULT_PASSWORD, "new_password": "a-brand-new-long-passphrase"},
+        )
+        assert ok.status_code == 200, ok.text
+        assert (await c.get("/api/v1/me")).status_code == 200  # this session stays
+        infra.cache.local.clear()
+        if infra.cache.redis is not None:
+            await infra.cache.redis.flushdb()
+        assert (await other.get("/api/v1/me")).status_code == 401  # the other one ends
+    assert await _notices(infra, t.id) == [(t.owner_email, "Your password was changed")]

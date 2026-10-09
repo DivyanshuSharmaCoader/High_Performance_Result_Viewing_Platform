@@ -216,6 +216,10 @@ async def test_password_reset_by_email_revokes_sessions(app, infra) -> None:
             if keys:
                 await infra.cache.redis.delete(*keys)
         assert (await old_session.get("/api/v1/me")).status_code == 401
+    # The owner is told, by email, that the password was reset (ASVS 2.2.3); the weak attempt sent nothing.
+    from tests.integration.test_mfa import _notices
+
+    assert await _notices(infra, t.id) == [(t.owner_email, "Your password was reset")]
 
 
 # ---- settings & subscription --------------------------------------------------------------------

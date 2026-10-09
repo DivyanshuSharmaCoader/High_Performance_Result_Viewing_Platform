@@ -109,6 +109,16 @@ TEMPLATES: dict[str, Template] = {
         footer="You're receiving this because you had a trial for {{ institution }} on ScoreCode.",
         sensitive=False,
     ),
+    "security_notice": Template(
+        subject="Security notice for your {{ institution }} account",
+        heading="{{ what }}",
+        body="This happened on {{ when }}. If it was you, there's nothing to do. If it wasn't, change your "
+        "password now and tell your institution's administrator.",
+        action_label="Review your account",
+        footer="You're receiving this because it concerns the security of your {{ institution }} account. "
+        "Security notices can't be turned off.",
+        sensitive=False,
+    ),
     "result_published": Template(
         subject="{{ exam_name }} results are available",
         heading="Your {{ exam_name }} results are available",

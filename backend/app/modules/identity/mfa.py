@@ -30,6 +30,7 @@ from app.core.errors import InvalidState, NotFound, PermissionDenied, Validation
 from app.core.http import Principal
 from app.modules.audit.service import Actor, record
 from app.modules.identity.models import User, UserRole
+from app.modules.identity.security_notices import notify as security_notice
 
 RECOVERY_CODES = 10
 _ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"  # Crockford: nothing to confuse when read from paper
@@ -132,6 +133,7 @@ class MfaService:
         codes = new_recovery_codes()
         user.totp_recovery_hashes = [_hash(c) for c in codes]
         await self._audit(uow, principal, "user.mfa_enabled", "Two-step sign-in turned on")
+        await security_notice(self.infra, uow, user, "Two-step sign-in was turned on")
         return codes
 
     async def disable(self, uow: UnitOfWork, principal: Principal, code: str) -> None:
@@ -142,6 +144,7 @@ class MfaService:
             raise ValidationFailed("That code didn't match.", field="code")
         self._clear(user)
         await self._audit(uow, principal, "user.mfa_disabled", "Two-step sign-in turned off")
+        await security_notice(self.infra, uow, user, "Two-step sign-in was turned off")
 
     async def regenerate(self, uow: UnitOfWork, principal: Principal, code: str) -> list[str]:
         user = await self._me(uow, principal)
@@ -152,6 +155,9 @@ class MfaService:
         codes = new_recovery_codes()
         user.totp_recovery_hashes = [_hash(c) for c in codes]
         await self._audit(uow, principal, "user.mfa_recovery_regenerated", "New recovery codes issued")
+        await security_notice(
+            self.infra, uow, user, "New recovery codes were created, and the old ones no longer work"
+        )
         return codes
 
     # ---- for someone else -------------------------------------------------------------------------
@@ -183,6 +189,7 @@ class MfaService:
             entity_id=user.id,
             summary=f"Two-step sign-in reset for {user.full_name}",
         )
+        await security_notice(self.infra, uow, user, f"{principal.display_name} reset your two-step sign-in")
 
     @staticmethod
     def _clear(user: User) -> None:

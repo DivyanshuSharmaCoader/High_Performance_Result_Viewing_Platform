@@ -46,6 +46,23 @@ async def _failures(infra, tenant_id, email: str) -> int:  # type: ignore[no-unt
         ).one()
 
 
+async def _notices(infra, tenant_id) -> list[tuple[str, str]]:  # type: ignore[no-untyped-def]
+    """Security notices queued for sending (ASVS 2.2.3), oldest first: (to, what happened)."""
+    from sqlalchemy import text
+
+    async with infra.db.uow(tenant_id) as uow:
+        rows = (
+            await uow.session.execute(
+                text(
+                    "SELECT payload->'params'->>'to' AS to_, payload->'params'->>'what' AS what FROM jobs"
+                    " WHERE kind = 'notifications.send_email' AND payload->>'template' = 'security_notice'"
+                    " ORDER BY created_at, id"
+                )
+            )
+        ).all()
+    return [(r.to_, r.what) for r in rows]
+
+
 async def test_turning_on_two_step_sign_in_then_signing_in_with_codes(app, infra, monkeypatch) -> None:
     t = await make_tenant(infra)
     async with Client(app, t.host) as c:
@@ -119,6 +136,13 @@ async def test_turning_on_two_step_sign_in_then_signing_in_with_codes(app, infra
         assert (await c.get("/api/v1/me")).json()["mfa_enabled"] is False
     async with Client(app, t.host) as c:
         assert (await _login(c, t.owner_email)).status_code == 200  # password alone again
+    # The owner heard about every change, by email; the refused attempts (a wrong code) sent nothing.
+    assert await _notices(infra, t.id) == [
+        (t.owner_email, "Two-step sign-in was turned on"),
+        (t.owner_email, "A recovery code was used to sign in (9 left)"),
+        (t.owner_email, "New recovery codes were created, and the old ones no longer work"),
+        (t.owner_email, "Two-step sign-in was turned off"),
+    ]
 
 
 async def test_a_lost_phone_is_reset_by_an_administrator_but_never_the_owners(
@@ -151,6 +175,8 @@ async def test_a_lost_phone_is_reset_by_an_administrator_but_never_the_owners(
         assert len(audit) == 1 and audit[0]["entity_id"] == str(other_id)
     async with Client(app, t.host) as c:
         assert (await _login(c, other_login)).status_code == 200  # back to a password; set it up again
+    resets = [n for n in await _notices(infra, t.id) if "reset your two-step" in n[1]]
+    assert len(resets) == 1 and resets[0][0] == other_login  # told, by email, who reset it
 
 
 async def test_students_and_faculty_without_permission_get_no_two_step_controls(app, infra) -> None:

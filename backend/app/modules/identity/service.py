@@ -42,6 +42,7 @@ from app.core.tenant import TenantContext
 from app.modules.audit.service import Actor, record, record_platform
 from app.modules.identity.mfa import MfaService
 from app.modules.identity.models import AuthToken, PlatformUser, User, UserRole
+from app.modules.identity.security_notices import notify as security_notice
 from app.modules.identity.sessions import SessionService
 from app.modules.notifications.emails import queue_email
 
@@ -173,6 +174,10 @@ class AuthService:
                         summary="Signed in with a recovery code",
                         after={"recovery_codes_left": len(user.totp_recovery_hashes or [])},
                     )
+                    left = len(user.totp_recovery_hashes or [])
+                    await security_notice(
+                        self.infra, uow, user, f"A recovery code was used to sign in ({left} left)"
+                    )
                 if user.kind == "staff":
                     await record(
                         uow,
@@ -236,6 +241,7 @@ class AuthService:
             entity_type="user",
             entity_id=user.id,
         )
+        await security_notice(self.infra, uow, user, "Your password was changed")
 
     # ---- password reset -------------------------------------------------------------------------
     async def request_password_reset(self, tenant: TenantContext, identifier: str, *, ip: str) -> None:
@@ -302,6 +308,7 @@ class AuthService:
                 entity_type="user",
                 entity_id=user.id,
             )
+            await security_notice(self.infra, uow, user, "Your password was reset")
 
     # ---- invitations ----------------------------------------------------------------------------
     async def issue_invite(
