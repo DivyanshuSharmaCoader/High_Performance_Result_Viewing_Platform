@@ -6,6 +6,7 @@
 * Demo Coaching Academy — Growth plan.
 
 Idempotent: tenants that already exist are left alone. Development/demo only: refuses to run in production.
+``--with-history`` also creates exams and publications for the presentation (app/demo/results.py).
 """
 
 from __future__ import annotations
@@ -143,7 +144,20 @@ async def seed_platform_user(infra: Infra) -> bool:
     return True
 
 
-async def run_seed(*, students_per_tenant: int = 120) -> None:
+async def seed_histories(infra: Infra) -> dict[str, list[tuple[str, str]]]:
+    from app.demo.results import seed_history
+
+    out = {}
+    for demo in DEMO_TENANTS:
+        async with infra.db.uow() as uow:
+            row = (
+                await uow.session.execute(text("SELECT id FROM resolve_tenant(:s, NULL)"), {"s": demo.slug})
+            ).one()
+        out[demo.slug] = await seed_history(infra, row.id, demo.slug, demo.owner_email)
+    return out
+
+
+async def run_seed(*, students_per_tenant: int = 120, with_history: bool = False) -> None:
     settings = get_settings()
     if settings.env is Environment.PRODUCTION:
         raise SystemExit("Refusing to seed demo data in production.")
@@ -154,10 +168,14 @@ async def run_seed(*, students_per_tenant: int = 120) -> None:
     try:
         created = await seed_tenants(infra, students_per_tenant=students_per_tenant)
         platform_created = await seed_platform_user(infra)
+        histories = await seed_histories(infra) if with_history else {}
     finally:
         await infra.close()
     base = settings.base_domain
     print("Demo tenants:", ", ".join(created) or "already present")
+    for slug, exams in histories.items():
+        for name, status in exams:
+            print(f"  {slug}: {name} — {status}")
     from app.demo.students import demo_student_login
 
     for demo in DEMO_TENANTS:

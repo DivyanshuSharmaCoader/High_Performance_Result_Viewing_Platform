@@ -150,7 +150,7 @@ def cmd_worker(_: argparse.Namespace) -> None:
 def cmd_seed(args: argparse.Namespace) -> None:
     from app.seed import run_seed
 
-    asyncio.run(run_seed(students_per_tenant=args.students))
+    asyncio.run(run_seed(students_per_tenant=args.students, with_history=args.with_history))
 
 
 def cmd_create_platform_user(args: argparse.Namespace) -> None:
@@ -185,6 +185,9 @@ def main(argv: list[str] | None = None) -> None:
         "seed", help="create demo tenants (Thapar, Demo School, Demo Coaching) with synthetic data"
     )
     seed.add_argument("--students", type=int, default=120)
+    seed.add_argument(
+        "--with-history", action="store_true", help="also exams and publications for the demo (docs/demo/)"
+    )
     seed.set_defaults(fn=cmd_seed)
 
     cpu = sub.add_parser(
