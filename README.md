@@ -111,6 +111,18 @@ cd frontend && pnpm e2e   # Playwright against the running stack (Option A)
 ```
 CI runs the same checks plus security scans, a Docker build with Trivy, and the full-stack E2E suite.
 
+## Demo, operations and evidence
+| | |
+|---|---|
+| Demo script (15 min, run end to end by CI) | [docs/demo/](docs/demo/README.md): `make seed-demo` |
+| Presentation | [docs/presentation/](docs/presentation/README.md) |
+| User guides | [docs/user-guide/](docs/user-guide/README.md): administrators, faculty, students |
+| Test and benchmark reports | [docs/reports/](docs/reports/README.md) |
+| Production compose, deploy and rollback | `compose.prod.yml`, `infra/ops/deploy.sh`, `release.yml` ([runbook](docs/runbooks/deploy-and-rollback.md)) |
+| Monitoring and alerts | `make monitoring` (Prometheus, Alertmanager, Grafana), `infra/monitoring/alerts.yml` |
+| Backups and restore drill | `infra/backup/`, `ops.yml` ([drill log](docs/runbooks/drills/README.md)) |
+| Runbooks | [docs/runbooks/](docs/runbooks/README.md) |
+
 ## Tech stack
 React 19 + TypeScript + Vite · FastAPI (Python 3.12) · PostgreSQL 16 · Redis 7 · S3-compatible storage
 (SeaweedFS in development) · Caddy · Docker · GitHub Actions — justified in [docs/17](docs/17-tech-stack.md);

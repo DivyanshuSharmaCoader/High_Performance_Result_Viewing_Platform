@@ -32,6 +32,15 @@ seed: ## Create Thapar, Demo School and Demo Coaching tenants with synthetic dat
 seed-stack: ## Seed inside the running container stack
 	$(COMPOSE) --profile app exec api scorecode seed
 
+seed-demo: ## Seed the stack with results history for the presentation (docs/demo/README.md)
+	$(COMPOSE) --profile app exec api scorecode seed --with-history
+
+monitoring: ## Prometheus, Alertmanager (→ Mailpit) and Grafana next to the stack → http://localhost:53000
+	$(COMPOSE) --profile app --profile monitoring up -d
+
+smoke: ## Read-only smoke test of a running deployment (SMOKE_BASE_DOMAIN, SMOKE_SCHEME; local stack by default)
+	infra/ops/smoke.sh
+
 platform-user: ## Create a platform (ScoreCode staff) account: make platform-user EMAIL=you@x NAME="You"
 	cd $(BACKEND) && uv run scorecode create-platform-user --email "$(EMAIL)" --name "$(NAME)"
 

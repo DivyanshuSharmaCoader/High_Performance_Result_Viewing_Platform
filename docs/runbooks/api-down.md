@@ -28,5 +28,6 @@ for 3 s before answering 502/503, and the apps retry with backoff.
   ([incident-template.md](incident-template.md)), and escalate.
 
 ## Afterwards
-Note in the review what the logs said, the time to detect (the alert fires about 2–3 min after the API
-stops: 1 min `for:`, scrape and evaluation intervals; measured in `ops.yml`) and the time to recover.
+Note in the review what the logs said, the time to detect, and the time to recover. In `ops.yml` (run
+37845231187) the page email arrived **101 s** after the API stopped: 1 min `for:`, plus the scrape and
+evaluation intervals and Alertmanager's group wait.
