@@ -37,13 +37,16 @@ def _readable(cipher: FieldCipher, token: str) -> bool:
     return True
 
 
-# Fixed statements for the two tables that hold encrypted secrets (no SQL is built from input).
+# The two tables that hold encrypted secrets, as literal statements (no SQL is built at run time).
 _STATEMENTS = {
-    table: (
-        text(f"SELECT id, totp_secret_enc FROM {table} WHERE totp_secret_enc IS NOT NULL"),  # noqa: S608
-        text(f"UPDATE {table} SET totp_secret_enc = :value WHERE id = :id AND totp_secret_enc = :was"),  # noqa: S608
-    )
-    for table in ("users", "platform_users")
+    "users": (
+        text("SELECT id, totp_secret_enc FROM users WHERE totp_secret_enc IS NOT NULL"),
+        text("UPDATE users SET totp_secret_enc = :value WHERE id = :id AND totp_secret_enc = :was"),
+    ),
+    "platform_users": (
+        text("SELECT id, totp_secret_enc FROM platform_users WHERE totp_secret_enc IS NOT NULL"),
+        text("UPDATE platform_users SET totp_secret_enc = :value WHERE id = :id AND totp_secret_enc = :was"),
+    ),
 }
 
 
