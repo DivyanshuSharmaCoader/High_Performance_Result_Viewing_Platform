@@ -244,5 +244,25 @@ QR on marksheet → https://verify.scorecode.in/v/7KQ3-M9XD-PA2F-8RTC-WV6H-Q (co
 | Backup copies | Managed snapshots + nightly encrypted `pg_dump` to a second provider/region object storage; object storage versioning for PDFs |
 | Drills | Monthly automated restore to a scratch DB + smoke test; result recorded in ops log |
 
+**Retention of operational data (as built, migration 0016).**
+- The worker runs `ops_purge()` a minute after it starts and then every 6 hours. It is idempotent, so
+  every worker may run it. Counts go to `scorecode_purged_rows_total{table}`.
+- It deletes tenant rows under each tenant's own RLS context in turn: the function sets the context per
+  tenant, and the policies bind its owner too. The runtime role still holds no DELETE on the append-only
+  tables.
+
+| Data | Kept for | Why it goes |
+|---|---|---|
+| Sessions (staff, students, platform) | 30 days after they ended (expiry or sign-out) | Addresses and user agents are personal data |
+| Activation, invitation and reset tokens; sign-up requests | 30 days after expiry | Single-use, no value once expired |
+| Idempotency keys | until expiry (24 h) | Only deduplicate retries |
+| Background jobs | 30 days after success or cancellation; 90 days after failure | Payloads hold ids; failures are kept longer for investigation |
+| Import staging rows (raw student data and marks from uploaded files) | 30 days after the import ended | The import's summary row stays as the record |
+| Email delivery records | 90 days | Provider ids and errors, for troubleshooting only |
+| In-app notifications | 365 days | A notice of a result, not the result |
+| **Never purged here:** audit logs, publications, published results, statistics, verification records, marks | | The record, kept per the institution's agreement. Deleted only when an institution leaves (runbooks/tenant-offboarding.md) |
+
+The same job keeps the audit log's monthly partitions three months ahead, so an API that runs for months
+without a restart never meets a missing partition.
 ## 13. Security testing & process
 SAST (Bandit/semgrep, ESLint security rules), dependency scanning (pip-audit, `pnpm audit`, Dependabot), secret scanning (gitleaks), container scanning (Trivy), DAST baseline (OWASP ZAP) against staging, tenant-isolation suite, authorization matrix tests, and a pre-launch manual review against the **OWASP ASVS Level 2** checklist. Details: [15 Testing](15-testing-strategy.md).

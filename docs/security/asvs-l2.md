@@ -98,7 +98,7 @@ Gaps are listed with their next step, not hidden.
 | 8.1.1 | Sensitive data not cached by intermediaries | Met | `private, no-store` on personal APIs; `no-store` default under `/api/` |
 | 8.2.2 | No sensitive data in browser storage | Met | Only UI preferences in local storage; session in an HttpOnly cookie |
 | 8.3.1 | Sensitive data in the body or headers, not the URL | Met | Verification codes are designed to be public; `Referrer-Policy: no-referrer` on the verify page |
-| 8.3.4 | Sensitive data identified with a retention policy | Partial | Retention is documented (docs/10 §12). **Gap:** automated purging of old notifications and delivery rows isn't built |
+| 8.3.4 | Sensitive data identified with a retention policy | Met | A retention table (docs/10 §12) applied by `ops_purge()` every 6 h, per tenant under RLS; `test_retention.py` (the window mutant is caught) |
 
 ## V9 Communications
 | # | Requirement | Status | Evidence / note |
@@ -156,7 +156,7 @@ Gaps are listed with their next step, not hidden.
 
 ## Gaps to close, by priority
 1. **Security event notifications (2.2.3)**: email the person when two-step is turned off or reset, or after a sign-in from a new device. Next in Phase 15 follow-ups.
-2. **Automated retention (8.3.4)**: purge job for old notifications and deliveries, in Phase 16 ops jobs.
+2. ~~**Automated retention (8.3.4)**~~: done (`ops_purge()`, 2026-10-09). Remaining: uploaded import *files* in object storage are not yet purged with their staging rows.
 3. **TLS verification (9.x)**: verified when deploying (Phase 16).
 4. **WebAuthn and passkeys (2.9)**: V1 roadmap.
 5. **Policy to require two-step for administrators**: tenant setting; today it's available and nudged.

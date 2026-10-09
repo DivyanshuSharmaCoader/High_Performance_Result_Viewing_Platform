@@ -77,6 +77,10 @@ JOBS_BY_STATUS = Gauge(
     "Jobs by queue and status (queued = due now, not scheduled)",
     ["queue", "status"],
 )
+PURGED = Counter("scorecode_purged_rows_total", "Rows removed by the retention purge", ["table"])
+MAINTENANCE_LAST = Gauge(
+    "scorecode_maintenance_last_success_timestamp_seconds", "When the retention purge last completed"
+)
 JOBS_OLDEST = Gauge(
     "scorecode_jobs_oldest_seconds", "Age of the oldest job in that queue and status", ["queue", "status"]
 )

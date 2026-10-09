@@ -27,7 +27,15 @@ from sqlalchemy import text
 from app.core.errors import DomainError
 from app.core.ids import uuid7
 from app.core.logging import get_logger
-from app.core.metrics import JOB_DURATION, JOBS, JOBS_BY_STATUS, JOBS_OLDEST, WORKER_ACTIVE
+from app.core.metrics import (
+    JOB_DURATION,
+    JOBS,
+    JOBS_BY_STATUS,
+    JOBS_OLDEST,
+    MAINTENANCE_LAST,
+    PURGED,
+    WORKER_ACTIVE,
+)
 
 if TYPE_CHECKING:
     from app.core.container import Infra
@@ -153,6 +161,9 @@ async def enqueue(
 
 def backoff_seconds(attempt: int) -> int:
     return int(min(600, 5 * (2 ** max(0, attempt - 1))))
+
+
+MAINTENANCE_EVERY_S = 6 * 3600
 
 
 class Worker:
@@ -294,9 +305,22 @@ class Worker:
                 JOBS_BY_STATUS.labels(queue, status).set(jobs)
                 JOBS_OLDEST.labels(queue, status).set(oldest)
 
+    async def maintenance(self) -> dict[str, int]:
+        """The retention purge and next months' audit partitions (``ops_purge()``, migration 0016).
+        Idempotent, so every worker may run it; each does so every ``MAINTENANCE_EVERY_S``."""
+        async with self.infra.db.uow() as uow:
+            counts: dict[str, int] = (await uow.session.execute(text("SELECT ops_purge()"))).scalar_one()
+        for table, n in counts.items():
+            if table != "tenants" and n:
+                PURGED.labels(table).inc(n)
+        MAINTENANCE_LAST.set(time.time())
+        log.info("maintenance_done", **counts)
+        return counts
+
     async def run_forever(self) -> None:
         log.info("worker_started", queue=",".join(self.queues))
         last_reap = last_stats = 0.0
+        last_maintenance = time.monotonic() - MAINTENANCE_EVERY_S + 60  # first run a minute after start
         while not self._stop.is_set():
             try:
                 if time.monotonic() - last_reap > 30:
@@ -305,6 +329,9 @@ class Worker:
                 if time.monotonic() - last_stats > 15:
                     await self.export_stats()
                     last_stats = time.monotonic()
+                if time.monotonic() - last_maintenance > MAINTENANCE_EVERY_S:
+                    last_maintenance = time.monotonic()  # even on failure: retried next period, not in a loop
+                    await self.maintenance()
                 free = self.concurrency - len(self._tasks)
                 jobs = await self._claim(max(1, free)) if free > 0 else []
             except Exception:
