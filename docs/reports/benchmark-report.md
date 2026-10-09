@@ -57,7 +57,7 @@ balances with `least_conn`. The 2-container runs split CPU within 10%.
 |---|---|
 | 1 vs 2 containers × 2 workers, 1,000 users (run 37838754876) | Both served the offered load: about 644 req/s, 0 errors. p95 9.1–9.8 ms vs 6.7 ms. There's nothing to compare at that load |
 | 1 vs 2 containers × 2 workers, 3,000 users (run 37845417571) | 531–534 vs 551–581 req/s. Failures **rose**, from 6–7.5% to 28–39% (all retryable 503s) |
-| 1 vs 2 containers × **1 worker**, 2,000 users (run 37866472727) | *pending* |
+| 1 vs 2 containers × **1 worker**, 2,000 users (run 37866472727, Intel Xeon 8573C) | **402–405 → 687–697 req/s (+71%)**; failures 2.0–4.8% → 0.03–0.64%; `latest` p95 2.6–4.3 s → 1.2 s. Each container runs at about one core (101% alone; 96–98% each when there are two) |
 
 **What the 3,000-user run shows:**
 - With two containers, four API processes, PostgreSQL, Caddy and a 3,000-user load generator compete for
@@ -66,7 +66,10 @@ balances with `least_conn`. The 2-container runs split CPU within 10%.
   so more requests wait past the 5 s pool timeout.
 - Scaling out works by adding machines (docs/14 N3). On one machine, the knob is the number of workers,
   about one per spare vCPU.
-- The one-worker comparison isolates the effect of a second API process that has a core of its own.
+- **The one-worker comparison shows the scale-out itself.** Each container is one process on one core,
+  so a second container brings a core of its own, as a second machine would. Throughput rises 71% and
+  failures nearly vanish. It's less than 2× because Caddy, PostgreSQL and the 2,000-user load generator
+  share the remaining two vCPUs. **NFR-16 demonstrated.**
 
 ## 5. Server-side latency (NFR-3: latest result p95 < 150 ms server-side)
 *Pending run 37867983470:* `timeline.py --latency` over the API's own request log. That is the time from

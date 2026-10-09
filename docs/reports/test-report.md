@@ -114,7 +114,7 @@ were required to fail. Recorded in commit messages and the checklist's work log.
 | NFR-13 WCAG 2.1 AA | **Automated part met; manual review not done** | `e2e/a11y.spec.ts`: WCAG 2.1 A/AA axe checks on 15 screens (public, student portal at 360 px, eight exam-office screens, console) plus `auth.spec` and `verify.spec`. Found and fixed: an unlabelled file input, off-screen save bars reachable by Tab, unnamed selects (80d3e53) |
 | NFR-14 Maintainability | **Met** | import-linter contracts, ruff, mypy, ESLint, tsc gates |
 | NFR-15 Portability | **Met** | containers only; S3/SMTP behind adapters |
-| NFR-16 Scalability | **Stateless and scalable; demonstrated within one machine's limits** | benchmark report §4 |
+| NFR-16 Scalability | **Met (demonstrated)** | 1 → 2 API containers of one worker each: 402–405 → 687–697 req/s, failures 2–4.8% → < 0.7% (run 37866472727; benchmark report §4) |
 | NFR-17 Privacy | **Met in code** (no PII in logs, tested); export and deletion are a manual procedure until V1 | `test_security_hardening.py`, runbook |
 | NFR-18 Cost | Estimate only | [16 Cost model](../16-cost-model.md) |
 | NFR-19 Observability | **Met** | metrics (multiprocess-correct), alert pipeline tested end to end (101 s to email) |

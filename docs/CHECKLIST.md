@@ -21,13 +21,14 @@
 | | |
 |---|---|
 | Current phase | **Phases 14, 16, 17 — closing** (Phases 0–13 and 15 complete; Gates M1–M5 passed) |
-| Next step | **P14.4** closes on the one-worker scaling run (37866472727). **Owner actions:** D23 domain, then P16.1–P16.3 on a real server; P17.3 review of the user guides; P17.5 presentation dry run |
+| Next step | Phases 0–15 complete. **Owner actions:** D23 domain, then P16.1–P16.3 on a real server; P17.3 review of the user guides; P17.5 presentation dry run |
 | Last updated | 2026-10-09 |
 | Open blockers | P16.1–P16.3 need a domain (D23) and a server: everything up to that is built and rehearsed in CI (`release.yml`). D24 (licence), D25 (Thapar branding) await owner action; safe defaults in place |
 
 ## 📊 Phase progress
 | Phase | Name | Steps | Done |
 |---|---|---|---|
+| 2026-10-09 | P14.4 ticked | `perf.yml compare=replicas`, one worker per container, 2,000 users, same runner (run 37866472727): 1 → 2 API containers gave 402–405 → 687–697 req/s (+71%), failures 2–4.8% → 0.03–0.64%, p95 2.6–4.3 s → 1.2 s, Caddy splitting CPU evenly. The earlier 2-workers-per-container run showed the opposite on one 4-vCPU machine (a second container added processes, not CPU). Both are in the [benchmark report](reports/benchmark-report.md) §4. |
 | 2026-10-09 | P17.4 ticked; ASVS gaps closed | P17.4: [reports](reports/README.md) verified by CI for bec0a0b (all 7 jobs; E2E 36 passed including the new accessibility spec, with the 8 demo steps skipped there and run by `demo.yml`). Also built after the reports, each tested with a caught mutant:<br>- **Accessibility (NFR-13, automated part):** axe on 15 screens. It found an unlabelled file input, off-screen save bars reachable by Tab (now `inert`), and unnamed selects.<br>- **Retention (ASVS 8.3.4):** `ops_purge()` every 6 h, per tenant under RLS. It also keeps audit partitions ahead, which before this only an API restart did.<br>- **Security notices (ASVS 2.2.3):** password and two-step changes are emailed to the person.<br>Remaining in 2.2.3: new-device sign-in. |
 | 2026-10-09 | P14.3, P14.5, P16.4, P16.5, P16.6, P17.1, P17.2 ticked | Verified by CI for ed958d9 (all 7 jobs) and the runs named.
 
@@ -64,7 +65,7 @@
 | 11 | Marksheet PDFs & verification | 5 | 5 |
 | 12 | Notifications | 3 | 3 |
 | 13 | Analytics (basic) & audit viewer | 5 | 5 |
-| 14 | Performance engineering (measure → optimise → re-measure) | 5 | 4 |
+| 14 | Performance engineering (measure → optimise → re-measure) | 5 | 5 |
 | 15 | Security review & hardening | 5 | 5 |
 | 16 | Deployment, backups, monitoring, runbooks | 6 | 3 |
 | 17 | Thapar & demo tenants, documentation, presentation (MVP complete) | 5 | 3 |
@@ -218,7 +219,7 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [x] **P14.1** Full scenario runs · Done when: Reports with p50/p95/p99, RPS, errors, resources
 - [x] **P14.2** Bottleneck analysis · Done when: Written analysis identifies top 3 bottlenecks
 - [x] **P14.3** Targeted optimisations · Done when: Before/after report per change
-- [ ] **P14.4** Horizontal scaling demonstration · Done when: Report (NFR-16)
+- [x] **P14.4** Horizontal scaling demonstration · Done when: Report (NFR-16)
 - [x] **P14.5** Failure-under-load tests · Done when: Results recorded per [15 §6](15-testing-strategy.md#6-failure-testing)
 
 ### Phase 15 — Security review & hardening
