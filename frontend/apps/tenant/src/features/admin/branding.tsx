@@ -437,7 +437,7 @@ function BrandingEditor({ initial }: { initial: BrandingOut }) {
           "fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 backdrop-blur transition-transform duration-200 lg:left-[248px] " +
           (dirty ? "translate-y-0" : "translate-y-full")
         }
-        aria-hidden={!dirty}
+        inert={!dirty} // off-screen with nothing to save: out of the tab order and the accessibility tree
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
           <p className="text-sm text-fg-muted">Previewing unsaved changes.</p>

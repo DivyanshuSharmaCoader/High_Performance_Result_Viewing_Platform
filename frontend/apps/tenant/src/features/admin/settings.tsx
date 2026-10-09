@@ -224,8 +224,16 @@ export function InstitutionSettingsPage() {
               ]}
             />
           </SettingRow>
-          <SettingRow label="Student activation" description="How students set up their accounts.">
-            <Select {...form.register("student_activation_mode")} className="max-w-xs">
+          <SettingRow
+            label="Student activation"
+            description="How students set up their accounts."
+            labelFor="setting-student_activation_mode"
+          >
+            <Select
+              id="setting-student_activation_mode"
+              {...form.register("student_activation_mode")}
+              className="max-w-xs"
+            >
               <option value="code">Printed activation codes</option>
               <option value="email">Email invitation</option>
             </Select>
@@ -233,8 +241,13 @@ export function InstitutionSettingsPage() {
           <SettingRow
             label="Verification page"
             description="What third parties see when they scan a marksheet's QR code."
+            labelFor="setting-verification_disclosure"
           >
-            <Select {...form.register("verification_disclosure")} className="max-w-md">
+            <Select
+              id="setting-verification_disclosure"
+              {...form.register("verification_disclosure")}
+              className="max-w-md"
+            >
               <option value="masked">Masked name and status only</option>
               <option
                 value="masked_plus_challenge"
@@ -247,8 +260,9 @@ export function InstitutionSettingsPage() {
           <SettingRow
             label="Class statistics for students"
             description="Aggregates students can see next to their result."
+            labelFor="setting-student_stats"
           >
-            <Select {...form.register("student_stats")} className="max-w-xs">
+            <Select id="setting-student_stats" {...form.register("student_stats")} className="max-w-xs">
               <option value="none">None</option>
               <option value="class_average">Class average only</option>
               <option value="full">Average, highest and distribution</option>
@@ -269,7 +283,7 @@ export function InstitutionSettingsPage() {
           "fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 backdrop-blur transition-transform duration-200 lg:left-[248px]",
           dirty ? "translate-y-0" : "translate-y-full",
         )}
-        aria-hidden={!dirty}
+        inert={!dirty} // off-screen with nothing to save: out of the tab order and the accessibility tree
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
           <p className="text-sm text-fg-muted">You have unsaved changes.</p>

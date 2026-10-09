@@ -66,15 +66,24 @@ export function SettingRow({
   label,
   description,
   children,
+  labelFor,
 }: {
   label: ReactNode;
   description?: ReactNode;
   children: ReactNode;
+  /** The id of the row's one form control (a select or input): the label names it. */
+  labelFor?: string;
 }) {
   return (
     <div className="grid gap-3 py-5 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,280px)_1fr] md:gap-8">
       <div>
-        <p className="text-sm font-medium text-fg">{label}</p>
+        {labelFor ? (
+          <label htmlFor={labelFor} className="block text-sm font-medium text-fg">
+            {label}
+          </label>
+        ) : (
+          <p className="text-sm font-medium text-fg">{label}</p>
+        )}
         {description && <p className="mt-1 text-[13px] leading-5 text-fg-subtle">{description}</p>}
       </div>
       <div className="min-w-0">{children}</div>

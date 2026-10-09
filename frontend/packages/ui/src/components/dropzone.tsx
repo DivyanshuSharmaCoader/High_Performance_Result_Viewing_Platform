@@ -69,12 +69,16 @@ export function FileDropzone({
         )}
         {hint && <span className="text-[13px] text-fg-subtle">{hint}</span>}
       </button>
+      {/* The button above is the control people and screen readers use; this input only opens the
+          file picker, so it is hidden from the accessibility tree (axe: no unlabelled duplicate). */}
       <input
         ref={input}
         type="file"
         accept={accept}
         className="sr-only"
         tabIndex={-1}
+        aria-hidden="true"
+        disabled={disabled}
         onChange={(e) => {
           take(e.target.files?.[0]);
           e.target.value = "";
