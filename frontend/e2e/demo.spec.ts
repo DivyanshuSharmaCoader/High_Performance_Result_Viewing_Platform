@@ -13,7 +13,8 @@ import { BASE, DEMO_PASSWORD, DEMO_PLATFORM, DEMO_TENANTS, PORT, apiAs, signIn, 
  * follow the script's order, so a failure names the step that would go wrong on stage.
  */
 test.skip(!process.env.E2E_DEMO, "needs `scorecode seed --with-history` (demo.yml)");
-test.describe.configure({ mode: "serial" });
+// One stage, one run: each step builds on the previous one, so a retry would meet a changed world.
+test.describe.configure({ mode: "serial", retries: 0 });
 
 const THAPAR = DEMO_TENANTS.thapar;
 const STUDENT = "102401001"; // COE-2A, the seeded student with an account
@@ -102,8 +103,8 @@ test("4 · publish live; the student sees it on a phone, with their SGPA and two
   await expect(latest).toContainText("SGPA");
   const history = phone.getByRole("region", { name: "Earlier results" });
   await expect(history.getByRole("listitem")).toHaveCount(3);
-  await expect(history).toContainText("2024-25");
-  await expect(history).toContainText("2025-26");
+  await expect(history).toContainText(/Academic year 2024.25/); // two academic years of results
+  await expect(history).toContainText(/Academic year 2025.26/);
 });
 
 test("5 · the official PDF verifies: genuine, current, and the file matches", async ({ page, browser }) => {
