@@ -258,6 +258,7 @@ QR on marksheet → https://verify.scorecode.in/v/7KQ3-M9XD-PA2F-8RTC-WV6H-Q (co
 | Idempotency keys | until expiry (24 h) | Only deduplicate retries |
 | Background jobs | 30 days after success or cancellation; 90 days after failure | Payloads hold ids; failures are kept longer for investigation |
 | Import staging rows (raw student data and marks from uploaded files) | 30 days after the import ended | The import's summary row stays as the record |
+| Uploaded import files (the spreadsheets) | 30 days after every import that used them ended | The stored object is deleted and the file row marked `purged_at` (ingestion maintenance task). Copies synced to the backup bucket go with that bucket's lifecycle rule |
 | Email delivery records | 90 days | Provider ids and errors, for troubleshooting only |
 | In-app notifications | 365 days | A notice of a result, not the result |
 | **Never purged here:** audit logs, publications, published results, statistics, verification records, marks | | The record, kept per the institution's agreement. Deleted only when an institution leaves (runbooks/tenant-offboarding.md) |

@@ -164,6 +164,15 @@ def backoff_seconds(attempt: int) -> int:
 
 
 MAINTENANCE_EVERY_S = 6 * 3600
+MaintenanceTask = Callable[["Infra"], Awaitable[dict[str, int]]]
+_maintenance_tasks: list[MaintenanceTask] = []
+
+
+def maintenance_task(fn: MaintenanceTask) -> MaintenanceTask:
+    """Modules add retention work that needs Python (e.g. deleting stored objects); the worker runs every
+    registered task after ``ops_purge()``. Each must be idempotent: every worker runs them."""
+    _maintenance_tasks.append(fn)
+    return fn
 
 
 class Worker:
@@ -310,6 +319,11 @@ class Worker:
         Idempotent, so every worker may run it; each does so every ``MAINTENANCE_EVERY_S``."""
         async with self.infra.db.uow() as uow:
             counts: dict[str, int] = (await uow.session.execute(text("SELECT ops_purge()"))).scalar_one()
+        for task in _maintenance_tasks:
+            try:
+                counts |= await task(self.infra)
+            except Exception:
+                log.exception("maintenance_task_failed", task=task.__name__)
         for table, n in counts.items():
             if table != "tenants" and n:
                 PURGED.labels(table).inc(n)

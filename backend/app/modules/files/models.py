@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Index, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -30,3 +31,4 @@ class StoredFile(UUIDPrimaryKey, TenantScoped, Timestamps, Base):
     sha256: Mapped[bytes] = mapped_column(LargeBinary(32))
     original_name: Mapped[str | None] = mapped_column(String(255))
     uploaded_by: Mapped[uuid.UUID | None]
+    purged_at: Mapped[datetime | None]  # stored object deleted after its retention (uploads)

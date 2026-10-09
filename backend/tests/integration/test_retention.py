@@ -127,8 +127,30 @@ async def test_the_purge_removes_old_operational_rows_in_every_tenant_and_keeps_
             await uow.session.execute(text("SELECT count(*) FROM audit_logs"))
         ).scalar_one() == audit_before
 
+    # Uploaded spreadsheets follow their staging rows: the stored object goes, the row stays, marked.
+    assert counts["import_files"] >= 2
+    for t in (a, b):
+        async with infra.db.uow(t.id) as uow:
+            files = {
+                r.import_id: r
+                for r in (
+                    await uow.session.execute(
+                        text(
+                            "SELECT j.id AS import_id, f.object_key, f.purged_at FROM import_jobs j"
+                            " JOIN files f ON f.id = j.file_id WHERE j.id IN (:o, :n)"
+                        ),
+                        {"o": rows[t.id]["import_old"], "n": rows[t.id]["import_new"]},
+                    )
+                ).all()
+            }
+        old, new = files[rows[t.id]["import_old"]], files[rows[t.id]["import_new"]]
+        assert old.purged_at is not None and new.purged_at is None
+        with pytest.raises(Exception):  # noqa: B017 - the storage client's own not-found error
+            await infra.storage.get(old.object_key)
+        assert await infra.storage.get(new.object_key)
+
     again = await Worker(infra, ["test-stats"]).maintenance()  # idempotent: nothing left to remove here
-    assert again["notifications"] == 0 and again["import_rows"] == 0
+    assert again["notifications"] == 0 and again["import_rows"] == 0 and again["import_files"] == 0
 
 
 async def test_the_runtime_role_still_cannot_delete_notifications(infra) -> None:

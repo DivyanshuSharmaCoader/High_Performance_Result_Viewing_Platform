@@ -156,7 +156,7 @@ Gaps are listed with their next step, not hidden.
 
 ## Gaps to close, by priority
 1. **New-device sign-in notices (2.2.3)**: the other security notices are built (2026-10-09). This one needs a record of known devices per user.
-2. ~~**Automated retention (8.3.4)**~~: done (`ops_purge()`, 2026-10-09). Remaining: uploaded import *files* in object storage are not yet purged with their staging rows.
+2. ~~**Automated retention (8.3.4)**~~: done (`ops_purge()`, 2026-10-09). Uploaded import files too (2026-10-09, migration 0017).
 3. **TLS verification (9.x)**: verified when deploying (Phase 16).
 4. **WebAuthn and passkeys (2.9)**: V1 roadmap.
 5. **Policy to require two-step for administrators**: tenant setting; today it's available and nudged.
