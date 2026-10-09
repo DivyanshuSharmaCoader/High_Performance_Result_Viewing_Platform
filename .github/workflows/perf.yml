@@ -142,7 +142,10 @@ jobs:
                   fi
                   echo "chaos: recovered action done at $(date -u +%T) (epoch $(date +%s))" | tee -a benchmarks/results/runs/chaos.txt ) &
               fi
+              since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
               benchmarks/k6/run.sh "$scenario" "$variant" "$i"
+              docker compose --profile app logs --no-log-prefix --since "$since" api 2>/dev/null \
+                | python3 benchmarks/k6/timeline.py --latency > "benchmarks/results/runs/server-$scenario-$variant-$i.txt" || true
               sleep 20
             done
           done
@@ -187,7 +190,11 @@ jobs:
             for v in $order; do
               configure "$v"
               q "SELECT pg_stat_statements_reset()" > /dev/null
+              since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
               benchmarks/k6/run.sh B preauth "$v-$round"
+              # Server-side latency per endpoint, from the API's own request log (NFR-3 is stated this way).
+              docker compose --profile app logs --no-log-prefix --since "$since" api 2>/dev/null \
+                | python3 benchmarks/k6/timeline.py --latency > "$runs/server-$v-$round.txt" || true
               # Statements the database ran for this run (BEGIN/COMMIT included: track_utility is on).
               q "SELECT sum(calls), round(sum(total_exec_time)::numeric) FROM pg_stat_statements
                   WHERE dbid = (SELECT oid FROM pg_database WHERE datname = 'scorecode')" > "$runs/pg-$v-$round.txt"
@@ -198,8 +205,8 @@ jobs:
           import pathlib, re, sys
           runs = pathlib.Path(sys.argv[1])
           print("### Comparison (scenario B, pre-authenticated, same runner)")
-          print("| Run | Requests | req/s | Failed | latest p95 | DB statements per request | DB time per request |")
-          print("|---|---|---|---|---|---|---|")
+          print("| Run | Requests | req/s | Failed | latest p95 (k6) | latest p95 (server) | DB statements per request | DB time per request |")
+          print("|---|---|---|---|---|---|---|---|")
           for f in sorted(runs.glob("B-preauth-*-[0-9]*.txt")):
               tag = f.stem.removeprefix("B-preauth-")
               text = f.read_text()
@@ -211,7 +218,9 @@ jobs:
               n = int(m[1])
               per = f"{int(pg[0]) / n:.2f}" if len(pg) == 2 and pg[0] else "?"
               ms = f"{float(pg[1]) / n:.3f} ms" if len(pg) == 2 and pg[1] else "?"
-              print(f"| {tag} | {n:,} | {m[2]} | {m[3]}% | {p95[1] if p95 else '?'} | {per} | {ms} |")
+              server = (runs / f"server-{tag}.txt").read_text() if (runs / f"server-{tag}.txt").exists() else ""
+              sp95 = re.search(r"/api/v1/me/results/latest\s+n=\s*\d+ p50=\s*\S+ p95=\s*(\S+)", server)
+              print(f"| {tag} | {n:,} | {m[2]} | {m[3]}% | {p95[1] if p95 else '?'} | {sp95[1] if sp95 else '?'} | {per} | {ms} |")
           PY2
       - name: Hot queries and plans
         if: always()
