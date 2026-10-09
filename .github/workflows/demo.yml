@@ -1,0 +1,59 @@
+# The presentation's demo script, run end to end (P17.1, P17.2; docs/demo/README.md): the stack, the
+# demo tenants with their results history (`scorecode seed --with-history`), then e2e/demo.spec.ts.
+#
+#   gh workflow run demo.yml
+name: Demo
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/app/demo/**"
+      - "backend/app/seed.py"
+      - "docs/demo/**"
+      - "frontend/e2e/demo.spec.ts"
+      - ".github/workflows/demo.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    name: Demo script · seeded history, live publish, verify, isolation, plans, console
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start the full stack
+        run: docker compose --profile app up -d --build --wait
+      - name: Seed the demo tenants with their history
+        run: docker compose --profile app exec -T api scorecode seed --with-history
+      - name: Let the history's marksheets and notices finish (as they would before a presentation)
+        run: |
+          for i in $(seq 1 90); do
+            out=$(docker compose --profile app exec -T api scorecode jobs stats)
+            echo "$out" | grep -qE '^(pdf|notifications|publishing) +(queued|running) ' || { echo "$out"; break; }
+            sleep 10
+          done
+          docker compose --profile app exec -T api scorecode jobs dead
+      - uses: pnpm/action-setup@v6
+        with: { package_json_file: frontend/package.json }
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - name: Install Playwright
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile && pnpm exec playwright install --with-deps chromium
+      - name: Run the demo script
+        working-directory: frontend
+        env: { CI: "1", E2E_DEMO: "1" }
+        run: pnpm exec playwright test e2e/demo.spec.ts --project desktop
+      - name: Upload the Playwright report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: demo-report-${{ github.run_id }}
+          path: frontend/playwright-report
+          retention-days: 14
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose --profile app logs --tail 300 api worker proxy
