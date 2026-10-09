@@ -20,14 +20,34 @@
 ## 📍 Current position
 | | |
 |---|---|
-| Current phase | **Phase 14 — Performance engineering** (Phases 0–13 and 15 complete; Gates M1–M5 passed) |
-| Next step | **P14.3–P14.5** close on the runner comparisons in progress (`perf.yml` `compare=ref:1e3b76b`, `compare=replicas`, `chaos=postgres`); then **P16.1** |
+| Current phase | **Phases 14, 16, 17 — closing** (Phases 0–13 and 15 complete; Gates M1–M5 passed) |
+| Next step | **P14.4** closes on the one-worker scaling run (37866472727). P17.4 is ticked when CI is green for the reports. **Owner actions:** D23 domain, then P16.1–P16.3 on a real server; P17.3 review of the user guides; P17.5 presentation dry run |
 | Last updated | 2026-10-09 |
-| Open blockers | None for code. D23 (domain), D24 (licence), D25 (Thapar branding) await owner action — safe defaults in place |
+| Open blockers | P16.1–P16.3 need a domain (D23) and a server: everything up to that is built and rehearsed in CI (`release.yml`). D24 (licence), D25 (Thapar branding) await owner action; safe defaults in place |
 
 ## 📊 Phase progress
 | Phase | Name | Steps | Done |
 |---|---|---|---|
+| 2026-10-09 | P14.3, P14.5, P16.4, P16.5, P16.6, P17.1, P17.2 ticked | Verified by CI for ed958d9 (all 7 jobs) and the runs named.
+
+**P14.3:** same-runner comparison, 1e3b76b against 22d2b73 (perf run 37838765271). 322–327 → 573–593 req/s; 3.3–3.6% → 0% failed; p95 4.4 s → 0.24–0.28 s; SQL 6.86 → 1.65 per request. Plus the per-change in-process measurements ([read-path report](../benchmarks/results/2026-10-09-read-path.md)).
+
+**P14.5:** Postgres-restart re-run with idle-only pings (run 37841311985): 57 retryable 503s in one window, no 500s, recovered.
+
+**P16.4:** the restore drill (`ops.yml` run 37847430260). 8,000 students, age-encrypted backup to a second bucket, database container and volume destroyed, restored as the owner, fingerprints identical (46 forced-RLS tables, 50 policies, grants, functions). **RTO 57 s.** Two earlier runs found that forced RLS blocks `pg_restore`; that led to the three-step restore.
+
+**P16.5:** `ops.yml` alerts job (run 37845231187). Promtool rule tests; every target up; API stopped → ScoreCodeAPIDown email in Mailpit after 101 s, then the resolved email. It also fixed `/metrics` with several workers (multiprocess) and added queue gauges.
+
+**P16.6:** [runbooks](runbooks/README.md). Writing them found the secret-key rotation lockout, so `scorecode reencrypt-secrets` was added.
+
+**P17.1/P17.2:** `scorecode seed --with-history`, and the [demo script](demo/README.md) runs end to end (`demo.yml` run 37867772295, 8/8).
+
+**Not ticked:**
+- **P14.4:** the 2-worker comparison at 3,000 users showed a second container on one 4-vCPU machine adds processes, not CPU (failures 6–7.5% → 28–39%). The 1-worker-per-container run decides.
+- **P16.1–P16.3:** no domain or server. `compose.prod.yml`, `deploy.sh` and `release.yml` are rehearsed in CI: install, upgrade with backup, automatic rollback of a broken release (runs 37846562794, 37847429961).
+- **P17.3:** the user guides are written; the owner's review is the gate.
+- **P17.4:** pending CI for 202842b.
+- **P17.5:** the deck is written; the dry run is the presenter's. |
 | 2026-10-09 | P15.1–P15.5, P14.1, P14.2 ticked | **P15:** P15.1–P15.3 and P15.5 verified by CI for 3da50e8 and b0f6c4b (all 7 jobs). P15.4 verified by CI for 8510a27, where E2E ran the new `edge.spec.ts` (32/32 passed). The ZAP baseline (run 37741788953) found no High alerts ([dispositions](security/zap-baseline-2026-10-08.md)). The Medium, `style-src 'unsafe-inline'`, is fixed on the verify page (stylesheet pinned by hash) and accepted on the SPAs as R-CSP, because sonner and react-style-singleton insert `<style>` at run time. COOP, CORP and COEP were added. Two edge bugs were found while analysing it and fixed: the deferred header block overwrote the verify page's `no-referrer`, and SPA HTML under app routes wasn't `no-cache`. **P14.1:** [runner report](../benchmarks/results/2026-10-08-runner-scenarios.md) from perf runs 37737458557 and 37737494369. A p95 ≤ 13 ms with 0 errors; B about 353 req/s, limited by API CPU (2 workers at about 97% each), with failures that are 5 s pool timeouts. **P14.2:** [profile analysis](../benchmarks/results/2026-10-09-read-path.md). The top costs are SQLAlchemy plus asyncpg (38.7%), a transaction per request (5%) and route matching (6.1%); the pool's pre-ping was found later (2.6%, half of all BEGINs). **P14.3**, four changes, each measured before and after in-process: read cache −20%, routers first −5%, lazy transaction −14%, idle-only ping −3% CPU per request. It stays open until the runner's same-machine comparison (`compare=ref:1e3b76b`) reports. P14.4 waits for `compare=replicas`; P14.5 waits for a Postgres-restart re-run with the new ping behaviour. |
 | 0 | Product & architecture | 4 | 4 |
 | 1 | Repository, tooling, CI, walking skeleton | 8 | 8 |
@@ -43,10 +63,10 @@
 | 11 | Marksheet PDFs & verification | 5 | 5 |
 | 12 | Notifications | 3 | 3 |
 | 13 | Analytics (basic) & audit viewer | 5 | 5 |
-| 14 | Performance engineering (measure → optimise → re-measure) | 5 | 2 |
+| 14 | Performance engineering (measure → optimise → re-measure) | 5 | 4 |
 | 15 | Security review & hardening | 5 | 5 |
-| 16 | Deployment, backups, monitoring, runbooks | 6 | 0 |
-| 17 | Thapar & demo tenants, documentation, presentation (MVP complete) | 5 | 0 |
+| 16 | Deployment, backups, monitoring, runbooks | 6 | 3 |
+| 17 | Thapar & demo tenants, documentation, presentation (MVP complete) | 5 | 2 |
 
 _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHECKLIST.md` for the overall count)._
 
@@ -196,9 +216,9 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 
 - [x] **P14.1** Full scenario runs · Done when: Reports with p50/p95/p99, RPS, errors, resources
 - [x] **P14.2** Bottleneck analysis · Done when: Written analysis identifies top 3 bottlenecks
-- [ ] **P14.3** Targeted optimisations · Done when: Before/after report per change
+- [x] **P14.3** Targeted optimisations · Done when: Before/after report per change
 - [ ] **P14.4** Horizontal scaling demonstration · Done when: Report (NFR-16)
-- [ ] **P14.5** Failure-under-load tests · Done when: Results recorded per [15 §6](15-testing-strategy.md#6-failure-testing)
+- [x] **P14.5** Failure-under-load tests · Done when: Results recorded per [15 §6](15-testing-strategy.md#6-failure-testing)
 
 ### Phase 15 — Security review & hardening
 
@@ -213,14 +233,14 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 - [ ] **P16.1** Domains & DNS · Done when: `https://thapar.<domain>` resolves with valid TLS
 - [ ] **P16.2** Demo/production environment · Done when: Smoke tests pass on deployed env
 - [ ] **P16.3** CD pipeline · Done when: A tagged release deploys without manual SSH
-- [ ] **P16.4** Backups & restore drill · Done when: Drill log with measured RTO
-- [ ] **P16.5** Monitoring & alerts · Done when: Test alert received
-- [ ] **P16.6** Runbooks · Done when: `docs/runbooks/` merged
+- [x] **P16.4** Backups & restore drill · Done when: Drill log with measured RTO
+- [x] **P16.5** Monitoring & alerts · Done when: Test alert received
+- [x] **P16.6** Runbooks · Done when: `docs/runbooks/` merged
 
 ### Phase 17 — Thapar & demo tenants, documentation, presentation (MVP complete)
 
-- [ ] **P17.1** Thapar tenant polish · Done when: Demo script runs end-to-end
-- [ ] **P17.2** Demo School & Demo Coaching · Done when: Demo script
+- [x] **P17.1** Thapar tenant polish · Done when: Demo script runs end-to-end
+- [x] **P17.2** Demo School & Demo Coaching · Done when: Demo script
 - [ ] **P17.3** User documentation · Done when: Reviewed
 - [ ] **P17.4** Test & benchmark reports · Done when: `docs/reports/` merged
 - [ ] **P17.5** Presentation · Done when: Dry run completed

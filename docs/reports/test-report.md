@@ -11,7 +11,7 @@ What is tested, how, what it found, and what is not tested. The numbers below we
 | Backend integration | `backend/tests/integration`, real PostgreSQL, Redis, object storage and mail | 200 | every push (CI) | pass (4 skipped locally without WeasyPrint; required and run in CI) |
 | Backend total | | **515 passed, 4 skipped** (local, 2026-10-09) | | |
 | Frontend unit and component | Vitest + Testing Library | **80** (tenant 67, UI library 7, API client 4, site 2) | every push | pass |
-| End-to-end | Playwright against the full container stack (`frontend/e2e`) | **32** in the regular run (desktop and mobile projects) | every push | pass (CI 8510a27: 32/32) |
+| End-to-end | Playwright against the full container stack (`frontend/e2e`) | **36** in the regular run (32 + 4 accessibility) | every push | pass (CI ed958d9: all jobs; a11y spec added in 80d3e53) |
 | Demo script | `e2e/demo.spec.ts` on `scorecode seed --with-history` | 8 | `demo.yml` | **8/8 passed** (run 37867772295, commit d458aad) |
 | Load | k6 scenarios A and B, cold and pre-authenticated (`benchmarks/k6`) | — | `perf.yml` (manual) | [benchmark report](benchmark-report.md) |
 | Failure injection | Redis stop, PostgreSQL restart, worker SIGKILL under load | 3 scenarios | `perf.yml` `chaos=` | all pass |
@@ -111,7 +111,7 @@ were required to fail. Recorded in commit messages and the checklist's work log.
 | NFR-10 Grading correctness | **Met** | golden tables, properties, ≥ 90% branch gate |
 | NFR-11 Auditability | **Met** | `test_audit.py` route sweep |
 | NFR-12 Student in ≤ 2 taps, 360 px | **Met** | E2E mobile project (Pixel 7), `publish.spec` on a 390 px phone |
-| NFR-13 WCAG 2.1 AA | **Partly**: automated axe checks in `auth.spec` and `verify.spec`; no manual review yet | — |
+| NFR-13 WCAG 2.1 AA | **Automated part met; manual review not done** | `e2e/a11y.spec.ts`: WCAG 2.1 A/AA axe checks on 15 screens (public, student portal at 360 px, eight exam-office screens, console) plus `auth.spec` and `verify.spec`. Found and fixed: an unlabelled file input, off-screen save bars reachable by Tab, unnamed selects (80d3e53) |
 | NFR-14 Maintainability | **Met** | import-linter contracts, ruff, mypy, ESLint, tsc gates |
 | NFR-15 Portability | **Met** | containers only; S3/SMTP behind adapters |
 | NFR-16 Scalability | **Stateless and scalable; demonstrated within one machine's limits** | benchmark report §4 |
