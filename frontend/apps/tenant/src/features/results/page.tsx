@@ -67,6 +67,7 @@ import { useTenant } from "../../lib/tenant";
 import { previewPayload } from "./preview";
 import { IssuedMarksheet, useLivePublication } from "./issued";
 import { PublishPanel } from "./publish";
+import { CorrectionPanel } from "./correction";
 
 const ExamAnalytics = lazy(() => import("./analytics"));
 
@@ -587,11 +588,24 @@ export default function ExamResultsPage() {
   const o = q.data;
   const stats = statsOf(o);
   const showResults = o.run && stats && o.run.status !== "running" && o.run.status !== "failed";
+  // A correction of published results (P18.3): the live version stays while marks change.
+  const correcting = Boolean(exam.data?.correction_started_at);
+  const correctedRun =
+    correcting && o.run && (o.run.status === "completed" || o.run.status === "approved") ? o.run : undefined;
   return (
     <div className="flex flex-col gap-5">
+      {correcting && exam.data && (
+        <CorrectionPanel exam={exam.data} runId={correctedRun?.id} hasCorrectedRun={Boolean(correctedRun)} />
+      )}
       <RunPanel o={o} />
-      {["approved", "scheduled", "published", "withdrawn"].includes(o.exam_status) && (
-        <PublishPanel examId={o.exam_id} examStatus={o.exam_status} students={o.run?.students ?? 0} />
+      {(correcting || ["approved", "scheduled", "published", "withdrawn"].includes(o.exam_status)) && (
+        <PublishPanel
+          examId={o.exam_id}
+          examStatus={o.exam_status}
+          students={o.run?.students ?? 0}
+          correcting={correcting}
+          runId={correctedRun?.id}
+        />
       )}
       {showResults && (
         <>

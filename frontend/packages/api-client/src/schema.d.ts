@@ -425,6 +425,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/exams/{exam_id}/correction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Correction */
+        post: operations["start_correction_api_v1_admin_exams__exam_id__correction_post"];
+        /** Cancel Correction */
+        delete: operations["cancel_correction_api_v1_admin_exams__exam_id__correction_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exams/{exam_id}/correction/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Correction Preview */
+        get: operations["correction_preview_api_v1_admin_exams__exam_id__correction_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/exams/{exam_id}/papers": {
         parameters: {
             query?: never;
@@ -2710,6 +2745,62 @@ export interface components {
             /** Terms */
             terms: number;
         };
+        /** CorrectionChangeOut */
+        CorrectionChangeOut: {
+            after: components["schemas"]["CorrectionSummary"] | null;
+            before: components["schemas"]["CorrectionSummary"] | null;
+            /** Enrollment No */
+            enrollment_no: string;
+            /** Full Name */
+            full_name: string;
+        };
+        /** CorrectionIn */
+        CorrectionIn: {
+            /**
+             * Reason
+             * @description Why the published results are corrected
+             */
+            reason: string;
+        };
+        /** CorrectionPreviewOut */
+        CorrectionPreviewOut: {
+            /** Changed */
+            changed: number;
+            /** Changes */
+            changes: components["schemas"]["CorrectionChangeOut"][];
+            /** Live Version */
+            live_version: number;
+            /** Revision */
+            revision: number | null;
+            /** Students */
+            students: number;
+        };
+        /** CorrectionStateOut */
+        CorrectionStateOut: {
+            /** Exam Status */
+            exam_status: string;
+            /** In Progress */
+            in_progress: boolean;
+            /** Reason */
+            reason: string | null;
+            /** Started At */
+            started_at: string | null;
+        };
+        /** CorrectionSummary */
+        CorrectionSummary: {
+            /** Grade */
+            grade: string | null;
+            /** Max Total */
+            max_total: string | null;
+            /** Outcome */
+            outcome: string | null;
+            /** Percentage */
+            percentage: string | null;
+            /** Sgpa */
+            sgpa: string | null;
+            /** Total */
+            total: string | null;
+        };
         /** CourseIn */
         CourseIn: {
             /** Code */
@@ -2926,6 +3017,11 @@ export interface components {
         ExamListItem: {
             /** Cohorts */
             cohorts: number;
+            /**
+             * Correcting
+             * @default false
+             */
+            correcting: boolean;
             /** Grading Scheme Name */
             grading_scheme_name: string;
             /**
@@ -2964,6 +3060,10 @@ export interface components {
             checks: components["schemas"]["ExamCheckOut"][];
             /** Cohorts */
             cohorts: components["schemas"]["ExamCohortOut"][];
+            /** Correction Reason */
+            correction_reason?: string | null;
+            /** Correction Started At */
+            correction_started_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -6314,6 +6414,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_correction_api_v1_admin_exams__exam_id__correction_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionStateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_correction_api_v1_admin_exams__exam_id__correction_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionStateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    correction_preview_api_v1_admin_exams__exam_id__correction_preview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exam_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorrectionPreviewOut"];
                 };
             };
             /** @description Validation Error */

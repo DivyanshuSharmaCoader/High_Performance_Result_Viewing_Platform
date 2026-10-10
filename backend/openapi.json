@@ -1086,6 +1086,229 @@
         "title": "CopyOut",
         "type": "object"
       },
+      "CorrectionChangeOut": {
+        "properties": {
+          "after": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrectionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CorrectionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enrollment_no": {
+            "title": "Enrollment No",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enrollment_no",
+          "full_name",
+          "before",
+          "after"
+        ],
+        "title": "CorrectionChangeOut",
+        "type": "object"
+      },
+      "CorrectionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "description": "Why the published results are corrected",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "CorrectionIn",
+        "type": "object"
+      },
+      "CorrectionPreviewOut": {
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "integer"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/CorrectionChangeOut"
+            },
+            "title": "Changes",
+            "type": "array"
+          },
+          "live_version": {
+            "title": "Live Version",
+            "type": "integer"
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revision"
+          },
+          "students": {
+            "title": "Students",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "live_version",
+          "revision",
+          "students",
+          "changed",
+          "changes"
+        ],
+        "title": "CorrectionPreviewOut",
+        "type": "object"
+      },
+      "CorrectionStateOut": {
+        "properties": {
+          "exam_status": {
+            "title": "Exam Status",
+            "type": "string"
+          },
+          "in_progress": {
+            "title": "In Progress",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "required": [
+          "in_progress",
+          "started_at",
+          "reason",
+          "exam_status"
+        ],
+        "title": "CorrectionStateOut",
+        "type": "object"
+      },
+      "CorrectionSummary": {
+        "properties": {
+          "grade": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade"
+          },
+          "max_total": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Total"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "percentage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Percentage"
+          },
+          "sgpa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sgpa"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "outcome",
+          "total",
+          "max_total",
+          "percentage",
+          "grade",
+          "sgpa"
+        ],
+        "title": "CorrectionSummary",
+        "type": "object"
+      },
       "CourseIn": {
         "additionalProperties": false,
         "properties": {
@@ -1725,6 +1948,11 @@
             "title": "Cohorts",
             "type": "integer"
           },
+          "correcting": {
+            "default": false,
+            "title": "Correcting",
+            "type": "boolean"
+          },
           "grading_scheme_name": {
             "title": "Grading Scheme Name",
             "type": "string"
@@ -1827,6 +2055,29 @@
             },
             "title": "Cohorts",
             "type": "array"
+          },
+          "correction_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correction Reason"
+          },
+          "correction_started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correction Started At"
           },
           "created_at": {
             "format": "date-time",
@@ -10520,6 +10771,143 @@
         "summary": "Set Cohorts",
         "tags": [
           "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/correction": {
+      "delete": {
+        "operationId": "cancel_correction_api_v1_admin_exams__exam_id__correction_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionStateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Correction",
+        "tags": [
+          "corrections"
+        ]
+      },
+      "post": {
+        "operationId": "start_correction_api_v1_admin_exams__exam_id__correction_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CorrectionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionStateOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Correction",
+        "tags": [
+          "corrections"
+        ]
+      }
+    },
+    "/api/v1/admin/exams/{exam_id}/correction/preview": {
+      "get": {
+        "operationId": "correction_preview_api_v1_admin_exams__exam_id__correction_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "exam_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Exam Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorrectionPreviewOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Correction Preview",
+        "tags": [
+          "corrections"
         ]
       }
     },

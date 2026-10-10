@@ -235,7 +235,9 @@ class ResultsService:
         ).first()
         if running is not None:
             raise Conflict("These results are already being processed.")
-        pending = await self.unsubmitted(uow, exam.id)
+        # In a correction of published results the papers were accepted when first published; the
+        # correction carries its own reason, so unsubmitted papers don't need another one.
+        pending = [] if exam.correction_started_at is not None else await self.unsubmitted(uow, exam.id)
         reason = (override_reason or "").strip()
         if pending and not reason:
             listed = ", ".join(f"{p['course_code']} · {p['cohort_code']}" for p in pending[:5])

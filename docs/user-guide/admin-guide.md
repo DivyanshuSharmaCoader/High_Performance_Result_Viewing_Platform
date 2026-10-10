@@ -86,8 +86,17 @@ and adjust the bands, pass rules and rounding.
   (password again, and a reason).
   - Students no longer see it, and its marksheets now verify as *Withdrawn*.
   - You can publish the same approved results again later. The new publication is the next version.
-- **Changing marks after publication** (corrections, with a list of what changed) is not available yet;
-  it is on the roadmap. Check marks before you approve: approval locks them.
+- **Correct results** when a mark was wrong after publishing (Results tab → *Correct results…*, with a
+  reason and your password):
+  - Students keep seeing the live version while you work. Nothing changes for them until you publish.
+  - Change the marks (in the paper's mark sheet, or by uploading a corrected file), then process and
+    approve as usual.
+  - Before you publish, *Correcting published results* lists every student whose result changes, with
+    the live result next to the corrected one.
+  - *Publish corrected results* replaces the live version with the next version. Only the students whose
+    result changed are notified, and the old marksheets' QR codes now say *Superseded*.
+  - *Cancel correction* goes back to the live version, as long as no mark was changed (change it back
+    first if needed). Withdrawing the live version is still possible during a correction.
 - **Revoke one marksheet** (e.g. issued to the wrong person) from that student's row in the exam's
   Results.
 - **Analytics:** pass rates, averages, median and spread per paper, grade distribution, and a comparison

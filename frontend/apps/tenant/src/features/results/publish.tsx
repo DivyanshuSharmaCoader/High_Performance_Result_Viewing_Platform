@@ -21,6 +21,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 
 import { useReauth } from "../../components/reauth";
+import { StartCorrectionButton, useCorrectionPreview } from "./correction";
 import { toastError } from "../../lib/forms";
 import { useCan, useSession } from "../../lib/session";
 
@@ -46,10 +47,14 @@ export function PublishPanel({
   examId,
   examStatus,
   students,
+  correcting = false,
+  runId,
 }: {
   examId: string;
   examStatus: string;
   students: number;
+  correcting?: boolean;
+  runId?: string;
 }) {
   const qc = useQueryClient();
   const withReauth = useReauth();
@@ -117,6 +122,8 @@ export function PublishPanel({
   const scheduled = list.find((p) => p.status === "scheduled");
   const current = live ?? scheduled;
   const ready = examStatus === "approved" || examStatus === "withdrawn";
+  const preview = useCorrectionPreview(examId, runId, correcting && ready);
+  const changed = preview.data?.changed;
 
   let body;
   if (live) {
@@ -150,6 +157,9 @@ export function PublishPanel({
       actions={
         canPublish && (
           <div className="flex flex-wrap gap-2">
+            {live && examStatus === "published" && (
+              <StartCorrectionButton examId={examId} liveVersion={live.version} />
+            )}
             {live && (
               <Button
                 size="sm"
@@ -188,7 +198,11 @@ export function PublishPanel({
                   Schedule…
                 </Button>
                 <Button size="sm" leadingIcon={<Rocket />} onClick={() => open("now")}>
-                  {examStatus === "withdrawn" ? "Publish again" : "Publish now"}
+                  {correcting && live
+                    ? "Publish corrected results"
+                    : examStatus === "withdrawn"
+                      ? "Publish again"
+                      : "Publish now"}
                 </Button>
               </>
             )}
@@ -229,9 +243,21 @@ export function PublishPanel({
       <ConfirmDialog
         open={action === "now"}
         onOpenChange={(v) => !v && setAction(null)}
-        title={`Publish to ${formatNumber(students)} students now?`}
-        description="Each student sees their own result straight away. You can withdraw later, with a reason, but students may already have seen it."
-        confirmLabel="Publish now"
+        title={
+          correcting && live
+            ? `Replace version ${live.version} with the corrected results?`
+            : `Publish to ${formatNumber(students)} students now?`
+        }
+        description={
+          correcting && live
+            ? `Every student sees the corrected version at once. ${
+                changed == null
+                  ? "Only students whose result changed are told."
+                  : `${formatNumber(changed)} ${changed === 1 ? "student's result changes; only they are" : "students' results change; only they are"} told.`
+              } Old marksheets' QR codes will say they were superseded.`
+            : "Each student sees their own result straight away. You can withdraw later, with a reason, but students may already have seen it."
+        }
+        confirmLabel={correcting && live ? "Publish corrected results" : "Publish now"}
         loading={run.isPending}
         onConfirm={() => run.mutate({ kind: "now" })}
       />

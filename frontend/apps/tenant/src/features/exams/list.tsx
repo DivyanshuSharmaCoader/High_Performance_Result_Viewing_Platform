@@ -291,6 +291,11 @@ export default function ExamsPage() {
                     </Td>
                     <Td className="whitespace-nowrap">
                       <ExamStatusBadge status={x.status} />
+                      {x.correcting && x.status !== "correction_draft" && (
+                        <Badge tone="warning" className="ml-1.5">
+                          Correcting
+                        </Badge>
+                      )}
                     </Td>
                     <Td className="hidden tabular text-fg-muted md:table-cell">{x.papers}</Td>
                     <Td className="hidden tabular text-fg-muted md:table-cell">{x.cohorts}</Td>
