@@ -75,3 +75,21 @@ export function useColorScheme(): [ColorScheme, (s: ColorScheme) => void] {
   }, []);
   return [scheme, update];
 }
+
+/** A device-local UI preference (e.g. the student portal's language). The one sanctioned place for
+ * localStorage writes, besides the colour scheme: never session data or anything personal. */
+export function readUiPref(key: string): string | null {
+  try {
+    return localStorage.getItem(`sc.${key}`);
+  } catch {
+    return null;
+  }
+}
+
+export function writeUiPref(key: string, value: string): void {
+  try {
+    localStorage.setItem(`sc.${key}`, value);
+  } catch {
+    /* private mode: the preference lasts for this page only */
+  }
+}

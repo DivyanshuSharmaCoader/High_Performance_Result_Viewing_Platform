@@ -13,8 +13,10 @@ Menus you can't use are hidden.
    charged, and when the trial ends nothing is deleted: you go back to your plan's limits.
 2. **Protect your account:** Account → **Two-step sign-in**. Scan the QR code with an authenticator app
    and keep the ten recovery codes somewhere safe. The dashboard reminds administrators until it's on.
-3. **Settings → Institution:** official name, address, and what students may see of class statistics
-   (nothing, averages only, or full). **Settings → Branding:** logo and colours (on plans with custom
+3. **Settings → Institution:** official name, address, what students may see of class statistics
+   (nothing, averages only, or full), and the **language for students and marksheets**: English, Hindi or
+   Punjabi. In Hindi or Punjabi, students and parents read their results in that language (they can
+   switch), and marksheets print English with that language beside it. **Settings → Branding:** logo and colours (on plans with custom
    branding).
 
 ## 2. Academic structure (Structure)

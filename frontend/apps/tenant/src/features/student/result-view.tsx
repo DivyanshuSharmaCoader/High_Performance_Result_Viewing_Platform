@@ -1,44 +1,36 @@
 import type { ResultPayload, SnapPaper } from "@scorecode/api-client";
 import { cn } from "@scorecode/ui";
 
+import { useI18n, type MessageKey } from "../../lib/i18n";
+
 /**
  * One student's result exactly as published — the snapshot payload (schema 1). Administrators preview
  * results with this same component, so what they approve is what students see (docs/03 W8).
  */
 
 type Tone = "success" | "danger" | "neutral" | "warning";
-const OUTCOME: Record<string, { label: string; tone: Tone; note?: string }> = {
-  pass: { label: "Passed", tone: "success" },
-  fail: {
-    label: "Not passed",
-    tone: "danger",
-    note: "Talk to your institution about re-evaluation or a supplementary exam.",
-  },
-  absent: { label: "Absent", tone: "neutral" },
-  withheld: {
-    label: "Result withheld",
-    tone: "warning",
-    note: "Your institution will tell you why and what happens next.",
-  },
-  incomplete: {
-    label: "Incomplete",
-    tone: "warning",
-    note: "Some marks weren't entered. Contact your institution.",
-  },
+// Labels come from the student catalogue (lib/i18n): English for staff previews, the student's language
+// in the portal.
+const OUTCOME: Record<string, { label: MessageKey; tone: Tone; note?: MessageKey }> = {
+  pass: { label: "outcome.pass", tone: "success" },
+  fail: { label: "outcome.fail", tone: "danger", note: "outcome.fail_note" },
+  absent: { label: "outcome.absent", tone: "neutral" },
+  withheld: { label: "outcome.withheld", tone: "warning", note: "outcome.withheld_note" },
+  incomplete: { label: "outcome.incomplete", tone: "warning", note: "outcome.incomplete_note" },
 };
-const PAPER: Record<string, { label: string; tone: Tone }> = {
-  pass: { label: "Pass", tone: "success" },
-  fail: { label: "Fail", tone: "danger" },
-  absent: { label: "Absent", tone: "neutral" },
-  exempt: { label: "Exempt", tone: "neutral" },
-  withheld: { label: "Withheld", tone: "warning" },
-  incomplete: { label: "Incomplete", tone: "warning" },
+const PAPER: Record<string, { label: MessageKey; tone: Tone }> = {
+  pass: { label: "paper.pass", tone: "success" },
+  fail: { label: "paper.fail", tone: "danger" },
+  absent: { label: "paper.absent", tone: "neutral" },
+  exempt: { label: "paper.exempt", tone: "neutral" },
+  withheld: { label: "paper.withheld", tone: "warning" },
+  incomplete: { label: "paper.incomplete", tone: "warning" },
 };
-const ATTENDANCE: Record<string, string> = {
-  absent: "Absent",
-  exempt: "Exempt",
-  malpractice: "Withheld",
-  withheld: "Withheld",
+const ATTENDANCE: Record<string, MessageKey> = {
+  absent: "paper.absent",
+  exempt: "paper.exempt",
+  malpractice: "paper.withheld",
+  withheld: "paper.withheld",
 };
 
 const TONE: Record<Tone, string> = {
@@ -78,7 +70,11 @@ function Figure({ label, value, big }: { label: string; value: string; big?: boo
 }
 
 function PaperCard({ p, average }: { p: SnapPaper; average?: string | null }) {
-  const status = PAPER[p.outcome] ?? { label: p.outcome, tone: "neutral" as const };
+  const { t } = useI18n();
+  const known = PAPER[p.outcome];
+  const status = known
+    ? { label: t(known.label), tone: known.tone }
+    : { label: p.outcome, tone: "neutral" as const };
   const present = p.attendance === "present";
   return (
     <li className="rounded-xl border border-border bg-surface p-4">
@@ -87,7 +83,7 @@ function PaperCard({ p, average }: { p: SnapPaper; average?: string | null }) {
           <p className="text-[15px] font-semibold leading-5 text-fg">{p.course_name}</p>
           <p className="mt-0.5 text-[12px] text-fg-subtle">
             <span className="font-mono">{p.course_code}</span>
-            {p.credits && <> · {p.credits} credits</>}
+            {p.credits && <> · {t("view.credits", { n: p.credits })}</>}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -110,7 +106,9 @@ function PaperCard({ p, average }: { p: SnapPaper; average?: string | null }) {
                 <div className="flex items-baseline justify-between gap-3 text-[13px]">
                   <span className={failed ? "text-danger" : "text-fg-muted"}>
                     {c.label}
-                    {failed && <span className="ml-1.5 text-[11px] font-medium">below the minimum</span>}
+                    {failed && (
+                      <span className="ml-1.5 text-[11px] font-medium">{t("view.below_minimum")}</span>
+                    )}
                   </span>
                   <span className="tabular text-fg">
                     <span className="font-semibold">{missing ? "—" : c.marks}</span>
@@ -129,13 +127,20 @@ function PaperCard({ p, average }: { p: SnapPaper; average?: string | null }) {
         </ul>
       ) : (
         <p className="mt-3 text-[13px] text-fg-muted">
-          {p.attendance ? (ATTENDANCE[p.attendance] ?? p.attendance) : "No marks entered"}
+          {p.attendance
+            ? ATTENDANCE[p.attendance]
+              ? t(ATTENDANCE[p.attendance]!)
+              : p.attendance
+            : t("view.no_marks")}
         </p>
       )}
       {(p.total || average) && (
         <div className="mt-3 flex items-baseline justify-between gap-3 border-t border-border pt-3 text-[13px]">
           <span className="text-fg-muted">
-            Total{average && <span className="text-fg-subtle"> · class average {average}</span>}
+            {t("view.total")}
+            {average && (
+              <span className="text-fg-subtle"> · {t("view.class_average", { value: average })}</span>
+            )}
           </span>
           <span className="tabular font-semibold text-fg">
             {p.total ?? "—"}
@@ -154,18 +159,25 @@ export function StudentResultView({
   payload: ResultPayload;
   averages?: Record<string, string | null>; // course code → class average, when the institution shares it
 }) {
+  const { t } = useI18n();
   const r = payload.result;
-  const outcome = OUTCOME[r.outcome] ?? { label: r.outcome, tone: "neutral" as const };
+  const known = OUTCOME[r.outcome];
+  const outcome = known
+    ? { label: t(known.label), tone: known.tone, note: known.note && t(known.note) }
+    : { label: r.outcome, tone: "neutral" as const, note: undefined };
   const figures = [
-    r.sgpa != null ? { label: "SGPA", value: gpa(r.sgpa) } : null,
-    pct(r.percentage) ? { label: "Percentage", value: pct(r.percentage)! } : null,
-    r.grade ? { label: "Grade", value: r.grade } : null,
-    r.total != null ? { label: "Total", value: `${r.total} / ${r.max_total}` } : null,
-    r.rank != null ? { label: "Rank", value: `#${r.rank}` } : null,
+    r.sgpa != null ? { label: t("view.sgpa"), value: gpa(r.sgpa) } : null,
+    pct(r.percentage) ? { label: t("view.percentage"), value: pct(r.percentage)! } : null,
+    r.grade ? { label: t("view.grade"), value: r.grade } : null,
+    r.total != null ? { label: t("view.total"), value: `${r.total} / ${r.max_total}` } : null,
+    r.rank != null ? { label: t("view.rank"), value: `#${r.rank}` } : null,
   ].filter((f): f is { label: string; value: string } => f !== null);
   const [lead, ...rest] = figures;
   return (
-    <article aria-label={`Result of ${payload.student.full_name}`} className="flex flex-col gap-4">
+    <article
+      aria-label={t("view.result_of", { name: payload.student.full_name })}
+      className="flex flex-col gap-4"
+    >
       <section className="overflow-hidden rounded-2xl border border-border bg-surface shadow-xs">
         <div
           className={cn(
@@ -205,13 +217,13 @@ export function StudentResultView({
           {outcome.note && <p className="mt-4 text-[13px] text-fg-muted">{outcome.note}</p>}
           {r.credits_attempted && r.credits_attempted !== "0" && (
             <p className="mt-3 text-[12px] text-fg-subtle">
-              Credits earned {r.credits_earned ?? "0"} of {r.credits_attempted}
+              {t("view.credits_earned", { earned: r.credits_earned ?? "0", attempted: r.credits_attempted })}
             </p>
           )}
         </div>
       </section>
-      <section aria-label="Marks by paper">
-        <h3 className="mb-2 px-1 text-[13px] font-semibold text-fg-muted">Marks by paper</h3>
+      <section aria-label={t("view.marks_by_paper")}>
+        <h3 className="mb-2 px-1 text-[13px] font-semibold text-fg-muted">{t("view.marks_by_paper")}</h3>
         <ul className="grid gap-3 sm:grid-cols-2">
           {payload.papers.map((p) => (
             <PaperCard key={p.course_code} p={p} average={averages?.[p.course_code]} />

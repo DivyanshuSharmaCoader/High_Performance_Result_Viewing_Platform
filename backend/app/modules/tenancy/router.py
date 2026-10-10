@@ -36,6 +36,7 @@ SETTINGS_FIELDS = (
     "verification_disclosure",
     "student_stats",
     "publish_notify_email",
+    "locale",
 )
 
 
@@ -50,6 +51,7 @@ class SettingsOut(BaseModel):
     verification_disclosure: str
     student_stats: str
     publish_notify_email: bool
+    locale: str
     special_codes: dict[str, Any]
     version: int
 
@@ -67,6 +69,8 @@ class SettingsIn(BaseModel):
     verification_disclosure: Literal["masked", "masked_plus_challenge"] = "masked"
     student_stats: Literal["none", "class_average", "full"] = "class_average"
     publish_notify_email: bool = True
+    # Students' and parents' default language, and the marksheet's second language (decision D29).
+    locale: Literal["en-IN", "hi-IN", "pa-IN"] = "en-IN"
 
 
 def _out(s: TenantSettings) -> SettingsOut:

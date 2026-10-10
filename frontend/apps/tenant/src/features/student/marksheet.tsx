@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Download, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 
+import { useI18n } from "../../lib/i18n";
 import { goTo } from "../../lib/navigate";
 import { fetchMyMarksheet, myMarksheetKey, useMyMarksheet } from "./api";
 
@@ -12,6 +13,7 @@ import { fetchMyMarksheet, myMarksheetKey, useMyMarksheet } from "./api";
  * so a fresh one is fetched on every click rather than reused from the page.
  */
 export function MarksheetCard({ publicationId }: { publicationId: string }) {
+  const { t } = useI18n();
   const qc = useQueryClient();
   const q = useMyMarksheet(publicationId);
   const [busy, setBusy] = useState(false);
@@ -30,13 +32,9 @@ export function MarksheetCard({ publicationId }: { publicationId: string }) {
         staleTime: 0,
       });
       if (fresh.url) goTo(fresh.url);
-      else setProblem("Your marksheet is still being prepared. Try again in a minute.");
+      else setProblem(t("ms.still_preparing"));
     } catch (e) {
-      setProblem(
-        e instanceof ApiError && e.status === 404
-          ? "This marksheet is no longer available."
-          : "The download didn't start. Check your connection and try again.",
-      );
+      setProblem(e instanceof ApiError && e.status === 404 ? t("ms.gone") : t("ms.download_failed"));
     } finally {
       setBusy(false);
     }
@@ -48,16 +46,12 @@ export function MarksheetCard({ publicationId }: { publicationId: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setProblem("Couldn't copy the link. Select it and copy it yourself.");
+      setProblem(t("ms.copy_failed"));
     }
   };
 
   const status =
-    m.status === "rendered"
-      ? "Your official statement of marks, with a QR code anyone can scan to check it."
-      : m.status === "pending"
-        ? "Being prepared — it'll be ready in a moment."
-        : "Not ready yet. Your institution can see this and will fix it.";
+    m.status === "rendered" ? t("ms.ready") : m.status === "pending" ? t("ms.pending") : t("ms.failed");
   return (
     <section
       aria-labelledby="marksheet-title"
@@ -66,7 +60,7 @@ export function MarksheetCard({ publicationId }: { publicationId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 id="marksheet-title" className="text-sm font-semibold text-fg">
-            Marksheet (PDF)
+            {t("ms.title")}
           </h2>
           <p className="text-[13px] text-fg-muted" aria-live="polite">
             {status}
@@ -78,7 +72,7 @@ export function MarksheetCard({ publicationId }: { publicationId: string }) {
           disabled={m.status !== "rendered"}
           onClick={() => void download()}
         >
-          {m.status === "pending" ? "Preparing…" : "Download"}
+          {m.status === "pending" ? t("ms.preparing") : t("ms.download")}
         </Button>
       </div>
       {problem && (
@@ -89,12 +83,9 @@ export function MarksheetCard({ publicationId }: { publicationId: string }) {
       {m.verification && (
         <div className="mt-4 border-t border-border pt-4">
           <p className="flex items-center gap-1.5 text-[13px] font-medium text-fg">
-            <ShieldCheck className="size-4 text-success" aria-hidden /> Share a verifiable result
+            <ShieldCheck className="size-4 text-success" aria-hidden /> {t("ms.share_title")}
           </p>
-          <p className="mt-0.5 text-[12px] text-fg-subtle">
-            Employers and universities can confirm it's genuine at this address. They see your institution,
-            the exam and whether the result is current — not your marks.
-          </p>
+          <p className="mt-0.5 text-[12px] text-fg-subtle">{t("ms.share_desc")}</p>
           <div className="mt-2 flex items-center gap-2 rounded-lg bg-surface-2 py-1.5 pr-1.5 pl-3">
             <code className="min-w-0 flex-1 truncate font-mono text-[12px] text-fg-muted">
               {m.verification.url.replace(/^https?:\/\//, "")}
@@ -105,11 +96,11 @@ export function MarksheetCard({ publicationId }: { publicationId: string }) {
               leadingIcon={copied ? <Check /> : <Copy />}
               onClick={() => void copy()}
             >
-              {copied ? "Copied" : "Copy link"}
+              {copied ? t("ms.copied") : t("ms.copy")}
             </Button>
           </div>
           <p className="mt-1.5 text-[12px] text-fg-subtle">
-            Verification code <span className="font-mono">{m.verification.code}</span>
+            {t("ms.code")} <span className="font-mono">{m.verification.code}</span>
           </p>
         </div>
       )}

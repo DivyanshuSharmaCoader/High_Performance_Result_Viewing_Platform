@@ -73,6 +73,7 @@ const schema = z.object({
   verification_disclosure: z.enum(["masked", "masked_plus_challenge"]),
   student_stats: z.enum(["none", "class_average", "full"]),
   publish_notify_email: z.boolean(),
+  locale: z.enum(["en-IN", "hi-IN", "pa-IN"]),
 });
 type Values = z.infer<typeof schema>;
 
@@ -88,6 +89,7 @@ function toValues(s: SettingsOut): Values {
     verification_disclosure: s.verification_disclosure as Values["verification_disclosure"],
     student_stats: s.student_stats as Values["student_stats"],
     publish_notify_email: s.publish_notify_email,
+    locale: (["en-IN", "hi-IN", "pa-IN"].includes(s.locale) ? s.locale : "en-IN") as Values["locale"],
   };
 }
 
@@ -266,6 +268,21 @@ export function InstitutionSettingsPage() {
               <option value="none">None</option>
               <option value="class_average">Class average only</option>
               <option value="full">Average, highest and distribution</option>
+            </Select>
+          </SettingRow>
+          <SettingRow
+            label="Language for students and marksheets"
+            description="Students and parents see their results in this language (they can switch on their own phone). In Hindi or Punjabi, marksheets carry English and that language side by side. Staff screens stay in English."
+            labelFor="setting-locale"
+          >
+            <Select id="setting-locale" {...form.register("locale")} className="max-w-xs">
+              <option value="en-IN">English</option>
+              <option value="hi-IN" lang="hi">
+                हिन्दी (Hindi)
+              </option>
+              <option value="pa-IN" lang="pa">
+                ਪੰਜਾਬੀ (Punjabi)
+              </option>
             </Select>
           </SettingRow>
           <SettingRow label="Email on publication" description="Emails contain a link only — never marks.">

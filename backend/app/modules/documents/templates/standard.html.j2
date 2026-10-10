@@ -52,6 +52,10 @@
   .verify img { width: 25mm; height: 25mm; }
   .verify .code-text { font-family: "DejaVu Sans Mono", monospace; font-size: 9pt; font-weight: 700; letter-spacing: 0.04em; }
   footer { margin-top: 5mm; font-size: 7.5pt; color: #8a8f98; }
+  /* The institution's own language beside English (labels.py): never spaced or upper-cased, which breaks
+     Devanagari and Gurmukhi shaping. */
+  .alt { letter-spacing: 0; text-transform: none; font-weight: inherit; }
+  .revised .alt { display: block; margin-top: 0.8mm; }
 </style>
 </head>
 <body>
@@ -68,27 +72,27 @@
   </header>
 
   <section class="title">
-    <div class="kicker">Statement of marks</div>
+    <div class="kicker">{{ L.statement }}</div>
     <div class="exam">{{ exam.name }}</div>
     <div class="muted">{{ exam.term }} · {{ exam.session }}</div>
   </section>
 
   <dl class="who">
-    <div><dt>Name</dt><dd>{{ student.name }}</dd></div>
-    <div><dt>Enrollment no.</dt><dd>{{ student.enrollment_no }}</dd></div>
-    {% if student.cohort %}<div><dt>Class / section</dt><dd>{{ student.cohort }}</dd></div>{% endif %}
-    {% if student.program %}<div><dt>Programme</dt><dd>{{ student.program }}</dd></div>{% endif %}
+    <div><dt>{{ L.name }}</dt><dd>{{ student.name }}</dd></div>
+    <div><dt>{{ L.enrollment_no }}</dt><dd>{{ student.enrollment_no }}</dd></div>
+    {% if student.cohort %}<div><dt>{{ L.class_section }}</dt><dd>{{ student.cohort }}</dd></div>{% endif %}
+    {% if student.program %}<div><dt>{{ L.programme }}</dt><dd>{{ student.program }}</dd></div>{% endif %}
   </dl>
 
   <table>
     <thead>
       <tr>
-        <th>Code</th>
-        <th>Paper</th>
-        {% if has_credits %}<th class="num">Credits</th>{% endif %}
-        <th class="num">Marks</th>
-        <th class="num">Grade</th>
-        <th>Result</th>
+        <th>{{ L.code }}</th>
+        <th>{{ L.paper }}</th>
+        {% if has_credits %}<th class="num">{{ L.credits }}</th>{% endif %}
+        <th class="num">{{ L.marks }}</th>
+        <th class="num">{{ L.grade }}</th>
+        <th>{{ L.result }}</th>
       </tr>
     </thead>
     <tbody>
@@ -108,29 +112,29 @@
   <section class="summary">
     <div><span class="badge {{ result.tone }}">{{ result.outcome }}</span></div>
     <dl class="figures">
-      <div><dt>Total</dt><dd>{{ result.total }} / {{ result.max }}</dd></div>
-      {% if result.percentage %}<div><dt>Percentage</dt><dd>{{ result.percentage }}</dd></div>{% endif %}
-      {% if result.grade %}<div><dt>Grade</dt><dd>{{ result.grade }}</dd></div>{% endif %}
-      {% if result.sgpa %}<div><dt>SGPA</dt><dd>{{ result.sgpa }}</dd></div>
-      {% elif result.grade_point %}<div><dt>Grade point</dt><dd>{{ result.grade_point }}</dd></div>{% endif %}
-      {% if result.credits %}<div><dt>Credits</dt><dd>{{ result.credits }}</dd></div>{% endif %}
-      {% if result.rank %}<div><dt>Rank</dt><dd>{{ result.rank }}</dd></div>{% endif %}
+      <div><dt>{{ L.total }}</dt><dd>{{ result.total }} / {{ result.max }}</dd></div>
+      {% if result.percentage %}<div><dt>{{ L.percentage }}</dt><dd>{{ result.percentage }}</dd></div>{% endif %}
+      {% if result.grade %}<div><dt>{{ L.grade }}</dt><dd>{{ result.grade }}</dd></div>{% endif %}
+      {% if result.sgpa %}<div><dt>{{ L.sgpa }}</dt><dd>{{ result.sgpa }}</dd></div>
+      {% elif result.grade_point %}<div><dt>{{ L.grade_point }}</dt><dd>{{ result.grade_point }}</dd></div>{% endif %}
+      {% if result.credits %}<div><dt>{{ L.credits }}</dt><dd>{{ result.credits }}</dd></div>{% endif %}
+      {% if result.rank %}<div><dt>{{ L.rank }}</dt><dd>{{ result.rank }}</dd></div>{% endif %}
     </dl>
   </section>
   {% if result.notes %}
   <ul class="notes">{% for n in result.notes %}<li>{{ n }}</li>{% endfor %}</ul>
   {% endif %}
   {% if revised %}
-  <div class="revised">Revised statement (version {{ version }}). It replaces any earlier statement of marks for this exam.</div>
+  <div class="revised">{{ revised_text }}</div>
   {% endif %}
 
   <section class="verify">
     <img src="{{ verify.qr }}" alt="Verification QR code">
     <div>
-      <div style="font-weight:700">Verify this statement</div>
-      <div class="muted">Scan the code, or visit <strong>{{ verify.display }}</strong></div>
-      <div style="margin-top:1.5mm"><span class="muted small">Verification code</span><br><span class="code-text">{{ verify.code }}</span></div>
-      <div class="muted small" style="margin-top:1.5mm">Issued {{ issued_on }} · Grading: {{ scheme }}</div>
+      <div style="font-weight:700">{{ L.verify_title }}</div>
+      <div class="muted">{{ L.verify_scan }}: <strong>{{ verify.display }}</strong></div>
+      <div style="margin-top:1.5mm"><span class="muted small">{{ L.verification_code }}</span><br><span class="code-text">{{ verify.code }}</span></div>
+      <div class="muted small" style="margin-top:1.5mm">{{ L.issued }} {{ issued_on }} · {{ L.grading }}: {{ scheme }}</div>
     </div>
   </section>
 

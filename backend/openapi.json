@@ -6826,6 +6826,16 @@
             ],
             "title": "Contact Phone"
           },
+          "locale": {
+            "default": "en-IN",
+            "enum": [
+              "en-IN",
+              "hi-IN",
+              "pa-IN"
+            ],
+            "title": "Locale",
+            "type": "string"
+          },
           "official_name": {
             "maxLength": 200,
             "minLength": 2,
@@ -6927,6 +6937,10 @@
             ],
             "title": "Contact Phone"
           },
+          "locale": {
+            "title": "Locale",
+            "type": "string"
+          },
           "official_name": {
             "title": "Official Name",
             "type": "string"
@@ -6968,6 +6982,7 @@
           "verification_disclosure",
           "student_stats",
           "publish_notify_email",
+          "locale",
           "special_codes",
           "version"
         ],

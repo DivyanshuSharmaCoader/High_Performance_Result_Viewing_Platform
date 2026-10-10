@@ -4606,6 +4606,12 @@ export interface components {
             contact_email?: string | null;
             /** Contact Phone */
             contact_phone?: string | null;
+            /**
+             * Locale
+             * @default en-IN
+             * @enum {string}
+             */
+            locale: "en-IN" | "hi-IN" | "pa-IN";
             /** Official Name */
             official_name: string;
             /**
@@ -4646,6 +4652,8 @@ export interface components {
             contact_email: string | null;
             /** Contact Phone */
             contact_phone: string | null;
+            /** Locale */
+            locale: string;
             /** Official Name */
             official_name: string;
             /** Publish Notify Email */

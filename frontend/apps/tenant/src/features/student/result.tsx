@@ -1,8 +1,9 @@
 import { ApiError } from "@scorecode/api-client";
-import { Button, Callout, Skeleton, formatDateTime } from "@scorecode/ui";
+import { Button, Callout, Skeleton } from "@scorecode/ui";
 import { ArrowLeft, Printer } from "lucide-react";
 import { Link, useParams } from "react-router";
 
+import { useI18n } from "../../lib/i18n";
 import { useMyResult, useMyStats } from "./api";
 import { ClassStats, type FullStats } from "./class-stats";
 import { MarksheetCard } from "./marksheet";
@@ -10,6 +11,7 @@ import { StudentResultView } from "./result-view";
 
 export default function StudentResultPage() {
   const { publicationId = "" } = useParams();
+  const { t, dateTime } = useI18n();
   const q = useMyResult(publicationId);
   const stats = useMyStats(publicationId);
   const averages = Object.fromEntries(
@@ -23,11 +25,11 @@ export default function StudentResultPage() {
     <>
       <div className="mb-4 flex items-center justify-between gap-3 print:hidden">
         <Link to="/me" className="inline-flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg">
-          <ArrowLeft className="size-4" aria-hidden /> My results
+          <ArrowLeft className="size-4" aria-hidden /> {t("result.my_results")}
         </Link>
         {q.data && (
           <Button size="sm" variant="ghost" leadingIcon={<Printer />} onClick={() => window.print()}>
-            Print
+            {t("result.print")}
           </Button>
         )}
       </div>
@@ -39,15 +41,14 @@ export default function StudentResultPage() {
       ) : q.error ? (
         <Callout tone="danger">
           {q.error instanceof ApiError && q.error.status === 404
-            ? "This result isn't available. It may have been withdrawn by your institution."
-            : "Your result couldn't be loaded. Check your connection and try again."}
+            ? t("result.not_available")
+            : t("result.load_failed")}
         </Callout>
       ) : (
         <>
           {q.data.revised && (
             <Callout tone="info" className="mb-4">
-              This is a revised result, published {formatDateTime(q.data.published_at)}. It replaces the
-              earlier version.
+              {t("result.revised_notice", { date: dateTime(q.data.published_at) })}
             </Callout>
           )}
           <StudentResultView payload={q.data.payload} averages={averages} />
@@ -56,8 +57,11 @@ export default function StudentResultPage() {
             <ClassStats stats={stats.data.stats as FullStats} percentage={q.data.payload.result.percentage} />
           ) : null}
           <p className="mt-5 text-[12px] text-fg-subtle">
-            Published by {q.data.payload.institution.name} on {formatDateTime(q.data.published_at)}
-            {classAverage && <> · class average {classAverage}%</>}.
+            {t("result.published_by", {
+              institution: q.data.payload.institution.name,
+              date: dateTime(q.data.published_at),
+            })}
+            {classAverage && <> · {t("result.class_average_pct", { value: classAverage })}</>}.
           </p>
         </>
       )}

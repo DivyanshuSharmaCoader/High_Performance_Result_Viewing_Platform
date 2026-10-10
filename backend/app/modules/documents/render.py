@@ -24,26 +24,13 @@ import segno
 from jinja2 import PackageLoader, StrictUndefined
 from jinja2.sandbox import SandboxedEnvironment
 
+from app.modules.documents.labels import LABELS, OUTCOMES, PAPER_OUTCOMES, bilingual, labels
 from app.modules.files.service import IMAGE_TYPES, sniff
 
 TEMPLATE_CODE = "standard"
 TEMPLATE_VERSION = 1
 
-OUTCOME = {
-    "pass": ("Passed", "pass"),
-    "fail": ("Not passed", "fail"),
-    "absent": ("Absent", "neutral"),
-    "withheld": ("Result withheld", "warn"),
-    "incomplete": ("Incomplete", "warn"),
-}
-PAPER_OUTCOME = {
-    "pass": "Pass",
-    "fail": "Fail",
-    "absent": "Absent",
-    "exempt": "Exempt",
-    "withheld": "Withheld",
-    "incomplete": "Incomplete",
-}
+TONE = {"pass": "pass", "fail": "fail", "absent": "neutral", "withheld": "warn", "incomplete": "warn"}
 
 _env = SandboxedEnvironment(
     loader=PackageLoader("app.modules.documents", "templates"),
@@ -124,12 +111,18 @@ def view_model(
     version: int,
     issued_at: datetime,
     timezone: str,
+    language: str = "en",
 ) -> dict[str, Any]:
-    """Everything the template prints, from the snapshot alone (schema 1)."""
+    """Everything the template prints, from the snapshot alone (schema 1). ``language`` other than ``en``
+    makes the labels bilingual (labels.py)."""
     result = payload["result"]
     student = payload["student"]
     names = payload["institution"]
-    outcome_label, tone = OUTCOME.get(result["outcome"], (str(result["outcome"]).title(), "neutral"))
+
+    def said(table: dict[str, dict[str, str]], code: Any) -> Any:
+        return bilingual(table[code], language) if code in table else str(code).title()
+
+    tone = TONE.get(result["outcome"], "neutral")
     papers = []
     for p in payload["papers"]:
         parts = [f"{c['label']} {_num(c['marks'])}/{_num(c['max'])}" for c in p.get("components", [])]
@@ -142,7 +135,7 @@ def view_model(
                 "total": _num(p["total"]),
                 "max": _num(p["max_total"]),
                 "grade": _num(p["grade"]),
-                "outcome": PAPER_OUTCOME.get(p["outcome"], str(p["outcome"]).title()),
+                "outcome": said(PAPER_OUTCOMES, p["outcome"]),
                 "failed": p["outcome"] == "fail",
             }
         )
@@ -166,7 +159,7 @@ def view_model(
         "papers": papers,
         "has_credits": any(p["credits"] is not None for p in papers),
         "result": {
-            "outcome": outcome_label,
+            "outcome": said(OUTCOMES, result["outcome"]),
             "tone": tone,
             "total": _num(result["total"]),
             "max": _num(result["max_total"]),
@@ -186,6 +179,9 @@ def view_model(
         "issued_on": f"{local.day} {local:%B %Y}",
         "version": version,
         "revised": version > 1,
+        "revised_text": bilingual(LABELS["revised"], language, sep=" ", version=version),
+        "L": labels(language),
+        "lang": language,
         "verify": {
             "url": verify_url,
             "display": verify_url.split("://", 1)[-1],

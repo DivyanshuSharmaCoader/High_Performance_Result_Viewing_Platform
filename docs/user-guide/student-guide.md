@@ -18,6 +18,8 @@ If the code has expired, ask your institution for a new slip. ScoreCode staff ca
   You never see another student's marks.
 - New results arrive with a **notification** (the bell), and by email if you've kept emails on (Account
   → Notifications).
+- **Language:** English, हिन्दी or ਪੰਜਾਬੀ, from the menu at the top. Your institution picks the default;
+  your choice is kept on your phone. (Notifications and the sign-in pages are in English.)
 
 ## Your marksheet (PDF)
 On a result, **Download** gets the official marksheet. Under it are its **verification code** and a

@@ -1,31 +1,44 @@
 import type { MyResultItem } from "@scorecode/api-client";
-import { EmptyState, Skeleton, formatDate, formatRelative } from "@scorecode/ui";
+import { EmptyState, Skeleton } from "@scorecode/ui";
 import { ChevronRight, FileText, Sparkles } from "lucide-react";
 import { Link } from "react-router";
 
+import { useI18n, type MessageKey } from "../../lib/i18n";
 import { useSession } from "../../lib/session";
 import { useTenant } from "../../lib/tenant";
 import { useMyResults } from "./api";
 import { Pill, gpa } from "./result-view";
 
 const OUTCOME = {
-  pass: { label: "Passed", tone: "success" },
-  fail: { label: "Not passed", tone: "danger" },
-  absent: { label: "Absent", tone: "neutral" },
-  withheld: { label: "Withheld", tone: "warning" },
-  incomplete: { label: "Incomplete", tone: "warning" },
-} as const;
+  pass: { label: "outcome.pass", tone: "success" },
+  fail: { label: "outcome.fail", tone: "danger" },
+  absent: { label: "outcome.absent", tone: "neutral" },
+  withheld: { label: "outcome.withheld", tone: "warning" },
+  incomplete: { label: "outcome.incomplete", tone: "warning" },
+} as const satisfies Record<string, { label: MessageKey; tone: string }>;
 
-const headline = (r: MyResultItem) =>
-  r.sgpa != null
-    ? { label: "SGPA", value: gpa(r.sgpa) }
-    : r.percentage != null
-      ? { label: "Percentage", value: `${r.percentage}%` }
-      : null;
+function useOutcome() {
+  const { t } = useI18n();
+  return (outcome: string) => {
+    const o = OUTCOME[outcome as keyof typeof OUTCOME];
+    return o ? { label: t(o.label), tone: o.tone } : { label: outcome, tone: "neutral" as const };
+  };
+}
+
+function useHeadline() {
+  const { t } = useI18n();
+  return (r: MyResultItem) =>
+    r.sgpa != null
+      ? { label: t("view.sgpa"), value: gpa(r.sgpa) }
+      : r.percentage != null
+        ? { label: t("view.percentage"), value: `${r.percentage}%` }
+        : null;
+}
 
 function LatestCard({ r }: { r: MyResultItem }) {
-  const o = OUTCOME[r.outcome as keyof typeof OUTCOME] ?? { label: r.outcome, tone: "neutral" as const };
-  const h = headline(r);
+  const { t, relative } = useI18n();
+  const o = useOutcome()(r.outcome);
+  const h = useHeadline()(r);
   return (
     <Link
       to={`/me/results/${r.publication_id}`}
@@ -37,14 +50,14 @@ function LatestCard({ r }: { r: MyResultItem }) {
       />
       <div className="relative">
         <p className="inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-brand-ink">
-          <Sparkles className="size-3.5" aria-hidden /> Latest result
+          <Sparkles className="size-3.5" aria-hidden /> {t("home.latest")}
         </p>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h2 className="text-xl font-semibold tracking-[-0.01em] text-fg">{r.exam.name}</h2>
             <p className="mt-0.5 text-[13px] text-fg-subtle">
-              {r.exam.term} · {r.exam.session} · published {formatRelative(r.published_at)}
-              {r.revised && " · revised"}
+              {r.exam.term} · {r.exam.session} · {t("home.published", { when: relative(r.published_at) })}
+              {r.revised && ` · ${t("home.revised")}`}
             </p>
           </div>
           <Pill tone={o.tone}>{o.label}</Pill>
@@ -61,7 +74,7 @@ function LatestCard({ r }: { r: MyResultItem }) {
             <span />
           )}
           <span className="inline-flex items-center gap-1 text-sm font-medium text-brand-ink">
-            See full result{" "}
+            {t("home.see_full")}{" "}
             <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </span>
         </div>
@@ -71,6 +84,9 @@ function LatestCard({ r }: { r: MyResultItem }) {
 }
 
 export default function StudentHome() {
+  const { t, date } = useI18n();
+  const outcomeOf = useOutcome();
+  const headline = useHeadline();
   const me = useSession();
   const { branding } = useTenant();
   const results = useMyResults();
@@ -78,9 +94,11 @@ export default function StudentHome() {
   const [latest, ...older] = results.data ?? [];
   return (
     <>
-      <h1 className="text-[22px] font-semibold tracking-[-0.01em] text-fg">Hello, {first}</h1>
+      <h1 className="text-[22px] font-semibold tracking-[-0.01em] text-fg">
+        {t("home.hello", { name: first })}
+      </h1>
       <p className="mt-1 text-sm text-fg-subtle">
-        Enrollment no. <span className="font-mono text-fg-muted">{me.login_id}</span>
+        {t("home.enrollment_no")} <span className="font-mono text-fg-muted">{me.login_id}</span>
       </p>
       <div className="mt-6 flex flex-col gap-6">
         {results.isPending ? (
@@ -89,8 +107,10 @@ export default function StudentHome() {
           <div className="rounded-xl border border-border bg-surface">
             <EmptyState
               icon={<FileText />}
-              title="No results yet"
-              description={`Your results will appear here as soon as ${branding.short_name ?? branding.display_name} publishes them.`}
+              title={t("home.no_results")}
+              description={t("home.no_results_desc", {
+                institution: branding.short_name ?? branding.display_name,
+              })}
             />
           </div>
         ) : (
@@ -99,14 +119,11 @@ export default function StudentHome() {
         {older.length > 0 && (
           <section aria-labelledby="history">
             <h2 id="history" className="mb-2 px-1 text-[13px] font-semibold text-fg-muted">
-              Earlier results
+              {t("home.earlier")}
             </h2>
             <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-surface">
               {older.map((r) => {
-                const o = OUTCOME[r.outcome as keyof typeof OUTCOME] ?? {
-                  label: r.outcome,
-                  tone: "neutral" as const,
-                };
+                const o = outcomeOf(r.outcome);
                 const h = headline(r);
                 return (
                   <li key={r.publication_id}>
@@ -117,7 +134,7 @@ export default function StudentHome() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-fg">{r.exam.name}</p>
                         <p className="text-[12px] text-fg-subtle">
-                          {r.exam.session} · {formatDate(r.published_at)}
+                          {r.exam.session} · {date(r.published_at)}
                         </p>
                       </div>
                       {h && <span className="tabular text-sm font-semibold text-fg">{h.value}</span>}

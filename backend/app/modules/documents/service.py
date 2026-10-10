@@ -35,6 +35,7 @@ from app.core.http import Principal
 from app.core.jobs import enqueue
 from app.core.logging import get_logger
 from app.modules.branding.models import TenantBranding
+from app.modules.documents.labels import language_of
 from app.modules.documents.models import MarksheetDocument
 from app.modules.documents.pool import pool as pdf_pool
 from app.modules.documents.render import (
@@ -175,6 +176,8 @@ class MarksheetService:
             ).all()
             branding = await self._branding(uow)
             timezone = (await uow.session.scalars(select(Tenant.timezone))).one()
+            # Hindi or Punjabi makes the marksheet bilingual (decision D29).
+            language = language_of((await uow.session.scalars(select(TenantSettings.locale))).one())
         issued_at: datetime = pub.published_at or pub.scheduled_at or utcnow()
         processes = self.infra.settings.pdf_processes
         outcome = {"rendered": 0, "failed": 0}
@@ -189,6 +192,7 @@ class MarksheetService:
                 version=pub.version,
                 issued_at=issued_at,
                 timezone=timezone,
+                language=language,
             )
             if processes > 0:
                 return await asyncio.get_running_loop().run_in_executor(pdf_pool(processes), job)

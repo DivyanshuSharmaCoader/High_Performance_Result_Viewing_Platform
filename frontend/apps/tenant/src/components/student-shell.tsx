@@ -4,12 +4,42 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { NotificationBell } from "../features/notifications/bell";
+import { I18nProvider, LANGUAGES, langOf, useI18n, type Lang } from "../lib/i18n";
 import { useLogout, useSession } from "../lib/session";
 import { useTenant } from "../lib/tenant";
 
-/** The student portal frame: light (students download as little as possible — docs/09 §7). */
+/** The student portal frame: light (students download as little as possible — docs/09 §7), and in the
+ * student's or parent's language (English, Hindi, Punjabi — decision D29). */
 export function StudentShell({ children }: { children: ReactNode }) {
   const tenant = useTenant();
+  return (
+    <I18nProvider defaultLocale={tenant.settings.locale}>
+      <Frame>{children}</Frame>
+    </I18nProvider>
+  );
+}
+
+function LanguagePicker() {
+  const { lang, setLang, t } = useI18n();
+  return (
+    <select
+      aria-label={t("shell.language")}
+      value={lang}
+      onChange={(e) => setLang(langOf(e.target.value) as Lang)}
+      className="h-8 rounded-md border border-border bg-surface px-1.5 text-[13px] text-fg-muted hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand print:hidden"
+    >
+      {LANGUAGES.map((l) => (
+        <option key={l.code} value={l.code} lang={l.code}>
+          {l.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function Frame({ children }: { children: ReactNode }) {
+  const tenant = useTenant();
+  const { t } = useI18n();
   const me = useSession();
   const logout = useLogout();
   const navigate = useNavigate();
@@ -27,6 +57,7 @@ export function StudentShell({ children }: { children: ReactNode }) {
             <span className="truncate text-sm font-semibold text-fg">{b.short_name ?? b.display_name}</span>
           </Link>
           <div className="flex items-center gap-1">
+            <LanguagePicker />
             <NotificationBell />
             <AccountMenu
               name={me.full_name}
@@ -42,7 +73,9 @@ export function StudentShell({ children }: { children: ReactNode }) {
         {children}
       </main>
       {b.show_powered_by && (
-        <footer className="pb-8 text-center text-xs text-fg-subtle print:hidden">Powered by ScoreCode</footer>
+        <footer className="pb-8 text-center text-xs text-fg-subtle print:hidden">
+          {t("shell.powered_by")}
+        </footer>
       )}
     </div>
   );
@@ -66,6 +99,7 @@ function AccountMenu({
   onAccount: () => void;
   onSignOut: () => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -100,7 +134,7 @@ function AccountMenu({
         ref={button}
         type="button"
         className="rounded-full p-0.5 hover:bg-surface-2"
-        aria-label="Account menu"
+        aria-label={t("shell.account_menu")}
         aria-expanded={open}
         aria-controls={id}
         onClick={() => setOpen((o) => !o)}
@@ -118,14 +152,14 @@ function AccountMenu({
           </div>
           <div className="my-1 h-px bg-border" />
           <button type="button" className={item} onClick={pick(onHome)}>
-            <House aria-hidden /> Home
+            <House aria-hidden /> {t("shell.home")}
           </button>
           <button type="button" className={item} onClick={pick(onAccount)}>
-            <UserRound aria-hidden /> Password & sessions
+            <UserRound aria-hidden /> {t("shell.password_sessions")}
           </button>
           <div className="my-1 h-px bg-border" />
           <button type="button" className={item} onClick={pick(onSignOut)}>
-            <LogOut aria-hidden /> Sign out
+            <LogOut aria-hidden /> {t("shell.sign_out")}
           </button>
         </div>
       )}

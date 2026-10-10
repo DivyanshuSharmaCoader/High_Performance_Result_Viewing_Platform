@@ -275,3 +275,25 @@ def test_marksheets_lay_out_in_spawned_processes() -> None:
         shutdown()
     assert all(r.pdf.startswith(b"%PDF-") and r.refused == [] for r in results)
     assert len({r.pdf for r in results}) == 4  # each one its own document
+
+
+def _pdf_text(pdf: bytes) -> bytes:
+    """The PDF with its compressed streams (object streams included) inflated, for searching."""
+    import contextlib
+    import re
+    import zlib
+
+    out = [pdf]
+    for m in re.finditer(rb"stream\r?\n(.*?)\r?\nendstream", pdf, re.S):
+        with contextlib.suppress(zlib.error):
+            out.append(zlib.decompress(m.group(1)))
+    return b"\n".join(out)
+
+
+@pytest.mark.pdf
+def test_hindi_and_punjabi_marksheets_embed_fonts_for_their_scripts() -> None:
+    """Without a Devanagari or Gurmukhi font the bilingual labels would print as boxes (P18.4)."""
+    for lang, script in (("hi", b"Devanagari"), ("pa", b"Gurmukhi")):
+        result = render_marksheet(PAYLOAD, **{**CONTEXT, "language": lang})
+        assert result.pdf.startswith(b"%PDF-") and result.refused == []
+        assert script in _pdf_text(result.pdf), f"no {script.decode()} font in the {lang} marksheet"
