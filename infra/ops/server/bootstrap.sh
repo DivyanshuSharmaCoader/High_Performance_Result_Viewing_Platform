@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+# One-time server baseline for ScoreCode on Ubuntu 24.04 (P18.8; docs/runbooks/server-setup.md). Run as
+# root, from the operator's machine:
+#
+#   infra/ops/server/remote.sh root inspect     # read-only: OS, disk, memory, Docker, ports, firewall
+#   infra/ops/server/remote.sh root apply       # the baseline below; idempotent, safe to run again
+#
+# `apply`:
+#   - unattended security updates (no automatic reboot), time sync on
+#   - Docker Engine + compose plugin from Docker's apt repository, on at boot, logs rotated
+#   - a `deploy` user (key login only, no password), allowed to run exactly two root-owned commands:
+#     scorecode-deploy (deploy a released version) and scorecode-ctl (a fixed set of operations)
+#   - /opt/scorecode (root-owned code, deploy-owned env/ and secrets/)
+#   - firewall rules for 22, 80 and 443 written to ufw but NOT enabled: enabling it is gate (a)
+# It never changes sshd, never disables root or password login, and never upgrades the OS release.
+set -euo pipefail
+mode=${1:-inspect}
+[ "$(id -u)" = 0 ] || { echo "run as root" >&2; exit 2; }
+here=$(cd "$(dirname "$0")" && pwd)
+
+inspect() {
+  echo "== system";  . /etc/os-release; echo "$PRETTY_NAME, kernel $(uname -r), $(nproc) vCPU, up $(uptime -p)"
+  echo "== memory";  free -m | sed -n 1,3p
+  echo "== disk";    df -h / | tail -1
+  echo "== docker";  if command -v docker >/dev/null; then docker --version; docker compose version 2>/dev/null || true
+                       docker ps --format '{{.Names}}  {{.Image}}  {{.Status}}' 2>/dev/null | head -20; else echo "not installed"; fi
+  echo "== listening TCP ports"; ss -tlnpH 2>/dev/null | awk '{print $4, $6}' | sort -u | head -30
+  echo "== firewall"; (ufw status verbose 2>/dev/null || echo "ufw not installed") | head -20
+  echo "             nftables rules: $(nft list ruleset 2>/dev/null | grep -c . || echo 0) lines"
+  echo "== login users"; awk -F: '$7 !~ /(nologin|false)$/ {print $1, $6, $7}' /etc/passwd
+  echo "== sshd";   sshd -T 2>/dev/null | grep -E '^(port|permitrootlogin|passwordauthentication|pubkeyauthentication) ' || true
+  echo "== services (failed)"; systemctl --failed --no-legend 2>/dev/null | head -10 || true
+  echo "== time";   timedatectl show -p NTPSynchronized -p Timezone 2>/dev/null || true
+  echo "== unattended upgrades"; (apt-config dump 2>/dev/null | grep -E 'APT::Periodic::(Update-Package-Lists|Unattended-Upgrade) ') || echo "not configured"
+}
+
+apply() {
+  export DEBIAN_FRONTEND=noninteractive
+  . /etc/os-release
+  [ "${VERSION_ID:-}" = "24.04" ] || echo "warning: tested on Ubuntu 24.04, this is $PRETTY_NAME" >&2
+
+  echo "== packages (security updates, time sync, firewall tool)"
+  apt-get update -qq
+  apt-get install -y -qq ca-certificates curl gnupg unattended-upgrades ufw jq >/dev/null
+  cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+EOF
+  # Ubuntu's default 50unattended-upgrades takes the security pocket only; never reboot on our behalf.
+  echo 'Unattended-Upgrade::Automatic-Reboot "false";' > /etc/apt/apt.conf.d/52scorecode-no-reboot
+  timedatectl set-ntp true || echo "warning: could not switch on time sync" >&2
+
+  echo "== Docker Engine"
+  if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1; then
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $VERSION_CODENAME stable" \
+      > /etc/apt/sources.list.d/docker.list
+    apt-get update -qq
+    apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null
+  fi
+  mkdir -p /etc/docker
+  want='{"log-driver":"json-file","log-opts":{"max-size":"20m","max-file":"5"},"live-restore":true}'
+  if [ -f /etc/docker/daemon.json ]; then
+    merged=$(jq -s '.[0] * .[1]' /etc/docker/daemon.json <(echo "$want"))
+  else
+    merged=$want
+  fi
+  if [ "$(jq -S . <<<"$merged")" != "$(jq -S . /etc/docker/daemon.json 2>/dev/null || true)" ]; then
+    jq . <<<"$merged" > /etc/docker/daemon.json
+    systemctl restart docker  # live-restore keeps running containers up across this restart
+  fi
+  systemctl enable --now containerd docker >/dev/null
+
+  echo "== deploy user"
+  id deploy >/dev/null 2>&1 || useradd --create-home --shell /bin/bash deploy
+  passwd -l deploy >/dev/null  # no password: keys only
+  install -d -m 700 -o deploy -g deploy /home/deploy/.ssh
+  touch /home/deploy/.ssh/authorized_keys
+  # Public keys arrive on stdin of `remote.sh root add-key` (never a private key); see below.
+  chown deploy:deploy /home/deploy/.ssh/authorized_keys
+  chmod 600 /home/deploy/.ssh/authorized_keys
+  gpasswd -d deploy docker >/dev/null 2>&1 || true  # the docker group is root in all but name
+
+  echo "== /opt/scorecode"
+  install -d -m 755 -o root -g root /opt/scorecode /opt/scorecode/releases /etc/scorecode
+  install -d -m 700 -o deploy -g deploy /opt/scorecode/env
+  install -d -m 750 -o root -g nogroup /opt/scorecode/secrets  # Alertmanager (nobody) reads its files here
+  install -d -m 750 -o root -g root /opt/scorecode/certs
+  install -m 755 -o root -g root "$here/scorecode-deploy" /usr/local/sbin/scorecode-deploy
+  install -m 755 -o root -g root "$here/scorecode-ctl" /usr/local/sbin/scorecode-ctl
+  install -d -m 755 -o root -g root /usr/local/lib/scorecode /usr/local/lib/scorecode/templates
+  install -m 755 -o root -g root "$here/render-env.py" /usr/local/lib/scorecode/render-env.py
+  install -m 644 -o root -g root "$here"/../env/*.env.example /usr/local/lib/scorecode/templates/
+  # Cloudflare's Origin CA root (public): the smoke tests go straight to this machine and trust it.
+  curl -fsSL https://developers.cloudflare.com/ssl/static/origin_ca_ecc_root.pem -o /opt/scorecode/certs/origin-ca.pem
+  [ -f /etc/scorecode/registry ] || echo "ghcr.io/divyanshusharmacoader" > /etc/scorecode/registry
+  cat > /etc/sudoers.d/scorecode <<'EOF'
+# The deploy user may run exactly these two root-owned programs (P18.8). Nothing else, no shell.
+deploy ALL=(root) NOPASSWD: /usr/local/sbin/scorecode-deploy, /usr/local/sbin/scorecode-ctl
+Defaults:deploy !requiretty
+EOF
+  chmod 440 /etc/sudoers.d/scorecode
+  visudo -cf /etc/sudoers.d/scorecode >/dev/null
+
+  echo "== firewall rules (written, not enabled)"
+  if ! ufw status | grep -q "Status: active"; then  # an active firewall keeps its rules; we only add ours
+    ufw default deny incoming >/dev/null
+    ufw default allow outgoing >/dev/null
+  fi
+  ufw allow 22/tcp comment 'ssh' >/dev/null
+  ufw allow 80/tcp comment 'http (Cloudflare redirects to https)' >/dev/null
+  ufw allow 443/tcp comment 'https' >/dev/null
+  ufw status verbose | head -3
+  echo "   enable with: infra/ops/server/remote.sh root firewall-on   (gate a: needs the owner's approval)"
+
+  echo "== done"
+  inspect
+}
+
+add_key() {  # one public key from stdin into deploy's authorized_keys
+  local key
+  key=$(head -c 2000)
+  [[ $key =~ ^(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa)\ [A-Za-z0-9+/=]+(\ .*)?$ ]] || { echo "not a public key" >&2; exit 2; }
+  grep -qxF "$key" /home/deploy/.ssh/authorized_keys || echo "$key" >> /home/deploy/.ssh/authorized_keys
+  echo "deploy now has $(grep -c . /home/deploy/.ssh/authorized_keys) key(s)"
+}
+
+firewall_on() {  # gate (a): only after the owner approved, and with SSH confirmed allowed
+  ufw status | grep -qE '^22/tcp +ALLOW' || { echo "refusing: no rule allows 22/tcp" >&2; exit 2; }
+  ufw --force enable
+  ufw status verbose
+}
+
+case "$mode" in
+  inspect) inspect ;;
+  apply) apply ;;
+  add-key) add_key ;;
+  firewall-on) firewall_on ;;
+  *) echo "usage: bootstrap.sh inspect|apply|add-key|firewall-on" >&2; exit 2 ;;
+esac

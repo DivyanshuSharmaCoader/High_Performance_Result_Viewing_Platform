@@ -7,6 +7,8 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | Variable | Default | Purpose |
 |---|---|---|
 | `SCORECODE_ENV` | `development` | `development`, `test`, `staging`, `production` |
+| `SCORECODE_SERVICE_NAME` | `scorecode` | Name in structured logs |
+| `SCORECODE_TOTP_ISSUER` | `ScoreCode` | Name shown in authenticator apps for two-step sign-in |
 | `SCORECODE_BASE_DOMAIN` | `localhost` | Tenants live at `<slug>.<base>`; console at `admin.<base>`; verification at `verify.<base>` (decision D23 is open, so nothing is hard-coded) |
 | `SCORECODE_PLATFORM_SUBDOMAIN` / `SCORECODE_VERIFY_SUBDOMAIN` | `admin` / `verify` | Reserved subdomains |
 | `SCORECODE_PUBLIC_SCHEME` / `SCORECODE_PUBLIC_PORT` | `http` / `8080` | Used to build absolute links in emails |
@@ -14,11 +16,14 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_DATABASE_URL_PLATFORM` | dev URL | Platform-console role `scorecode_platform` (BYPASSRLS) |
 | `SCORECODE_DATABASE_URL_MIGRATOR` | dev URL | Schema owner, used only by `scorecode migrate` |
 | `SCORECODE_DB_POOL_SIZE` / `_MAX_OVERFLOW` / `_POOL_TIMEOUT_S` | `10` / `5` / `5.0` | Connections per process; a request that waits longer than the timeout gets `503 overloaded` + `Retry-After` |
+| `SCORECODE_DB_STATEMENT_CACHE_SIZE` | `0` | asyncpg's prepared-statement cache; 0 keeps the app compatible with PgBouncer transaction pooling |
 | `SCORECODE_REDIS_URL` | unset | Optional cache and shared rate limits; the app works without it |
 | `SCORECODE_REDIS_TIMEOUT_S` / `_CONNECT_TIMEOUT_S` | `0.5` / `1.0` | A circuit breaker stops repeated waits when Redis is unhealthy |
+| `SCORECODE_CACHE_LOCAL_TTL_S` | `30` | In-process cache lifetime (tenant configuration and similar), in front of Redis |
 | `SCORECODE_S3_ENDPOINT_URL` | `http://localhost:59000` | S3 API endpoint used by the app |
 | `SCORECODE_S3_PUBLIC_ENDPOINT_URL` | unset | Endpoint browsers use for signed download URLs |
 | `SCORECODE_S3_BUCKET` / `_ACCESS_KEY` / `_SECRET_KEY` / `_REGION` | dev values | Object storage (private bucket) |
+| `SCORECODE_SIGNED_URL_TTL_S` | `300` | Lifetime of signed download links (marksheets, logos) |
 | `SCORECODE_SMTP_HOST` / `_PORT` / `_USERNAME` / `_PASSWORD` / `_STARTTLS` | Mailpit | Outgoing email (SES/Postmark SMTP in production) |
 | `SCORECODE_MAIL_FROM` | `ScoreCode <no-reply@scorecode.localhost>` | Sender address (deliverability: docs/14 §R) |
 | `SCORECODE_MAIL_RATE_PER_SECOND` | `10` | Emails per second per sending job; keep the total under the provider's rate |
@@ -47,6 +52,7 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_OLD_SECRET_KEY` | — | Only for `scorecode reencrypt-secrets`, after `SCORECODE_SECRET_KEY` changed: the previous key, to re-encrypt two-step secrets (docs/runbooks/security-incident.md). Remove it afterwards |
 | `API_WORKERS` (compose) | `2` | Uvicorn worker processes per API container; scale containers with `docker compose up --scale api=N` (Caddy balances across them) |
 | `SCORECODE_SENTRY_DSN` | unset | Error reporting (PII scrubbed) |
+| `SCORECODE_METRICS_ENABLED` | `true` | `/metrics` for Prometheus (scraped inside the server only; the edge doesn't route it) |
 | `SCORECODE_LOG_LEVEL` / `SCORECODE_LOG_JSON` | `INFO` / `true` | Structured logs; secrets and personal data are redacted |
 | `SCORECODE_EXPOSE_DOCS` | `true` | `/api/docs` and `/api/openapi.json`. Must be `false` outside development (refused at start-up) |
 | `SCORECODE_BREACHED_PASSWORD_CHECK` | `true` | Refuse passwords found in breaches (Have I Been Pwned range API: only 5 hash characters leave the server; fails open after 2 s). Needs outbound HTTPS to `api.pwnedpasswords.com` |

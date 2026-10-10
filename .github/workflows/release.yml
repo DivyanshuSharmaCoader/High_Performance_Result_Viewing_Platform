@@ -4,8 +4,9 @@
 #                                                   approval (GitHub Environment "production")
 #   gh workflow run release.yml                   → the rehearsal only: nothing is pushed or deployed
 #
-# The rehearsal runs the production compose file and infra/ops/deploy.sh on this runner, as on a server:
-# first install, an upgrade with a backup, then a release that fails, which must roll back on its own.
+# The rehearsal sets this runner up as the VPS is set up (infra/ops/server/bootstrap.sh on Ubuntu 24.04),
+# then deploys through the same sudo-only path: first install, an upgrade with a backup, then a release
+# that fails, which must roll back on its own.
 name: Release
 
 on:
@@ -18,6 +19,7 @@ on:
       - "infra/ops/**"
       - "infra/caddy/**"
       - "infra/backup/**"
+      - "infra/bundle/**"
       - ".github/workflows/release.yml"
 
 permissions:
@@ -25,61 +27,132 @@ permissions:
 
 jobs:
   rehearsal:
-    name: Deploy rehearsal · install, upgrade with backup, failed release rolls back
-    runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    name: Server rehearsal · bootstrap, sudo-only deploy user, settings, install, upgrade with backup, rollback
+    runs-on: ubuntu-24.04  # the VPS's release
+    timeout-minutes: 50
     env:
+      V1: v0.0.1-rehearsal
+      V2: v0.0.2-rehearsal
+      VBAD: v0.0.3-rehearsal
+      DOMAIN: scorecode.test
+      # The rehearsal adds local object storage and mail, which a real server gets from its providers.
       COMPOSE_FILES: compose.prod.yml:infra/ops/rehearsal/compose.override.yml
-      SMOKE_CACERT: certs/origin.pem
-      # Production refuses demo data (`scorecode seed`), so there is no tenant here: the smoke test checks
-      # every host except one tenant's own configuration, which E2E covers.
-      SMOKE_TENANT: ""
     steps:
       - uses: actions/checkout@v7
-      - name: Build the four images as rehearsal-1 (what a tag would push)
+      - name: Build the images of three releases (what a tag would push)
         run: |
           set -euo pipefail
-          docker build -q --target runtime -t rehearsal/scorecode-backend:rehearsal-1 backend
-          docker build -q -f frontend/Dockerfile -t rehearsal/scorecode-proxy:rehearsal-1 .
-          docker build -q -t rehearsal/scorecode-postgres:rehearsal-1 infra/postgres
-          docker build -q -t rehearsal/scorecode-backup:rehearsal-1 infra/backup
+          p=rehearsal/scorecode
+          docker build -q --target runtime -t "$p-backend:$V1" backend
+          docker build -q -f frontend/Dockerfile -t "$p-proxy:$V1" .
+          docker build -q -t "$p-postgres:$V1" infra/postgres
+          docker build -q -t "$p-backup:$V1" infra/backup
+          docker build -q -f infra/bundle/Dockerfile -t "$p-bundle:$V1" .
           docker build -q -t scorecode/seaweedfs:dev infra/seaweedfs
-          for name in backend proxy postgres backup; do
-            docker tag "rehearsal/scorecode-$name:rehearsal-1" "rehearsal/scorecode-$name:rehearsal-2"
-          done
+          for n in backend proxy postgres backup bundle; do docker tag "$p-$n:$V1" "$p-$n:$V2"; done
           # A broken release: its migrate step fails, so the deploy must roll back.
-          printf 'FROM rehearsal/scorecode-backend:rehearsal-1\nENTRYPOINT ["sh", "-c", "echo broken release >&2; exit 1"]\n' \
-            | docker build -q -t rehearsal/scorecode-backend:rehearsal-bad -
-          for name in proxy postgres backup; do
-            docker tag "rehearsal/scorecode-$name:rehearsal-1" "rehearsal/scorecode-$name:rehearsal-bad"
-          done
-      - name: Server files (env/, certs/) as an operator would create them
-        run: python3 infra/ops/rehearsal/make-env.py
-      - name: First install (rehearsal-1)
+          printf 'FROM %s\nENTRYPOINT ["sh", "-c", "echo broken release >&2; exit 1"]\n' "$p-backend:$V1" \
+            | docker build -q -t "$p-backend:$VBAD" -
+          for n in proxy postgres backup bundle; do docker tag "$p-$n:$V1" "$p-$n:$VBAD"; done
+      - name: Server baseline (bootstrap.sh apply), as on the VPS
         run: |
           set -euo pipefail
-          SKIP_PULL=1 SKIP_BACKUP=1 infra/ops/deploy.sh rehearsal-1
-          test "$(cat .deployed-version)" = rehearsal-1
+          sudo bash infra/ops/server/bootstrap.sh apply | tee bootstrap.txt
+          echo rehearsal | sudo tee /etc/scorecode/registry >/dev/null
+          sudo ufw status | grep -q "Status: inactive"  # the firewall is written, not switched on (gate a)
+      - name: The deploy user can run exactly two programs as root, and nothing else
+        run: |
+          set -euo pipefail
+          sudo -u deploy sudo -n -l | tee sudo-l.txt
+          grep -q /usr/local/sbin/scorecode-deploy sudo-l.txt && grep -q /usr/local/sbin/scorecode-ctl sudo-l.txt
+          if sudo -u deploy sudo -n /usr/bin/id 2>/dev/null; then echo "deploy runs arbitrary commands as root"; exit 1; fi
+          if sudo -u deploy docker ps 2>/dev/null; then echo "deploy reaches Docker directly"; exit 1; fi
+          if sudo -u deploy sudo -n /usr/local/sbin/scorecode-deploy 'v1.0.0;id' 2>/dev/null; then echo "a bad version was accepted"; exit 1; fi
+          if sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl logs 'api;id' 2>/dev/null; then echo "a bad service was accepted"; exit 1; fi
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl versions
+      - name: Settings from the operator's values (render-env, through sudo)
+        run: |
+          set -euo pipefail
+          recipient=$(docker run --rm --entrypoint age-keygen "rehearsal/scorecode-backup:$V1" 2>/dev/null | grep -o 'age1[0-9a-z]*')
+          cat > values.txt <<EOF
+          SCORECODE_DOMAIN=$DOMAIN
+          FILES_S3_ENDPOINT=http://s3:8333
+          FILES_S3_BUCKET=scorecode-files
+          FILES_S3_ACCESS_KEY_ID=rehearsal
+          FILES_S3_SECRET_ACCESS_KEY=rehearsal-object-storage-secret-0123456789
+          FILES_S3_REGION=us-east-1
+          BACKUP_S3_ENDPOINT=http://s3:8333
+          BACKUP_S3_BUCKET=scorecode-backups
+          BACKUP_S3_REGION=us-east-1
+          BACKUP_S3_ACCESS_KEY_ID=rehearsal
+          BACKUP_S3_SECRET_ACCESS_KEY=rehearsal-object-storage-secret-0123456789
+          BACKUP_AGE_RECIPIENT=$recipient
+          SMTP_HOST=mailpit
+          SMTP_PORT=1025
+          SMTP_USERNAME=rehearsal
+          SMTP_PASSWORD=rehearsal-smtp-password
+          MAIL_FROM=ScoreCode <results@$DOMAIN>
+          ALERT_EMAIL_TO=ops@$DOMAIN
+          PDF_PROCESSES=1
+          EOF
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl render-env < values.txt | tee render.txt
+          if grep -q rehearsal-object-storage-secret render.txt; then echo "render-env printed a value"; exit 1; fi
+          # A value can't smuggle in a second setting, and unknown names are refused.
+          if printf 'SCORECODE_DOMAIN=x\nSCORECODE_ENV=development\n' | sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl render-env 2>/dev/null; then
+            echo "an unknown setting was accepted"; exit 1
+          fi
+          sudo sh -c "stat -c '%n %U:%G %a' /opt/scorecode/env/*.env /opt/scorecode/secrets/*" | tee perms.txt
+          if grep -E '/env/[a-z]+\.env ' perms.txt | grep -v 'generated.env' | grep -v 'deploy:deploy 600'; then echo "env file with wrong owner or mode"; exit 1; fi
+          if grep -E '/secrets/' perms.txt | grep -v 'root:nogroup 640'; then echo "secret file with wrong owner or mode"; exit 1; fi
+          grep -q 'generated.env root:root 600' perms.txt
+          # Run again: server-side secrets are generated once, never replaced.
+          before=$(sudo sha256sum /opt/scorecode/env/generated.env)
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl render-env < values.txt >/dev/null
+          test "$before" = "$(sudo sha256sum /opt/scorecode/env/generated.env)"
+      - name: An origin certificate (self-signed here; Cloudflare's Origin CA on the VPS)
+        run: |
+          set -euo pipefail
+          sudo openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=$DOMAIN" \
+            -addext "subjectAltName=DNS:$DOMAIN,DNS:*.$DOMAIN" \
+            -keyout /opt/scorecode/certs/origin-key.pem -out /opt/scorecode/certs/origin.pem 2>/dev/null
+          sudo cp /opt/scorecode/certs/origin.pem /opt/scorecode/certs/origin-ca.pem
+          sudo chmod 600 /opt/scorecode/certs/origin-key.pem
+      - name: First install (v0.0.1) through scorecode-deploy
+        run: |
+          set -euo pipefail
+          sudo SKIP_PULL=1 SKIP_BACKUP=1 COMPOSE_FILES="$COMPOSE_FILES" /usr/local/sbin/scorecode-deploy "$V1"
+          test "$(cat /opt/scorecode/.deployed-version)" = "$V1"
           # ...and production really refuses demo data.
-          if SCORECODE_VERSION=rehearsal-1 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
+          cd /opt/scorecode
+          if sudo SCORECODE_VERSION="$V1" REGISTRY=rehearsal docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
             --env-file env/deploy.env exec -T api scorecode seed --students 5; then echo "seeded production"; exit 1; fi
-      - name: Upgrade (rehearsal-2), with a backup taken first
+      - name: Upgrade (v0.0.2), with an encrypted backup of the database and the files first
         run: |
           set -euo pipefail
-          SCORECODE_VERSION=rehearsal-1 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
+          cd /opt/scorecode
+          sudo SCORECODE_VERSION="$V1" REGISTRY=rehearsal docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
             --env-file env/deploy.env run --rm --entrypoint aws backup --endpoint-url http://s3:8333 s3 mb s3://scorecode-backups
-          SKIP_PULL=1 infra/ops/deploy.sh rehearsal-2
-          test "$(cat .deployed-version)" = rehearsal-2
-          grep -q '"backup":"s3://scorecode-backups/rehearsal/db/' deploy.log
+          sudo SKIP_PULL=1 COMPOSE_FILES="$COMPOSE_FILES" /usr/local/sbin/scorecode-deploy "$V2"
+          test "$(cat .deployed-version)" = "$V2"
+          grep -q '"backup":"s3://scorecode-backups/prod/db/' deploy.log
       - name: A failed release rolls back on its own
         run: |
           set -euo pipefail
-          if SKIP_PULL=1 SKIP_BACKUP=1 infra/ops/deploy.sh rehearsal-bad; then
+          cd /opt/scorecode
+          if sudo SKIP_PULL=1 SKIP_BACKUP=1 COMPOSE_FILES="$COMPOSE_FILES" /usr/local/sbin/scorecode-deploy "$VBAD"; then
             echo "the broken release was reported as deployed"; exit 1
           fi
-          grep -q "rolled back to rehearsal-2" deploy.log
-          test "$(cat .deployed-version)" = rehearsal-2
-          SMOKE_BASE_DOMAIN=scorecode.test SMOKE_SCHEME=https SMOKE_PORT=443 SMOKE_CONNECT_TO=127.0.0.1:443 infra/ops/smoke.sh
+          grep -q "rolled back to $V2" deploy.log
+          test "$(cat .deployed-version)" = "$V2"
+          SMOKE_BASE_DOMAIN="$DOMAIN" SMOKE_SCHEME=https SMOKE_PORT=443 SMOKE_CONNECT_TO=127.0.0.1:443 \
+            SMOKE_CACERT=/opt/scorecode/certs/origin-ca.pem SMOKE_TENANT="" infra/ops/smoke.sh
+      - name: Operations as the deploy user (scorecode-ctl)
+        run: |
+          set -euo pipefail
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl status
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl versions
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl jobs stats
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl logs api 5 >/dev/null
       - name: Hardening as deployed
         run: |
           set -euo pipefail
@@ -90,16 +163,18 @@ jobs:
             grep -E "scorecode-$svc-1 " hardening.txt | grep -q "readonly=true" || { echo "$svc is not read-only"; exit 1; }
             grep -E "scorecode-$svc-1 " hardening.txt | grep -qv "user= " || { echo "$svc runs as root"; exit 1; }
           done
-      - name: Deploy log
+      - name: Rehearsal log
         if: always()
         run: |
-          { echo "### Deploy rehearsal"; echo '```'; cat deploy.log 2>/dev/null | grep -v '^{' | tail -40; echo '```'
-            echo '```'; cat hardening.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "### Server rehearsal"; echo '```'; sudo cat /opt/scorecode/deploy.log 2>/dev/null | grep -v '^{' | tail -40; echo '```'
+            echo '```'; cat sudo-l.txt perms.txt hardening.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Logs on failure
         if: failure()
         run: |
-          SCORECODE_VERSION=rehearsal-2 docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
-            --env-file env/deploy.env logs --tail 80 migrate api worker proxy backup
+          cd /opt/scorecode 2>/dev/null || exit 0
+          sudo SCORECODE_VERSION="$(cat .deployed-version 2>/dev/null || echo "$V1")" REGISTRY=rehearsal docker compose \
+            -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml --env-file env/deploy.env \
+            logs --tail 80 migrate api worker proxy backup || true
 
   images:
     name: Build, scan and push images (tags only)
@@ -128,6 +203,7 @@ jobs:
           docker build -q -f frontend/Dockerfile -t "$prefix-proxy:$VERSION" .
           docker build -q -t "$prefix-postgres:$VERSION" infra/postgres
           docker build -q -t "$prefix-backup:$VERSION" infra/backup
+          docker build -q -f infra/bundle/Dockerfile -t "$prefix-bundle:$VERSION" .
           echo "prefix=$prefix" >> "$GITHUB_OUTPUT"
       - name: Trivy · backend (fixable critical vulnerabilities stop the release)
         uses: aquasecurity/trivy-action@v0.36.0
@@ -143,7 +219,7 @@ jobs:
         with: { image-ref: "${{ steps.build.outputs.prefix }}-backup:${{ github.ref_name }}", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
       - name: Push
         run: |
-          for name in backend proxy postgres backup; do
+          for name in backend proxy postgres backup bundle; do
             docker push "${{ steps.build.outputs.prefix }}-$name:${{ github.ref_name }}"
           done
 
@@ -171,10 +247,10 @@ jobs:
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
           printf '%s\n' "$KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
-          ssh_() { ssh -i ~/.ssh/deploy -o BatchMode=yes "$USER_@$HOST" "$@"; }
-          # The release's compose file, scripts and monitoring config; the server keeps env/, certs/, secrets/.
-          tar czf - compose.prod.yml infra/ops infra/monitoring | ssh_ "tar xzf - -C /opt/scorecode"
-          ssh_ "cd /opt/scorecode && infra/ops/deploy.sh $VERSION"
+          # The deploy user may only run the root-owned wrapper, which takes the compose file and scripts
+          # from this version's bundle image, never from us (infra/ops/server/scorecode-deploy).
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER_@$HOST" \
+            sudo /usr/local/sbin/scorecode-deploy "$VERSION"
       - name: Smoke test through Cloudflare, with real certificates
         env:
           DOMAIN: ${{ vars.PRODUCTION_DOMAIN }}

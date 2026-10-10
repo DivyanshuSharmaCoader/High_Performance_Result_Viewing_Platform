@@ -46,6 +46,13 @@ values: dict[str, Value] = {
     "AWS_ACCESS_KEY_ID": "rehearsal",
     "AWS_SECRET_ACCESS_KEY": "rehearsal-object-storage-secret-0123456789",
     "AWS_DEFAULT_REGION": "us-east-1",
+    "FILES_S3_ENDPOINT": "http://s3:8333",
+    "FILES_S3_REGION": "us-east-1",
+    "FILES_S3_ACCESS_KEY_ID": "rehearsal",
+    "FILES_S3_SECRET_ACCESS_KEY": "rehearsal-object-storage-secret-0123456789",
+    "BACKUP_FILES_MIRROR": "/home/backup/mirror",
+    "SCORECODE_S3_REGION": "us-east-1",
+    "SCORECODE_S3_BUCKET": "scorecode-files",
     "DATA_SOURCE_NAME": f"postgresql://scorecode_monitor:{pw['monitor']}@postgres:5432/scorecode?sslmode=disable",
 }
 

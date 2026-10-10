@@ -8,6 +8,10 @@
 #   AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
 #   BACKUP_FILES_S3_URI        optional: the files bucket, synced too (marksheet PDFs can't be re-rendered
 #                              byte for byte, and their SHA-256 is what verification checks)
+#   FILES_S3_ENDPOINT FILES_S3_REGION FILES_S3_ACCESS_KEY_ID FILES_S3_SECRET_ACCESS_KEY
+#                              optional: the files bucket's own provider and keys (R2), when it is not on
+#                              the backup storage; without them the backup storage's are used
+#   BACKUP_FILES_MIRROR        optional: a persistent directory, so each run copies only new files
 #   PUSHGATEWAY_URL            optional: report success for the ScoreCodeBackupStale alert
 #
 # Writes <prefix>/db/YYYY/MM/scorecode-<UTC timestamp>.dump.age and prints one line of JSON.
@@ -31,8 +35,18 @@ size=$(wc -c < "$work/db.dump.age" | tr -d ' ')
 aws $endpoint s3 cp --only-show-errors --metadata "sha256=$sha" "$work/db.dump.age" "$key"
 
 if [ -n "${BACKUP_FILES_S3_URI:-}" ]; then
+  # Two providers can't sync bucket to bucket, so through a local mirror: files bucket → mirror with the
+  # files provider's keys, then mirror → backup storage with the backup keys.
+  mirror=${BACKUP_FILES_MIRROR:-$work/files}
+  mkdir -p "$mirror"
+  files_endpoint=${FILES_S3_ENDPOINT:-${BACKUP_S3_ENDPOINT:-}}
   # shellcheck disable=SC2086
-  aws $endpoint s3 sync --only-show-errors "$BACKUP_FILES_S3_URI" "${BACKUP_S3_URI%/}/files/"
+  AWS_ACCESS_KEY_ID=${FILES_S3_ACCESS_KEY_ID:-$AWS_ACCESS_KEY_ID} \
+  AWS_SECRET_ACCESS_KEY=${FILES_S3_SECRET_ACCESS_KEY:-$AWS_SECRET_ACCESS_KEY} \
+  AWS_DEFAULT_REGION=${FILES_S3_REGION:-$AWS_DEFAULT_REGION} \
+    aws ${files_endpoint:+--endpoint-url $files_endpoint} s3 sync --only-show-errors "$BACKUP_FILES_S3_URI" "$mirror"
+  # shellcheck disable=SC2086
+  aws $endpoint s3 sync --only-show-errors "$mirror" "${BACKUP_S3_URI%/}/files/"
 fi
 
 took=$(( $(date +%s) - started ))

@@ -44,7 +44,9 @@ class SmtpMailer:
         msg["From"] = self.settings.mail_from
         msg["To"] = email.to
         msg["Subject"] = email.subject
-        msg_id = make_msgid(domain="scorecode")
+        # The sender's own domain in the Message-ID, as receivers expect from an authenticated domain.
+        sender = self.settings.mail_from.rsplit("<", 1)[-1].rstrip(">").strip()
+        msg_id = make_msgid(domain=sender.rsplit("@", 1)[-1] if "@" in sender else "scorecode")
         msg["Message-ID"] = msg_id
         if email.reply_to:
             msg["Reply-To"] = email.reply_to

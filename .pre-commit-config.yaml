@@ -10,6 +10,11 @@ repos:
       - id: detect-private-key
       - id: check-added-large-files
         args: ["--maxkb=800"]
+  # The same secret scan CI runs (gitleaks); infra/ops/leak-scan.py checks for the real values.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
   - repo: local
     hooks:
       - id: ruff-format

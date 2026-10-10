@@ -164,6 +164,13 @@ jobs:
       - name: bandit (SAST, medium+)
         working-directory: backend
         run: uvx bandit -q -r app -ll
+      - name: semgrep (SAST, OWASP Top 10 and Python rules; errors fail)
+        run: uvx semgrep scan --metrics=off --config p/owasp-top-ten --config p/python --severity ERROR --error backend/app infra/ops
+      - name: shellcheck (operations scripts; errors fail)
+        run: |
+          shellcheck --version | head -2
+          shellcheck -S error infra/ops/*.sh infra/ops/server/*.sh infra/ops/server/scorecode-deploy \
+            infra/ops/server/scorecode-ctl infra/backup/*.sh benchmarks/k6/*.sh
       - uses: pnpm/action-setup@v6
         with: { package_json_file: frontend/package.json }
       - uses: actions/setup-node@v7

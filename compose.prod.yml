@@ -117,6 +117,7 @@ services:
     env_file: [env/backup.env]
     environment:
       HOME: /tmp
+    volumes: ["backupmirror:/home/backup/mirror"]  # the files bucket's copy, so nights copy only new files
     depends_on:
       postgres: { condition: service_healthy }
 
@@ -136,7 +137,7 @@ services:
     image: prom/alertmanager:v0.28.1
     command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--storage.path=/alertmanager"]
     volumes:
-      - ./infra/monitoring/alertmanager.prod.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./secrets/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro  # written by render-env.py
       - ./secrets:/run/secrets:ro
       - amdata:/alertmanager
   pushgateway:
@@ -154,3 +155,4 @@ volumes:
   caddydata:
   promdata:
   amdata:
+  backupmirror:

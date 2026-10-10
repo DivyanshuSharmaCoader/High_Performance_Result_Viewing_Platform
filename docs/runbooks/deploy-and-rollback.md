@@ -13,7 +13,7 @@
    copies them), plus:
    - `env/` (mode 700), filled in from `infra/ops/env/*.example` (mode 600). Every secret is new and
      random.
-   - `secrets/alert_smtp_password` and `infra/monitoring/alertmanager.prod.yml`, if you run monitoring
+   - `secrets/alertmanager.yml` and `secrets/alert_smtp_password`, written by `render-env.py` (docs/configuration.md)
      on the VM.
 4. **GHCR:** `docker login ghcr.io` with a token that can only read packages.
 5. **First deploy:** `SKIP_BACKUP=1 SMOKE_TENANT= infra/ops/deploy.sh vX.Y.Z`. Then create the first

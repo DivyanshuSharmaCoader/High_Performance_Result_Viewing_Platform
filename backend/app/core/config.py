@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from enum import StrEnum
 from functools import lru_cache
-from typing import Annotated, Self
+from typing import Self
 
-from pydantic import Field, SecretStr, model_validator
+from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DEV_SECRET = "dev-only-insecure-secret-change-me-0123456789"  # noqa: S105 - explicit dev default, rejected in prod
@@ -123,8 +123,6 @@ class Settings(BaseSettings):
     pdf_processes: int = 2  # marksheet layout processes per worker; 0 = in a thread (P14.3)
     worker_poll_interval_s: float = 1.0
     job_lease_s: int = 120
-    job_max_attempts: int = 5
-    jobs_inline: bool = False  # tests may run jobs synchronously after commit
 
     # --- Observability ----------------------------------------------------------------------------
     sentry_dsn: SecretStr | None = None
@@ -134,8 +132,6 @@ class Settings(BaseSettings):
 
     # --- Platform bootstrap -----------------------------------------------------------------------
     totp_issuer: str = "ScoreCode"
-
-    session_cache_ttl_s: Annotated[int, Field(ge=0, le=300)] = 60
 
     @model_validator(mode="after")
     def _production_safety(self) -> Self:

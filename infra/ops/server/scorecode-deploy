@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Deploy a released version of ScoreCode (root-owned; the deploy user runs it through sudo, P18.8).
+#
+#   sudo scorecode-deploy v1.2.3
+#
+# Everything that runs as root comes from the release itself, never from the deploy user: the compose
+# file, deploy script and monitoring config are taken from the scorecode-bundle image of that version,
+# which CI built, scanned and pushed (release.yml). So a stolen deploy key can redeploy a real release,
+# and nothing else. The registry is fixed here, whatever env/deploy.env says.
+set -euo pipefail
+version=${1:-}
+[[ $version =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "usage: scorecode-deploy vMAJOR.MINOR.PATCH" >&2; exit 2; }
+REGISTRY=$(cat /etc/scorecode/registry)
+export REGISTRY
+cd /opt/scorecode
+exec 9>/run/scorecode-deploy.lock
+flock -n 9 || { echo "another deploy is running" >&2; exit 3; }
+
+bundle="$REGISTRY/scorecode-bundle:$version"
+# sudo resets the environment, so only root itself (the CI rehearsal) can skip pulling.
+[ "${SKIP_PULL:-0}" = 1 ] || docker pull -q "$bundle" >/dev/null
+staging="releases/.$version.$$"
+rm -rf "$staging" && mkdir -p "$staging"
+cid=$(docker create "$bundle")
+trap 'docker rm -f "$cid" >/dev/null 2>&1 || true; rm -rf "$staging"' EXIT
+docker cp -q "$cid:/bundle/." "$staging/"
+[ -f "$staging/compose.prod.yml" ] && [ -x "$staging/infra/ops/deploy.sh" ] || { echo "bundle $version is incomplete" >&2; exit 4; }
+rm -rf "releases/$version" && mv "$staging" "releases/$version"
+chown -R root:root "releases/$version"
+# The running files are the release's own (root-owned). env/, secrets/, certs/ stay as they are.
+cp -f "releases/$version/compose.prod.yml" compose.prod.yml
+rm -rf infra && cp -a "releases/$version/infra" infra
+# The settings renderer and its templates follow the release too.
+install -m 755 infra/ops/server/render-env.py /usr/local/lib/scorecode/render-env.py
+install -m 644 infra/ops/env/*.env.example /usr/local/lib/scorecode/templates/
+install -m 755 infra/ops/server/scorecode-ctl /usr/local/sbin/scorecode-ctl
+# Keep the last five releases for rollbacks.
+ls -1dt releases/v* 2>/dev/null | tail -n +6 | xargs -r rm -rf
+# deploy.sh's smoke test goes straight to this machine's edge, so it trusts Cloudflare's Origin CA.
+export SMOKE_CACERT=/opt/scorecode/certs/origin-ca.pem SMOKE_TENANT=${SMOKE_TENANT-}
+exec infra/ops/deploy.sh "$version"

@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# A fixed set of operations on the ScoreCode server (root-owned; the deploy user runs it through sudo).
+#
+#   sudo scorecode-ctl status                 containers and their health; the deployed version
+#   sudo scorecode-ctl logs SERVICE [LINES]   recent logs of one service
+#   sudo scorecode-ctl restart SERVICE        restart one service (api, worker, proxy, redis, backup, ...)
+#   sudo scorecode-ctl backup                 an encrypted backup now (as the nightly job does)
+#   sudo scorecode-ctl smoke                  the smoke test against this machine
+#   sudo scorecode-ctl versions               releases kept on disk, and the deployed one
+#   sudo scorecode-ctl rollback VERSION       deploy an earlier release again
+#   sudo scorecode-ctl monitoring up|down     the Prometheus/Alertmanager/Grafana profile
+#   sudo scorecode-ctl jobs stats|dead|retry  the job queue (scorecode jobs)
+#   sudo scorecode-ctl sentry-test            send one synthetic error to Sentry (scrubbed)
+#   sudo scorecode-ctl registry-login USER    log the root Docker client in to GHCR; token on stdin
+#   sudo scorecode-ctl create-platform-admin  the first console account; EMAIL, NAME, PASSWORD on stdin
+#   sudo scorecode-ctl install-cert           origin certificate on stdin (PEM); the key is made here
+#   sudo scorecode-ctl make-csr               a new origin key (kept here) and its CSR on stdout
+#   sudo scorecode-ctl render-env             settings files from the operator's values on stdin
+#
+# Each subcommand maps to a fixed command line; arguments are validated, nothing reaches a shell.
+set -euo pipefail
+cd /opt/scorecode
+REGISTRY=$(cat /etc/scorecode/registry)
+export REGISTRY
+version=$(cat .deployed-version 2>/dev/null || true)
+dc() {
+  [ -n "$version" ] || { echo "nothing deployed yet" >&2; exit 3; }
+  SCORECODE_VERSION=$version docker compose -f compose.prod.yml --env-file env/deploy.env "$@"
+}
+service() {
+  [[ ${1:-} =~ ^(api|worker|proxy|redis|postgres|backup|prometheus|alertmanager|pushgateway|postgres-exporter|grafana)$ ]] \
+    || { echo "unknown service: ${1:-}" >&2; exit 2; }
+}
+
+cmd=${1:-}; shift || true
+case "$cmd" in
+  status)
+    echo "deployed: ${version:-nothing}"
+    [ -z "$version" ] || dc ps --format 'table {{.Service}}\t{{.Status}}'
+    ;;
+  logs)
+    service "${1:-}"; lines=${2:-100}; [[ $lines =~ ^[0-9]{1,5}$ ]] || exit 2
+    dc logs --no-color --tail "$lines" "$1"
+    ;;
+  restart) service "${1:-}"; dc restart "$1" ;;
+  backup) dc run --rm backup backup.sh ;;
+  smoke)
+    domain=$(grep -E '^BASE_DOMAIN=' env/deploy.env | head -1 | cut -d= -f2 | awk '{print $1}')
+    # Straight to this machine's edge, trusting Cloudflare's Origin CA (the origin certificate's issuer).
+    SMOKE_BASE_DOMAIN=$domain SMOKE_SCHEME=https SMOKE_PORT=443 SMOKE_CONNECT_TO=127.0.0.1:443 \
+      SMOKE_CACERT=certs/origin-ca.pem SMOKE_TENANT="${1-}" infra/ops/smoke.sh
+    ;;
+  versions) echo "deployed: ${version:-nothing}"; ls -1t releases | grep -E '^v' || true ;;
+  rollback)
+    [[ ${1:-} =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || exit 2
+    exec /usr/local/sbin/scorecode-deploy "$1"
+    ;;
+  monitoring)
+    case "${1:-}" in
+      up) dc --profile monitoring up -d --wait ;;
+      down) dc --profile monitoring stop prometheus alertmanager pushgateway postgres-exporter grafana ;;
+      *) exit 2 ;;
+    esac
+    ;;
+  jobs)
+    [[ ${1:-} =~ ^(stats|dead|retry)$ ]] || exit 2
+    dc exec -T api scorecode jobs "$1"
+    ;;
+  sentry-test) dc exec -T api scorecode sentry-test ;;
+  registry-login)
+    [[ ${1:-} =~ ^[A-Za-z0-9-]{1,39}$ ]] || exit 2
+    docker login ghcr.io -u "$1" --password-stdin >/dev/null && echo "logged in to ghcr.io"
+    ;;
+  create-platform-admin)
+    # Three lines on stdin: email, name, password. Passed to the CLI through its environment only.
+    # The TOTP enrolment goes back on stdout to the caller (infra/ops/create-admin.py writes it to a
+    # private file); nothing is logged here.
+    IFS= read -r email; IFS= read -r name; IFS= read -r SCORECODE_PLATFORM_PASSWORD_INIT
+    export SCORECODE_PLATFORM_PASSWORD_INIT
+    dc run --rm -T -e SCORECODE_PLATFORM_PASSWORD_INIT api \
+      scorecode create-platform-user --email "$email" --name "$name" --role platform_admin
+    ;;
+  render-env) exec /usr/bin/python3 /usr/local/lib/scorecode/render-env.py ;;
+  make-csr)
+    install -d -m 750 certs
+    domain=$(grep -E '^BASE_DOMAIN=' env/deploy.env | head -1 | cut -d= -f2 | awk '{print $1}')
+    umask 077
+    openssl req -new -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes \
+      -keyout certs/origin-key.pem.new -subj "/CN=$domain" 2>/dev/null
+    ;;
+  install-cert)
+    cert=$(head -c 20000)
+    printf '%s\n' "$cert" | openssl x509 -noout 2>/dev/null || { echo "not a certificate" >&2; exit 2; }
+    [ -f certs/origin-key.pem.new ] || { echo "run make-csr first" >&2; exit 2; }
+    # The certificate must belong to the new key.
+    [ "$(printf '%s\n' "$cert" | openssl x509 -noout -pubkey | sha256sum)" = "$(openssl pkey -in certs/origin-key.pem.new -pubout | sha256sum)" ] \
+      || { echo "certificate does not match the key" >&2; exit 2; }
+    printf '%s\n' "$cert" > certs/origin.pem
+    mv certs/origin-key.pem.new certs/origin-key.pem
+    chmod 644 certs/origin.pem; chmod 600 certs/origin-key.pem
+    openssl x509 -in certs/origin.pem -noout -subject -enddate
+    [ -z "$version" ] || dc restart proxy
+    ;;
+  *) sed -n '2,20p' "$0" >&2; exit 2 ;;
+esac

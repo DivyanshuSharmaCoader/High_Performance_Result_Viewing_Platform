@@ -88,7 +88,7 @@ Kubernetes, Kafka, microservices, service mesh, GraphQL, multi-region, sharding,
 
 ## 3. Decision register — confirm before writing production code
 
-Status: **Accepted** decisions are implemented; ADRs for the architectural ones live in [`docs/adr/`](adr/). Decisions D23–D25 need the project owner's action and are implemented with safe, configurable defaults until then.
+Status: **Accepted** decisions are implemented; ADRs for the architectural ones live in [`docs/adr/`](adr/). D25 still needs the project owner's action and is implemented with a safe default until then.
 
 | ID | Decision | Recommendation | Status |
 |---|---|---|---|
@@ -114,9 +114,13 @@ Status: **Accepted** decisions are implemented; ADRs for the architectural ones 
 | D20 | Demo hosting | Single VM + docker compose + Cloudflare | **Accepted** |
 | D21 | Repo layout | Monorepo: `backend/`, `frontend/` (pnpm workspace), `infra/`, `docs/`, `benchmarks/` | **Accepted** |
 | D22 | Package managers | `uv` (Python), `pnpm` (JS) | **Accepted** |
-| D23 | Domain names | Register `scorecode.in` (or available alternative) + a demo domain; check trademark conflicts for "ScoreCode" | **Open — owner action.** Code uses a configurable `SCORECODE_BASE_DOMAIN` (`localhost` in dev) so no domain is hard-coded. |
-| D24 | Licence | Proprietary (all rights reserved) while the repo is public for the college project? Or keep repo private and share with faculty. | **Open — owner decision.** Repository ships with an "All rights reserved" notice until decided. |
+| D23 | Domain names | `scorecode.website`, registered by the owner and on Cloudflare (2026-10-10). The code still reads the domain only from settings (`SCORECODE_BASE_DOMAIN`), and the repository names it only through variables | **Accepted** (owner, 2026-10-10) |
+| D24 | Licence and visibility | The repository was public and is private since 2026-10-10. It keeps the "All rights reserved" notice. Because it was public, nothing that identifies the infrastructure (server address, bucket names, account and zone ids, emails) is committed, and `infra/ops/leak-scan.py` checks every blob in history against the real values | **Accepted** (owner, 2026-10-10) |
 | D25 | Thapar branding/data | Use only public information and synthetic student data; get permission before using Thapar's logo/name publicly beyond the academic demo | **Open — owner action.** Seed uses the institute's name only, a generated monogram (no official logo) and 100% synthetic students. |
+| D26 | Go-to-market focus | **Small and medium schools in North India** (Punjab, Haryana, Himachal Pradesh, Chandigarh, Delhi NCR). This narrows D18. The core stays generic: no school-only code paths. Schools are served by templates and settings (class and section structure, percentage bands, term exams), the same way coaching institutes and universities are | **Accepted** (owner, 2026-10-10) |
+| D27 | First production host | One Hostinger KVM 2 VM in India (2 vCPU, 8 GB, 100 GB NVMe, Ubuntu 24.04) behind Cloudflare, running `compose.prod.yml`. This is D20's single-VM topology made real; the move to managed PostgreSQL and more hosts is docs/14 N3/N4 | **Accepted** (owner, 2026-10-10) |
+| D28 | Transactional email | Brevo SMTP relay for result notices, invitations, resets and security notices. The sending domain is authenticated with Brevo's DKIM and DMARC records | **Accepted** (owner, 2026-10-10) |
+| D29 | Student and parent languages | Hindi and Punjabi (Gurmukhi) for the student/parent result view and marksheet labels, through an i18n catalogue so more can follow. Staff screens stay English for now | **Accepted** (owner, 2026-10-10) |
 
 ### Questions for you (short answers are enough)
 1. Is the repository going to be **public** (portfolio) or **private**? (affects D24 and secret hygiene)
