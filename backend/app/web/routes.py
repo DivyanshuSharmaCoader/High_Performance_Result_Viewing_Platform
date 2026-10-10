@@ -12,6 +12,7 @@ from app.modules.documents.router import admin_router as marksheets_admin_router
 from app.modules.documents.router import student_router as my_marksheets_router
 from app.modules.entitlements.router import router as plans_router
 from app.modules.examinations.router import router as exams_router
+from app.modules.exports.router import router as exports_router
 from app.modules.grading.router import router as grading_router
 from app.modules.identity.router import platform_router as platform_auth_router
 from app.modules.identity.router import router as identity_router
@@ -60,5 +61,6 @@ def include_routers(app: FastAPI) -> None:
         correction_router,
         marksheets_admin_router,
         plans_router,
+        exports_router,
     ):
         app.include_router(router)

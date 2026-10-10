@@ -14,6 +14,7 @@ class P:
     SUBSCRIPTION_VIEW = "subscription.view"
     SUBSCRIPTION_MANAGE = "subscription.manage"  # start the trial; owner only
     OWNER_TRANSFER = "owner.transfer"
+    DATA_EXPORT = "data.export"  # every record of the institution, as a download; owner only (P18.5)
     STAFF_VIEW = "staff.view"
     STAFF_MANAGE = "staff.manage"
     STUDENTS_VIEW = "students.view"
@@ -84,7 +85,7 @@ _ADMIN = frozenset(
 )
 
 ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
-    "institution_owner": _ADMIN | {P.OWNER_TRANSFER, P.SUBSCRIPTION_MANAGE},
+    "institution_owner": _ADMIN | {P.OWNER_TRANSFER, P.SUBSCRIPTION_MANAGE, P.DATA_EXPORT},
     "institution_admin": _ADMIN,
     "faculty": frozenset(
         {

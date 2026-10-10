@@ -6,6 +6,7 @@
   "analytics.view",
   "audit.view",
   "branding.manage",
+  "data.export",
   "exams.manage",
   "exams.view",
   "exams.view_assigned",

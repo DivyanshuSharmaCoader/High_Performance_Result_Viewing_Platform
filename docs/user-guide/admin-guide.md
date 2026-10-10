@@ -104,7 +104,14 @@ and adjust the bands, pass rules and rounding.
 - **Analytics:** pass rates, averages, median and spread per paper, grade distribution, and a comparison
   of sections.
 
-## 7. Keeping track
+## 7. Your data
+- **Settings → Your data** (owner only): *Export everything* prepares a ZIP of CSV files with students,
+  staff, structure, exams, every mark, every published result, verification codes and the audit log.
+  Passwords and other secrets are never included.
+- It takes a minute or two; download it with your password. Each export is kept seven days, then deleted.
+  Up to five exports a day. Every request and download is in the audit log.
+
+## 8. Keeping track
 - **Audit log:** who did what and when, across everything above, with before and after values.
   Filterable, and it can't be edited by anyone.
 - **Plan & usage:** students, staff, storage and publications this year against your plan's limits.

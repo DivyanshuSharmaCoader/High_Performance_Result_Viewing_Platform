@@ -24,12 +24,15 @@ import { z } from "zod";
 
 import { PlanLimitCallout } from "../../components/limit-callout";
 import { applyServerError } from "../../lib/forms";
+import { useCan } from "../../lib/session";
 import { useFeature } from "../../lib/tenant";
 
 export function SettingsLayout() {
+  const owner = useCan("data.export");
   const tabs = [
     { to: "/admin/settings", label: "Institution", end: true },
     { to: "/admin/settings/branding", label: "Branding", end: false },
+    ...(owner ? [{ to: "/admin/settings/data", label: "Your data", end: false }] : []),
   ];
   return (
     <>

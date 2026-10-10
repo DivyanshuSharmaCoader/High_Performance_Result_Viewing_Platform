@@ -1455,6 +1455,89 @@
         "title": "CourseOut",
         "type": "object"
       },
+      "DataExportOut": {
+        "properties": {
+          "counts": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counts"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "size_bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Bytes"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "ready",
+              "failed",
+              "expired"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "created_at",
+          "finished_at",
+          "expires_at",
+          "size_bytes",
+          "counts"
+        ],
+        "title": "DataExportOut",
+        "type": "object"
+      },
       "DepartmentIn": {
         "additionalProperties": false,
         "properties": {
@@ -2702,6 +2785,24 @@
           "grading_scheme_id"
         ],
         "title": "ExamUpdateIn",
+        "type": "object"
+      },
+      "ExportLinkOut": {
+        "properties": {
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "filename"
+        ],
+        "title": "ExportLinkOut",
         "type": "object"
       },
       "FieldOut": {
@@ -12133,6 +12234,93 @@
         "summary": "Transition",
         "tags": [
           "exams"
+        ]
+      }
+    },
+    "/api/v1/admin/exports": {
+      "get": {
+        "operationId": "list_exports_api_v1_admin_exports_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DataExportOut"
+                  },
+                  "title": "Response List Exports Api V1 Admin Exports Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Exports",
+        "tags": [
+          "data export"
+        ]
+      },
+      "post": {
+        "operationId": "request_export_api_v1_admin_exports_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Request Export",
+        "tags": [
+          "data export"
+        ]
+      }
+    },
+    "/api/v1/admin/exports/{export_id}/link": {
+      "post": {
+        "operationId": "export_link_api_v1_admin_exports__export_id__link_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "export_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Export Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportLinkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Link",
+        "tags": [
+          "data export"
         ]
       }
     },

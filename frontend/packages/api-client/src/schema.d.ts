@@ -768,6 +768,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Exports */
+        get: operations["list_exports_api_v1_admin_exports_get"];
+        put?: never;
+        /** Request Export */
+        post: operations["request_export_api_v1_admin_exports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/exports/{export_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Export Link */
+        post: operations["export_link_api_v1_admin_exports__export_id__link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/grading-schemes": {
         parameters: {
             query?: never;
@@ -2841,6 +2876,34 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** DataExportOut */
+        DataExportOut: {
+            /** Counts */
+            counts: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Expires At */
+            expires_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Size Bytes */
+            size_bytes: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "ready" | "failed" | "expired";
+        };
         /** DepartmentIn */
         DepartmentIn: {
             /** Code */
@@ -3256,6 +3319,13 @@ export interface components {
             notes?: string | null;
             /** Version */
             version: number;
+        };
+        /** ExportLinkOut */
+        ExportLinkOut: {
+            /** Filename */
+            filename: string;
+            /** Url */
+            url: string;
         };
         /** FieldOut */
         FieldOut: {
@@ -7207,6 +7277,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ExamOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_exports_api_v1_admin_exports_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataExportOut"][];
+                };
+            };
+        };
+    };
+    request_export_api_v1_admin_exports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DataExportOut"];
+                };
+            };
+        };
+    };
+    export_link_api_v1_admin_exports__export_id__link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportLinkOut"];
                 };
             };
             /** @description Validation Error */

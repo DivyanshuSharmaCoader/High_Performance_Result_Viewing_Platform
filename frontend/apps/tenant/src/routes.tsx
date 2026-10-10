@@ -57,6 +57,7 @@ const InstitutionSettings = lazy(() =>
 const BrandingSettings = lazy(() =>
   import("./features/admin/branding").then((m) => ({ default: m.BrandingSettingsPage })),
 );
+const DataExport = lazy(() => import("./features/admin/data").then((m) => ({ default: m.DataExportPage })));
 
 function load(Component: LazyExoticComponent<ComponentType>) {
   return (
@@ -233,6 +234,7 @@ export const router = createBrowserRouter([
                         children: [
                           { index: true, element: <InstitutionSettings /> },
                           { path: "branding", element: <BrandingSettings /> },
+                          { path: "data", element: <DataExport /> },
                         ],
                       },
                     ],
