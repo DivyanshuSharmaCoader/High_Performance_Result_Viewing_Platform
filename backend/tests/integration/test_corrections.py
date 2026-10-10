@@ -61,6 +61,9 @@ async def test_a_correction_keeps_the_live_version_then_replaces_it_and_tells_on
     async with Client(app, e.x.t.host) as c:
         await c.login(e.x.t.owner_email)
         v1 = (await _publish(c, e)).json()
+    await drain_jobs(infra, ["notifications"])  # version 1's notices go out while it is live
+    async with Client(app, e.x.t.host) as c:
+        await c.login(e.x.t.owner_email)
         assert (await _set_a002(c, e, "25")).status_code == 409  # published: marks are locked
 
         assert (await c.post(_corr(e), json={"reason": "x"})).status_code == 422  # a reason is required
