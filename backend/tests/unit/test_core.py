@@ -152,3 +152,18 @@ def test_password_rules() -> None:
     assert password_problems("password123", min_length=10)
     assert password_problems("thapar-2025-secret", min_length=10, context=("thapar",))
     assert password_problems("a perfectly fine passphrase", min_length=10) == []
+
+
+def test_exported_csv_text_never_becomes_a_formula() -> None:
+    from app.modules.exports.service import _cell
+
+    assert _cell('=HYPERLINK("http://x","y")') == '\'=HYPERLINK("http://x","y")'
+    assert [_cell(v) for v in ("+1", "-1", "@x", "\tx", "Aarav", None, True)] == [
+        "'+1",
+        "'-1",
+        "'@x",
+        "'\tx",
+        "Aarav",
+        "",
+        "true",
+    ]

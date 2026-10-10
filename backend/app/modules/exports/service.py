@@ -6,6 +6,7 @@
   rate-limit and job bookkeeping never leave.
 * CSVs are UTF-8 with a byte-order mark (Excel then shows Hindi and Punjabi names correctly), with JSON in
   the few columns that hold structure (mark components, grading configuration, audit before/after).
+  Text that a spreadsheet would run as a formula is quote-prefixed (CSV injection, docs/10 §6).
 * The ZIP is a private object; downloads are signed links that expire in five minutes, each one audited.
   After seven days the object is deleted (maintenance task) and the export says "expired".
 """
@@ -37,6 +38,7 @@ from app.modules.exports.models import DataExport
 from app.modules.files.models import StoredFile
 from app.modules.files.service import FileService, FileType
 from app.modules.identity.service import AuthService
+from app.modules.ingestion.report import FORMULA_TRIGGERS
 
 log = get_logger(__name__)
 
@@ -183,8 +185,12 @@ class ExportLink:
 
 
 def _cell(v: Any) -> Any:
+    """CSV text. A string that a spreadsheet would read as a formula (= + - @ tab CR) gets Excel's quote
+    prefix, so a hostile name typed into an import can't become a live formula in the owner's Excel."""
     if v is None:
         return ""
+    if isinstance(v, str):
+        return f"'{v}" if v.startswith(FORMULA_TRIGGERS) else v
     if isinstance(v, (dict, list)):
         return json.dumps(v, ensure_ascii=False, sort_keys=True, default=str)
     if isinstance(v, (datetime, date)):

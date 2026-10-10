@@ -12,7 +12,7 @@ repos:
         args: ["--maxkb=800"]
   # The same secret scan CI runs (gitleaks); infra/ops/leak-scan.py checks for the real values.
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.28.0
+    rev: v8.24.3  # the version CI runs
     hooks:
       - id: gitleaks
   - repo: local
