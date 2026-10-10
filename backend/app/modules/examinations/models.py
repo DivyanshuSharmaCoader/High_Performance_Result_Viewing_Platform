@@ -81,6 +81,11 @@ class Examination(UUIDPrimaryKey, TenantScoped, Versioned, Timestamps, Base):
     scheduled_publish_at: Mapped[datetime | None]
     notes: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[uuid.UUID | None]
+    # A correction of published results in progress (P18.3): set by "start correction", cleared when the
+    # corrected version is published or the correction is cancelled. The live version stays visible.
+    correction_started_at: Mapped[datetime | None]
+    correction_started_by: Mapped[uuid.UUID | None]
+    correction_reason: Mapped[str | None] = mapped_column(Text)
 
 
 class ExamCohort(TenantScoped, Base):

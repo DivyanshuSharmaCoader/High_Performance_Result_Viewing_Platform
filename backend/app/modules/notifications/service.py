@@ -37,6 +37,7 @@ from app.modules.examinations.models import Examination
 from app.modules.identity.models import User
 from app.modules.notifications.emails import render
 from app.modules.notifications.models import Notification, NotificationDelivery
+from app.modules.publishing.changes import changed_students
 from app.modules.publishing.models import Publication, PublishedResult
 from app.modules.tenancy.models import Tenant, TenantSettings
 
@@ -88,18 +89,21 @@ class Notifier:
             if pub.status != "published":
                 return {"skipped": pub.status}  # withdrawn (or replaced) before we got here
             revised = pub.version > 1
-            recipients = (
-                await uow.session.execute(
-                    select(User.id, User.email, User.notify_email)
-                    .join(Student, Student.user_id == User.id)
-                    .join(
-                        PublishedResult,
-                        (PublishedResult.student_id == Student.id)
-                        & (PublishedResult.publication_id == publication_id),
-                    )
-                    .where(User.status == "active")
+            query = (
+                select(User.id, User.email, User.notify_email)
+                .join(Student, Student.user_id == User.id)
+                .join(
+                    PublishedResult,
+                    (PublishedResult.student_id == Student.id)
+                    & (PublishedResult.publication_id == publication_id),
                 )
-            ).all()
+                .where(User.status == "active")
+            )
+            if pub.supersedes_id is not None:
+                # A correction replacing a live version: tell only the students whose result changed.
+                changed = await changed_students(uow, publication_id, pub.supersedes_id)
+                query = query.where(Student.id.in_(changed))
+            recipients = (await uow.session.execute(query)).all()
             link = f"/me/results/{publication_id}"
             title = (
                 f"Your {exam_name} result was revised" if revised else f"{exam_name} results are available"

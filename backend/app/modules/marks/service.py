@@ -180,8 +180,10 @@ class MarksService:
             return True, False, False
         if exam.status == "marks_entry_open":
             editable = admin or status in ("open", "returned")
-        elif exam.status in ("marks_entry_closed", "processed"):
-            editable = admin  # after processing, a change sets the results aside (results.staleness)
+        elif exam.status in ("marks_entry_closed", "processed", "correction_draft"):
+            # After processing, a change sets the results aside (results.staleness). In a correction of
+            # published results, administrators change marks while the live version stays visible.
+            editable = admin
         else:
             editable = False
         return True, editable, editable and status in ("open", "returned")
@@ -529,4 +531,6 @@ def _why_locked(exam: Examination, submission: PaperSubmission | None) -> str:
         return "Marks entry hasn't opened for this exam yet."
     if exam.status == "marks_entry_closed":
         return "Marks entry is closed. Ask an administrator to reopen it."
+    if exam.status in ("published", "scheduled", "approved"):
+        return "These results are approved or published. An administrator can start a correction to change marks."
     return "Marks can't be changed at this stage."

@@ -38,6 +38,7 @@ class ExamAction(StrEnum):
     CANCEL_SCHEDULE = "cancel_schedule"
     PUBLISH = "publish"
     START_CORRECTION = "start_correction"
+    CANCEL_CORRECTION = "cancel_correction"
     WITHDRAW = "withdraw"
     REAPPROVE = "reapprove"
     ARCHIVE = "archive"
@@ -80,6 +81,12 @@ TRANSITIONS: tuple[Transition, ...] = (
         S.PUBLISHED, A.START_CORRECTION, S.CORRECTION_DRAFT, needs_reason=True, label="Start correction"
     ),
     Transition(S.CORRECTION_DRAFT, A.PROCESS, S.PROCESSED, label="Process corrected marks"),
+    # Cancelling a correction returns to the live version from any step of the correction. The publishing
+    # service allows it only while a correction is in progress and no mark has changed.
+    *(
+        Transition(src, A.CANCEL_CORRECTION, S.PUBLISHED, label="Cancel the correction")
+        for src in (S.CORRECTION_DRAFT, S.MARKS_ENTRY_OPEN, S.MARKS_ENTRY_CLOSED, S.PROCESSED, S.APPROVED)
+    ),
     Transition(S.PUBLISHED, A.WITHDRAW, S.WITHDRAWN, needs_reason=True, label="Withdraw results"),
     Transition(S.WITHDRAWN, A.REAPPROVE, S.APPROVED, label="Approve again"),
     Transition(S.PUBLISHED, A.ARCHIVE, S.ARCHIVED, label="Archive"),

@@ -14,9 +14,10 @@ from app.modules.documents.service import MarksheetService, Progress
 from app.modules.identity.permissions import P
 from app.modules.notifications.service import DeliveryCounts, Notifier
 from app.modules.publishing.models import Publication
-from app.modules.publishing.service import MyResult, PublishingService
+from app.modules.publishing.service import CorrectionPreview, MyResult, PublishingService
 
 admin_router = APIRouter(prefix="/api/v1/admin/exams/{exam_id}/publications", tags=["publications"])
+correction_router = APIRouter(prefix="/api/v1/admin/exams/{exam_id}/correction", tags=["corrections"])
 student_router = APIRouter(prefix="/api/v1/me/results", tags=["my results"])
 
 PublicationStatus = Literal["scheduled", "published", "superseded", "withdrawn", "cancelled"]
@@ -316,3 +317,95 @@ async def my_result_stats(
     response.headers["Cache-Control"] = NO_STORE
     stats = await PublishingService(infra).my_stats(uow, principal, publication_id)
     return MyStatsOut(available=stats is not None, stats=stats)
+
+
+# ---- corrections after publication (P18.3) -----------------------------------------------------------
+class CorrectionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(min_length=3, max_length=500, description="Why the published results are corrected")
+
+
+class CorrectionStateOut(BaseModel):
+    in_progress: bool
+    started_at: datetime | None
+    reason: str | None
+    exam_status: str
+
+
+class CorrectionSummary(BaseModel):
+    outcome: str | None
+    total: str | None
+    max_total: str | None
+    percentage: str | None
+    grade: str | None
+    sgpa: str | None
+
+
+class CorrectionChangeOut(BaseModel):
+    enrollment_no: str
+    full_name: str
+    before: CorrectionSummary | None
+    after: CorrectionSummary | None
+
+
+class CorrectionPreviewOut(BaseModel):
+    live_version: int
+    revision: int | None
+    students: int
+    changed: int
+    changes: list[CorrectionChangeOut]
+
+
+def _state(exam: Any) -> CorrectionStateOut:
+    return CorrectionStateOut(
+        in_progress=exam.correction_started_at is not None,
+        started_at=exam.correction_started_at,
+        reason=exam.correction_reason,
+        exam_status=exam.status,
+    )
+
+
+def _s(v: dict[str, Any] | None) -> CorrectionSummary | None:
+    return None if v is None else CorrectionSummary(**{k: None if v.get(k) is None else str(v[k]) for k in v})
+
+
+def _preview(p: CorrectionPreview) -> CorrectionPreviewOut:
+    return CorrectionPreviewOut(
+        live_version=p.live_version,
+        revision=p.revision,
+        students=p.students,
+        changed=p.changed,
+        changes=[
+            CorrectionChangeOut(
+                enrollment_no=c.enrollment_no, full_name=c.full_name, before=_s(c.before), after=_s(c.after)
+            )
+            for c in p.changes
+        ],
+    )
+
+
+@correction_router.post("", status_code=201)
+async def start_correction(
+    exam_id: uuid.UUID,
+    body: CorrectionIn,
+    uow: UoW,
+    infra: InfraDep,
+    principal: Principal = require(P.PUBLICATIONS_MANAGE),
+) -> CorrectionStateOut:
+    exam = await PublishingService(infra).start_correction(uow, principal, exam_id, body.reason)
+    return _state(exam)
+
+
+@correction_router.delete("")
+async def cancel_correction(
+    exam_id: uuid.UUID, uow: UoW, infra: InfraDep, principal: Principal = require(P.PUBLICATIONS_MANAGE)
+) -> CorrectionStateOut:
+    exam = await PublishingService(infra).cancel_correction(uow, principal, exam_id)
+    return _state(exam)
+
+
+@correction_router.get("/preview")
+async def correction_preview(
+    exam_id: uuid.UUID, uow: UoW, infra: InfraDep, _: Principal = require(P.RESULTS_VIEW)
+) -> CorrectionPreviewOut:
+    return _preview(await PublishingService(infra).correction_preview(uow, exam_id))

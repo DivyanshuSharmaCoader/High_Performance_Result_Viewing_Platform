@@ -320,6 +320,7 @@ SAMPLE_BODIES: dict[tuple[str, str], Any] = {
     ("POST", "/api/v1/admin/exams/{exam_id}/results/reject"): {"run_id": str(uuid.uuid4()), "reason": "xyz"},
     ("POST", "/api/v1/admin/exams/{exam_id}/results/revoke"): {"reason": "xyz"},
     ("POST", "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/withdraw"): {"reason": "xyz"},
+    ("POST", "/api/v1/admin/exams/{exam_id}/correction"): {"reason": "a mark was entered wrongly"},
     (
         "POST",
         "/api/v1/admin/exams/{exam_id}/publications/{publication_id}/verification/{student_id}/revoke",

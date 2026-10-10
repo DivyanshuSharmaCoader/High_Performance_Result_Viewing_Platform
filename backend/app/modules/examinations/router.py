@@ -104,6 +104,7 @@ class ExamListItem(BaseModel):
     cohorts: int
     marks_deadline: datetime | None
     updated_at: datetime
+    correcting: bool = False  # a correction of published results is in progress (P18.3)
 
 
 class ExamCohortOut(BaseModel):
@@ -173,6 +174,8 @@ class ExamOut(BaseModel):
     notes: str | None
     created_at: datetime
     updated_at: datetime
+    correction_started_at: datetime | None = None  # a correction of published results (P18.3)
+    correction_reason: str | None = None
     cohorts: list[ExamCohortOut]
     papers: list[ExamPaperOut]
     checks: list[ExamCheckOut]
@@ -204,6 +207,8 @@ async def _out(uow: Any, service: ExamService, exam_id: uuid.UUID) -> ExamOut:
         notes=e.notes,
         created_at=e.created_at,
         updated_at=e.updated_at,
+        correction_started_at=e.correction_started_at,
+        correction_reason=e.correction_reason,
         cohorts=[
             ExamCohortOut(id=c.id, code=c.code, name=c.name, program_code=p.code, students=n)
             for c, p, n in view.cohorts
@@ -263,6 +268,7 @@ async def list_exams(
             cohorts=cohorts,
             marks_deadline=e.marks_deadline,
             updated_at=e.updated_at,
+            correcting=e.correction_started_at is not None,
         )
         for e, t, s, scheme_name, papers, cohorts in rows
     ]

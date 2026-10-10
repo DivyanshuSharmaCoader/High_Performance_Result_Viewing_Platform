@@ -58,7 +58,8 @@ from app.modules.results.models import Approval, ResultRun, StudentExamResult, S
 from app.modules.tenancy.models import TenantSettings
 
 ROSTER_STATUSES = ("active", "graduated")
-PROCESSABLE = (ExamStatus.MARKS_ENTRY_CLOSED, ExamStatus.PROCESSED)
+# A correction draft (published results being corrected, P18.3) is processed like closed marks entry.
+PROCESSABLE = (ExamStatus.MARKS_ENTRY_CLOSED, ExamStatus.PROCESSED, ExamStatus.CORRECTION_DRAFT)
 PREVIOUS = ("completed", "stale", "approved", "published")
 CHUNK = 1000  # rows per INSERT: ~17 columns each stays well under the 32,767-parameter limit
 EXAM_RESULTS = cast(Table, StudentExamResult.__table__)
@@ -345,7 +346,7 @@ class ResultsService:
         )
         exam.grading_scheme_version_id = run.grading_scheme_version_id
         before = exam.status
-        if exam.status == ExamStatus.MARKS_ENTRY_CLOSED:
+        if exam.status in (ExamStatus.MARKS_ENTRY_CLOSED, ExamStatus.CORRECTION_DRAFT):
             exam.status = transition_for(exam.status, ExamAction.PROCESS, None).target.value
         exam.version += 1
         await uow.flush()

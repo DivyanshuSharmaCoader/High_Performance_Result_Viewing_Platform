@@ -21,6 +21,7 @@ stateDiagram-v2
     Scheduled --> Published: scheduled time reached
     Published --> CorrectionDraft: start correction (reason)
     CorrectionDraft --> Processed: re-process changed marks
+    CorrectionDraft --> Published: cancel correction (only if no mark changed; also from the later steps of a correction)
     Published --> Withdrawn: withdraw (reason)
     Withdrawn --> Approved: re-approve for publication
     Published --> Archived: session archived
@@ -37,7 +38,7 @@ stateDiagram-v2
     Returned --> Submitted: faculty resubmits
     Submitted --> Locked: exam approved
     Open --> Locked: admin force-locks (reason)
-    Locked --> Open: correction started (affected papers only)
+    Locked --> Submitted: correction started (administrators change marks; the live version stays)
 ```
 
 ## 3. Result run

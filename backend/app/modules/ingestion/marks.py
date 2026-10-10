@@ -56,7 +56,7 @@ ATTENDANCE_WORDS = {
     "p": "present",
 }
 ROSTER_STATUSES = ("active", "graduated")
-WRITE_STATES_ADMIN = ("marks_entry_open", "marks_entry_closed", "processed")
+WRITE_STATES_ADMIN = ("marks_entry_open", "marks_entry_closed", "processed", "correction_draft")
 
 
 @dataclass(frozen=True)
