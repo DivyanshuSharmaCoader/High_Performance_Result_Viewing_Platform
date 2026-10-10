@@ -240,8 +240,20 @@ async def _notification(infra: Any, t: TenantFixture) -> uuid.UUID:
         return n.id
 
 
+async def _export(infra: Any, t: TenantFixture) -> uuid.UUID:
+    from app.modules.exports.models import DataExport
+
+    owner, _ = await make_user(infra, t, "institution_owner")
+    async with infra.db.uow(t.id) as uow:
+        x = DataExport(tenant_id=t.id, requested_by=owner, status="queued")
+        uow.session.add(x)
+        await uow.flush()
+        return x.id
+
+
 PROVIDERS: dict[str, Provider] = {
     "notification_id": _notification,
+    "export_id": _export,
     "user_id": _staff_user,
     "exam_id": _exam,
     "publication_id": _publication,
