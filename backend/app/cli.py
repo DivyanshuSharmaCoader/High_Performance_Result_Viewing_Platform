@@ -153,6 +153,31 @@ def cmd_seed(args: argparse.Namespace) -> None:
     asyncio.run(run_seed(students_per_tenant=args.students, with_history=args.with_history))
 
 
+SENTRY_TEST = (
+    "ScoreCode Sentry test: student test.parent@example.com, phone 9876543210, enrollment 102401001, "
+    "marks 45.5, token abcdefghijklmnopqrstuvwxyz0123456789"
+)
+
+
+def cmd_sentry_test(_: argparse.Namespace) -> None:
+    """One synthetic error to Sentry (P18.6). Prints the event id only, never the DSN or the payload."""
+    import sentry_sdk
+
+    from app.core.sentry import init_sentry, scrub_text
+
+    if not init_sentry(get_settings(), "cli"):
+        raise SystemExit("SCORECODE_SENTRY_DSN is not set: nothing was sent.")
+    try:
+        raise RuntimeError(SENTRY_TEST)
+    except RuntimeError as exc:
+        event_id = sentry_sdk.capture_exception(exc)
+    sent = sentry_sdk.flush(timeout=15)
+    print(
+        f"event id: {event_id} ({'delivered to the SDK transport' if sent is not False else 'flush timed out'})"
+    )
+    print(f"Sentry should show only: {scrub_text(SENTRY_TEST)}")
+
+
 def cmd_create_platform_user(args: argparse.Namespace) -> None:
     from app.modules.platform.bootstrap import create_platform_user_cli
 
@@ -209,6 +234,10 @@ def main(argv: list[str] | None = None) -> None:
     retry = jobs_sub.add_parser("retry", help="run dead jobs again from attempt 0")
     retry.add_argument("job_ids", nargs="+")
     jobs.set_defaults(fn=cmd_jobs)
+
+    sub.add_parser(
+        "sentry-test", help="send one synthetic, scrubbed error to Sentry (prints the event id only)"
+    ).set_defaults(fn=cmd_sentry_test)
 
     rotate = sub.add_parser(
         "reencrypt-secrets",

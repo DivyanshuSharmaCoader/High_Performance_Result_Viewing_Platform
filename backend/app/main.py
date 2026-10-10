@@ -6,7 +6,6 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-import sentry_sdk
 from fastapi import FastAPI, Response
 from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST
@@ -16,6 +15,7 @@ from app.core.config import Settings, get_settings
 from app.core.container import Infra
 from app.core.logging import configure_logging, get_logger
 from app.core.metrics import render as render_metrics
+from app.core.sentry import init_sentry
 from app.jobs_registry import load_job_handlers
 from app.models_registry import metadata as _all_models  # noqa: F401  (every table, so FKs resolve)
 from app.modules.identity.authn import CookieAuthenticator
@@ -27,31 +27,10 @@ from app.web.routes import include_routers
 log = get_logger("scorecode.app")
 
 
-def _init_sentry(settings: Settings) -> None:
-    if settings.sentry_dsn:
-
-        def _scrub(event, _hint):  # type: ignore[no-untyped-def]
-            request = event.get("request") or {}
-            request.pop("cookies", None)
-            request.pop("data", None)
-            headers = request.get("headers") or {}
-            for h in ("cookie", "authorization", "x-csrf-token"):
-                headers.pop(h, None)
-            return event
-
-        sentry_sdk.init(
-            dsn=settings.sentry_dsn.get_secret_value(),
-            environment=settings.env.value,
-            send_default_pii=False,
-            traces_sample_rate=0.0,
-            before_send=_scrub,
-        )
-
-
 def create_app(settings: Settings | None = None, infra: Infra | None = None) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level, settings.log_json, settings.service_name)
-    _init_sentry(settings)
+    init_sentry(settings, "api")
     infra = infra or Infra.build(settings, app_name="scorecode-api")
     load_job_handlers()  # the API enqueues jobs, so every job kind must be known here too
 

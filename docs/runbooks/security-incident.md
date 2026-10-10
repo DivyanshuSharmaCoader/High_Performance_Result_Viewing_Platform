@@ -41,6 +41,21 @@ sessions after a broad compromise, as postgres:
 `UPDATE sessions SET revoked_at = now() WHERE revoked_at IS NULL` and the same for `platform_sessions`.
 Everyone signs in again.
 
+## Error reports (Sentry): turn off, or rotate the key
+Sentry receives errors only, scrubbed of personal data before they leave (`app/core/sentry.py`: no user,
+no cookies, headers or query strings, no local variables or source lines; emails, phones, ids, long
+numbers, decimals and tokens replaced). If an event ever looks wrong, or the DSN leaked:
+1. **Off now:** remove `SENTRY_DSN` from the master file, then
+   `infra/ops/with-secrets.sh run -- python3 infra/ops/push-env.py` and restart `api` and `worker`
+   (`remote.sh deploy ctl restart api`, then `worker`). Nothing is sent without a DSN.
+2. **Rotate:** Sentry → Project → Settings → Client Keys (DSN): create a new key, disable the old one, put
+   the new DSN in the master file, push and restart as above.
+3. **Check:** `remote.sh deploy ctl sentry-test` prints an event id; in Sentry the event's message must
+   read only `ScoreCode Sentry test: student [email], phone [phone], enrollment [number], marks [n],
+   token [token]`.
+4. Delete any event that carried personal data in Sentry (Issues → the issue → Delete), and record it as
+   an incident (who, what, when) as below.
+
 ## Suspected cross-tenant exposure
 This is the most serious kind of incident: isolation is the product's core promise (docs/06).
 1. **Preserve:** take a backup now (`dc run --rm backup backup.sh`) and keep the logs (`dc logs > …`).

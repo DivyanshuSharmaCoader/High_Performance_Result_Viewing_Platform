@@ -126,6 +126,7 @@ class Settings(BaseSettings):
 
     # --- Observability ----------------------------------------------------------------------------
     sentry_dsn: SecretStr | None = None
+    release: str | None = None  # the deployed version (compose sets it from SCORECODE_VERSION)
     metrics_enabled: bool = True
     expose_docs: bool = True
     breached_password_check: bool = True  # Have I Been Pwned range API (k-anonymity); fails open

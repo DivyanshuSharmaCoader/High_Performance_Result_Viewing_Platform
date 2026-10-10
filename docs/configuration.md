@@ -79,7 +79,7 @@ no test names it, though its default may still be exercised.
 
 | Variable | Default | Read by | Tests |
 |---|---|---|---|
-| `SCORECODE_ENV` | `development` | `main`, `seed` | conftest, test_core, test_marksheet_render, test_metrics_multiprocess |
+| `SCORECODE_ENV` | `development` | `core/sentry`, `seed` | conftest, test_core, test_marksheet_render, test_metrics_multiprocess |
 | `SCORECODE_SERVICE_NAME` | `scorecode` | `main` | — |
 | `SCORECODE_LOG_LEVEL` | `INFO` | `main`, `worker` | — |
 | `SCORECODE_LOG_JSON` | `True` | `main`, `worker` | — |
@@ -149,7 +149,8 @@ no test names it, though its default may still be exercised.
 | `SCORECODE_PDF_PROCESSES` | `2` | `modules/documents/service` | — |
 | `SCORECODE_WORKER_POLL_INTERVAL_S` | `1.0` | `worker` | — |
 | `SCORECODE_JOB_LEASE_S` | `120` | `worker` | — |
-| `SCORECODE_SENTRY_DSN` | — | `main` | — |
+| `SCORECODE_SENTRY_DSN` | — | `core/sentry` | test_sentry_scrub |
+| `SCORECODE_RELEASE` | — | `core/jobs`, `core/sentry`, `modules/directory/service`, `modules/identity/staff` | test_sentry_scrub |
 | `SCORECODE_METRICS_ENABLED` | `True` | `main`, `worker` | — |
 | `SCORECODE_EXPOSE_DOCS` | `True` | `main` | test_core |
 | `SCORECODE_BREACHED_PASSWORD_CHECK` | `True` | `core/breached` | test_breached_passwords |

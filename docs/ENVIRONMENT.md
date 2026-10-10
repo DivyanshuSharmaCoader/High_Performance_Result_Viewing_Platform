@@ -51,7 +51,8 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_DB_PING_AFTER_IDLE_S` | `1.0` | A pooled connection idle longer than this is pinged before use; busier ones are not (core/db.py `_ping_if_idle`) |
 | `SCORECODE_OLD_SECRET_KEY` | — | Only for `scorecode reencrypt-secrets`, after `SCORECODE_SECRET_KEY` changed: the previous key, to re-encrypt two-step secrets (docs/runbooks/security-incident.md). Remove it afterwards |
 | `API_WORKERS` (compose) | `2` | Uvicorn worker processes per API container; scale containers with `docker compose up --scale api=N` (Caddy balances across them) |
-| `SCORECODE_SENTRY_DSN` | unset | Error reporting (PII scrubbed) |
+| `SCORECODE_SENTRY_DSN` | unset | Error reporting, errors only, scrubbed of personal data (`app/core/sentry.py`). `scorecode sentry-test` sends one synthetic error |
+| `SCORECODE_RELEASE` | unset | The deployed version, attached to error reports; compose sets it from `SCORECODE_VERSION` |
 | `SCORECODE_METRICS_ENABLED` | `true` | `/metrics` for Prometheus (scraped inside the server only; the edge doesn't route it) |
 | `SCORECODE_LOG_LEVEL` / `SCORECODE_LOG_JSON` | `INFO` / `true` | Structured logs; secrets and personal data are redacted |
 | `SCORECODE_EXPOSE_DOCS` | `true` | `/api/docs` and `/api/openapi.json`. Must be `false` outside development (refused at start-up) |

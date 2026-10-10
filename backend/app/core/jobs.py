@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+import sentry_sdk
 from sqlalchemy import text
 
 from app.core.errors import DomainError
@@ -276,6 +277,11 @@ class Worker:
             outcome = "retry" if retryable else "dead"
             JOBS.labels(job.queue, job.kind, outcome).inc()
             log.exception("job_error", error_code=type(exc).__name__, **log_ctx)
+            if not retryable:  # a job that failed every attempt; retries are not worth a report each
+                with sentry_sdk.new_scope() as scope:
+                    scope.set_tag("job_kind", job.kind)
+                    scope.set_tag("queue", job.queue)
+                    sentry_sdk.capture_exception(exc)
             await self._finish(
                 job,
                 "queued" if retryable else "dead",
@@ -322,8 +328,9 @@ class Worker:
         for task in _maintenance_tasks:
             try:
                 counts |= await task(self.infra)
-            except Exception:
+            except Exception as exc:
                 log.exception("maintenance_task_failed", task=task.__name__)
+                sentry_sdk.capture_exception(exc)
         for table, n in counts.items():
             if table != "tenants" and n:
                 PURGED.labels(table).inc(n)

@@ -32,6 +32,7 @@ x-backend: &backend
   env_file: [env/app.env]
   environment:
     SCORECODE_ENV: production
+    SCORECODE_RELEASE: ${SCORECODE_VERSION:?}
 
 services:
   # Self-hosted for the demo VM. With managed PostgreSQL (small production, docs/14 N3), remove this
@@ -85,6 +86,7 @@ services:
     command: ["scorecode", "worker"]
     environment:
       SCORECODE_ENV: production
+      SCORECODE_RELEASE: ${SCORECODE_VERSION:?}
       SCORECODE_PDF_PROCESSES: ${PDF_PROCESSES:-2}
     depends_on:
       migrate: { condition: service_completed_successfully }

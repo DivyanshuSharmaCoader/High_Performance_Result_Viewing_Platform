@@ -11,6 +11,7 @@ from app.core.config import get_settings
 from app.core.container import Infra
 from app.core.jobs import Worker
 from app.core.logging import configure_logging, get_logger
+from app.core.sentry import init_sentry
 from app.jobs_registry import load_job_handlers
 from app.models_registry import metadata as _all_models  # noqa: F401  (every table, so FKs resolve)
 
@@ -20,6 +21,7 @@ log = get_logger("scorecode.worker")
 async def main() -> None:
     settings = get_settings()
     configure_logging(settings.log_level, settings.log_json, "scorecode-worker")
+    init_sentry(settings, "worker")
     load_job_handlers()
     infra = Infra.build(settings, app_name="scorecode-worker")
     worker = Worker(
