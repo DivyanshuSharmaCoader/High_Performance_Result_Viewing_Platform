@@ -14,7 +14,7 @@ commit=$(git rev-parse --short HEAD)
 # Detached on the server (nohup), so a dropped SSH connection can't stop it half-way; polled until done.
 # (The pid file's path is absolute: "cd x && cmd & echo $!" backgrounds the whole list, so a relative
 # path landed in the home directory, and "no pid file" read as "finished".)
-ssh_ "cd $dir || exit 1; RUNS='${RUNS:-B:cold:1 B:preauth:1}' VUS=${VUS:-1000} HOLD=${HOLD:-5m} nohup bash benchmarks/vps/run-on-vps.sh > $dir/run.log 2>&1 < /dev/null & echo \$! > $dir/run.pid; echo started"
+ssh_ "cd $dir || exit 1; RUNS='${RUNS:-B:cold:1 B:preauth:1}' VUS=${VUS:-1000} HOLD=${HOLD:-5m} STUDENTS=${STUDENTS:-8000} nohup bash benchmarks/vps/run-on-vps.sh > $dir/run.log 2>&1 < /dev/null & echo \$! > $dir/run.pid; echo started"
 ssh_ "test -s $dir/run.pid" || { echo "no pid file: not polling" >&2; exit 1; }
 # Finished only when the server says so: an unreachable server (or a missing pid file) is not "done".
 while :; do

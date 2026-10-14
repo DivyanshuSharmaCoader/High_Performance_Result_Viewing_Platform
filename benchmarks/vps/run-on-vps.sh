@@ -27,7 +27,17 @@ services:
 YML
 dc() { docker compose -f compose.yml -f perf-limits.yml "$@"; }
 (
-  while sleep 5; do
+  high=0; prev=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
+  while sleep 10; do
+    cur=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
+    steal=$(echo "$prev $cur" | awk '{d=$3-$1; printf "%.0f", d>0 ? 100*($4-$2)/d : 0}'); prev=$cur
+    if [ "$steal" -gt 50 ]; then high=$((high + 1)); else high=0; fi
+    if [ "$high" -ge 3 ]; then
+      echo "WATCHDOG: the host withheld over 50% of CPU for 30 s; stopping the test stack" | tee -a "$out/watchdog.txt"
+      docker ps -q --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME" | xargs -r docker kill >/dev/null
+      docker ps -q --filter ancestor=grafana/k6:latest | xargs -r docker kill >/dev/null
+      break
+    fi
     avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
     if [ "$avail" -lt 700 ]; then
       echo "WATCHDOG: only ${avail} MB available; stopping the test stack to protect production" | tee -a "$out/watchdog.txt"
@@ -56,9 +66,9 @@ echo "== build and start (project $COMPOSE_PROJECT_NAME)"
 dc --profile app up -d --build --wait --quiet-pull 2>&1 | tail -3
 dc ps --format '{{.Service}} {{.Status}}'
 
-echo "== synthetic data: 8,000 students, published"
+echo "== synthetic data: ${STUDENTS:-8000} students, published"
 dc --profile app run --rm -T -v "$PWD/backend/scripts:/scripts:ro" -v "$PWD/benchmarks/data:/data" \
-  --entrypoint python api /scripts/loadtest_data.py --students 8000 --sessions "$(( VUS > 1000 ? VUS : 1000 ))" --out /data
+  --entrypoint python api /scripts/loadtest_data.py --students "${STUDENTS:-8000}" --sessions "$(( VUS > 1000 ? VUS : 1000 ))" --out /data
 
 echo "== background work (marksheets, notifications)"
 started=$(date +%s)
