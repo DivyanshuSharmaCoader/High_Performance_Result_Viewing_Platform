@@ -1,28 +1,38 @@
 # Deploy and roll back
 
 ## Install a server (once)
-1. **A VM** (Ubuntu 24.04, 2–4 vCPU, 4–8 GB, Indian region). Install Docker. Create a `deploy` user in the
-   `docker` group, with SSH keys only.
-2. **Cloudflare (D23):** the domain's DNS on Cloudflare.
-   - DNS: `A @` and `A *` → the VM, both proxied.
-   - SSL/TLS: "Full (strict)". Edge certificates: "Always Use HTTPS".
-   - Create an **Origin certificate** for `*.domain` and `domain`. Save it as
-     `/opt/scorecode/certs/origin.pem` and `origin-key.pem`, owned by root, mode 600.
-   - Firewall: allow 443 only from Cloudflare's ranges, and 22 from your addresses.
-3. **Files:** `/opt/scorecode` holds `compose.prod.yml` and `infra/` from the release (the deploy job
-   copies them), plus:
-   - `env/` (mode 700), filled in from `infra/ops/env/*.example` (mode 600). Every secret is new and
-     random.
-   - `secrets/alertmanager.yml` and `secrets/alert_smtp_password`, written by `render-env.py` (docs/configuration.md)
-     on the VM.
-4. **GHCR:** `docker login ghcr.io` with a token that can only read packages.
-5. **First deploy:** `SKIP_BACKUP=1 SMOKE_TENANT= infra/ops/deploy.sh vX.Y.Z`. Then create the first
-   platform user with `dc exec api scorecode create-platform-user --email … --name …`. It prints the TOTP
-   enrolment once.
-6. **GitHub:**
-   - Repository secrets `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS`.
-   - Variable `PRODUCTION_DOMAIN`.
-   - An Environment `production` with required reviewers.
+Everything runs from the operator's Mac through the secrets loader (`infra/ops/with-secrets.sh run -- …`);
+no value is typed, printed or put on a command line. `remote.sh` steps run over SSH with host keys checked.
+
+1. **A VM** (Ubuntu 24.04, 2–4 vCPU, 4–8 GB, Indian region), reachable as root with the operator's key.
+2. **Baseline:** `remote.sh root inspect` (read-only), then `remote.sh root apply`:
+   - unattended security updates, NIC/NPL time, Docker Engine and Compose;
+   - a `deploy` user with no password and **not** in the `docker` group, whose sudo allows exactly
+     `scorecode-deploy` and `scorecode-ctl`;
+   - `/opt/scorecode`, the daily log archive, and ufw rules for 22/80/443 (written, not enabled).
+3. **The deploy account's own key** (never root's): `ssh-keygen -t ed25519 -f ~/.ssh/scorecode_deploy`,
+   then `remote.sh root add-key < ~/.ssh/scorecode_deploy.pub`. Test: the key logs in as `deploy` and is
+   refused as root; `sudo -l` lists the two programs only; `docker ps` is refused.
+4. **Settings:** `python3 infra/ops/push-env.py` sends the operator's values over SSH stdin to the
+   root-owned renderer (`env/*.env`, mode 600; `secrets/alertmanager.yml`). Database passwords and app
+   keys are generated on the server, once, and never leave it. Re-run after changing a value.
+5. **Registry:** `printf %s "$GHCR_READ_TOKEN" | remote.sh deploy ctl registry-login "$GHCR_USERNAME"`
+   (a token that can only read packages, on stdin).
+6. **Origin certificate** (the key is made on the server and stays there):
+   `remote.sh deploy ctl make-csr | python3 infra/ops/cloudflare.py sign-csr | remote.sh deploy ctl install-cert`.
+7. **Gate (a), with the owner's approval:**
+   - `remote.sh root firewall-on`;
+   - `remote.sh root harden-ssh`: keys only, root by key only. **It reverts itself in 3 minutes**: test a
+     NEW login for root and deploy, check a password is refused, then `remote.sh root confirm-ssh`.
+   - Recovery if locked out: the provider's browser console.
+8. **GitHub:** the `production` environment, limited to `v*` tags, with secrets `DEPLOY_HOST`,
+   `DEPLOY_USER` (`deploy`), `DEPLOY_SSH_KEY` (the deploy key) and `DEPLOY_KNOWN_HOSTS` (from
+   `ssh-keygen -F`), each set from stdin. Variable `PRODUCTION_DOMAIN` only after the DNS cut-over.
+   Required reviewers need a paid plan for a private repository; a tag push is the approval.
+9. **First deploy:** push a tag (Release, below). Then `python3 infra/ops/create-admin.py` creates the
+   first platform user and writes its TOTP enrolment to a private file on the Mac.
+10. **Cloudflare (gate b):** `cloudflare.py dns-plan`, then `dns-apply --yes`, then `ssl-strict --yes`
+    ("Full (strict)" and "Always Use HTTPS").
 
 ## Release
 1. Merge to `main` with CI green. The release rehearsal (`release.yml`) runs on every change to the
@@ -30,8 +40,8 @@
 2. `git tag vX.Y.Z && git push origin vX.Y.Z`.
 3. `release.yml` builds the four images, scans them (fixable critical vulnerabilities stop it) and pushes
    them to GHCR.
-4. It waits for approval on the `production` environment, then deploys over SSH with
-   `infra/ops/deploy.sh`:
+4. It deploys over SSH as `deploy`, which runs `sudo scorecode-deploy vX.Y.Z`: the server pulls that
+   version's bundle image and runs its `infra/ops/deploy.sh`:
    1. A backup with the running version.
    2. Migrations (expand-only).
    3. A restart.
