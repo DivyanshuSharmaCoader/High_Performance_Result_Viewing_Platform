@@ -30,7 +30,7 @@ dc() { docker compose -f compose.yml -f perf-limits.yml "$@"; }
   high=0; prev=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
   while sleep 10; do
     cur=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
-    steal=$(echo "$prev $cur" | awk '{d=$3-$1; printf "%.0f", d>0 ? 100*($4-$2)/d : 0}'); prev=$cur
+    steal=$(echo "$prev $cur" | awk '{d=$3-$1; printf "%.0f", (d > 0 ? 100*($4-$2)/d : 0)}'); prev=$cur
     if [ "$steal" -gt 50 ]; then high=$((high + 1)); else high=0; fi
     if [ "$high" -ge 3 ]; then
       echo "WATCHDOG: the host withheld over 50% of CPU for 30 s; stopping the test stack" | tee -a "$out/watchdog.txt"
@@ -88,7 +88,7 @@ q "SELECT pg_stat_statements_reset()" >/dev/null
 ( prev=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
   while sleep 10; do
     cur=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
-    steal=$(echo "$prev $cur" | awk '{d=$3-$1; printf "%.0f", d>0 ? 100*($4-$2)/d : 0}')
+    steal=$(echo "$prev $cur" | awk '{d=$3-$1; printf "%.0f", (d > 0 ? 100*($4-$2)/d : 0)}')
     prev=$cur
     echo "$(date +%s) $(awk '/MemAvailable|SwapTotal|SwapFree/ {printf "%s=%dMB ", $1, $2/1024}' /proc/meminfo) load=$(cut -d' ' -f1 /proc/loadavg) steal=${steal}%"
   done ) > "$out/host-memory.txt" &

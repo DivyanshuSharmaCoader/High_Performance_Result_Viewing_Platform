@@ -1,8 +1,8 @@
-# Result day on the production VPS: two attempts, both stopped by the server itself — 2026-10-14
+# Result day on the production VPS — 2026-10-14
 
-P18.11. **No latency, throughput or capacity figure was measured on the VPS.** Both attempts stopped
-before the load generator started. What they found is a capacity limit of a different kind, and the
-changes made because of it. The same test on a CI runner of the same size is in
+P18.11. Two full-size attempts stalled the server before any load was applied; after the fixes they led
+to (v0.1.3, v0.1.4), a step-wise run at **200 concurrent students completed with no errors**. Nothing
+above 200 was tested on the VPS. The same test on a CI runner of the same size is in
 [2026-10-14-result-day-ci-2vcpu.md](2026-10-14-result-day-ci-2vcpu.md).
 
 ## Set-up
@@ -48,9 +48,45 @@ services). The VPS: Hostinger KVM 2, 2 vCPU (AMD EPYC 9354P), 7.9 GB RAM, Ubuntu
 - The test stack's worker gets the same cap; its poller now waits for an explicit "finished" from the
   server and never removes anything when the server can't be reached.
 
+## Attempt 3: step-wise, after v0.1.4 (17:15–17:52 UTC, commit 118febe)
+2,000 students (6 papers, published), the test worker capped like production's (1 CPU, half weight),
+**200 virtual users**: 60 s ramp, 2 min hold, each journey with 2–10 s think time. k6 ran on the same VPS
+(it competes for the same 2 vCPUs, so these figures are pessimistic). Production `v0.1.4` ran beside it.
+
+| | Pre-authenticated | Sign-in first (Argon2) |
+|---|---|---|
+| Requests | 25,088 · **132.3/s** | 26,202 · **138.0/s** |
+| Failed | **0.00%** | **0.00%** (200 of 200 sign-ins) |
+| Latest result p50 / p95 / p99 | 16.7 / 313 / 936 ms | 9.1 / 237 / 720 ms |
+| Class statistics p50 / p95 / p99 | 14.5 / 265 / 816 ms | 8.1 / 208 / 663 ms |
+| `/me` p50 / p95 / p99 | 33.0 / 654 / 1,483 ms | 17.9 / 472 / 1,333 ms |
+| Marksheet link p50 / p95 / p99 | 37.4 / 476 / 1,292 ms | 21.3 / 356 / 1,134 ms |
+| Marksheet PDF p95 | 17 ms | 13 ms |
+| Sign-in p50 / p95 | — | 58.9 / 368 ms |
+
+Server-side (the API's own log, pre-authenticated): latest p95 246 ms, statistics p95 217 ms, `/me` p95
+589 ms.
+
+**Resources** (docker stats every 5 s; k6 not included): all containers together peaked at 1.7–1.9 GB of
+memory; CPU averaged 112–133% of the 200% available and peaked at 230–267%. The test API used most of it
+(average 66–76%, peak 173%). **Production's worker held 108 MiB after rendering**, against 2.3 GB before
+PDF processes were recycled.
+
+**Marksheets:** 2,000 rendered in 961 s with the worker capped at one CPU, about 2.1 a second (8,000 would
+take about 64 minutes). No duplicates.
+
+**Production during the run:** 105 of 105 probes from outside (`/api/v1/plans`, every 15 s, verified
+TLS) answered 200; the slowest took 0.84 s. SSH stayed reachable.
+
+**Not measured:** host-level memory, swap and CPU steal during attempt 3 (the sampler's awk expression
+was wrong and wrote nothing; fixed afterwards). Concurrency above 200.
+
 ## What this means
-- **Not tested on the VPS:** concurrency, latency and error rates under 1,000 students. Do not claim a
-  capacity for this server from these attempts.
+- **Tested on the VPS:** 200 students using the portal at once (about 135 requests a second) with no
+  errors and p95 under 0.7 s for every page, while production stayed responsive. Rendering capped at one
+  CPU no longer stalls the server.
+- **Not tested:** more than 200 at once. CPU was already at about two-thirds of the machine at 200, so
+  the 1,000-student result day the CI runner handled (with 3–6% errors) is not shown to work here.
 - **Known limit:** on this plan, two cores at 100% for many minutes stalls the whole server. One stack's
   rendering capped at one core is the next thing to verify, then the k6 journey, ideally with production
   alone (no second stack) and k6 on another machine.
