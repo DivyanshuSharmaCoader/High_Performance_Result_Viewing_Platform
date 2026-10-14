@@ -1,6 +1,6 @@
 // Result-day student journey (docs/11 §4). One virtual user = one student:
-//   config → me → latest result → class stats → (30%) history → think 2–10 s → repeat.
-// The marksheet-URL step of the plan is left out: marksheet PDFs arrive in Phase 11.
+//   config → me → latest result → class stats → (30%) history → (50%) marksheet link and the PDF
+//   → think 2–10 s → repeat.
 //
 // Run (stack up, data from backend/scripts/loadtest_data.py): benchmarks/k6/run.sh A preauth 1
 // which wraps: docker run --rm --network scorecode_default -v "$PWD/benchmarks:/bench" grafana/k6 run \
@@ -27,7 +27,7 @@ const SHAPES = {
   // VUS raises B's users (P14.4 needs a load that saturates one API container).
   B: { executor: "ramping-vus", startVUs: 0, stages: [{ duration: "60s", target: Number(__ENV.VUS || 1000) }, { duration: "5m", target: Number(__ENV.VUS || 1000) }], gracefulRampDown: "15s" },
 };
-const ENDPOINTS = ["config", "me", "latest", "stats", "history", "csrf", "login"];
+const ENDPOINTS = ["config", "me", "latest", "stats", "history", "marksheet", "pdf", "csrf", "login"];
 
 export const options = {
   scenarios: { journey: SHAPES[SCENARIO] },
@@ -76,6 +76,16 @@ export default function () {
   const pub = latest.status === 200 && latest.json() ? latest.json().publication_id : null;
   if (pub) get(`/api/v1/me/results/${pub}/stats`, "stats", h);
   if (Math.random() < 0.3) get("/api/v1/me/results", "history", h);
+  if (pub && Math.random() < 0.5) {
+    // The signed link, then the PDF itself through the edge (files.<domain> → object storage).
+    const m = get(`/api/v1/me/results/${pub}/marksheet`, "marksheet", h);
+    const url = m.status === 200 && m.json() ? m.json().url : null;
+    if (url) {
+      const u = url.match(/^https?:\/\/([^/]+)(\/.*)$/);
+      const pdf = http.get(`${BASE}${u[2]}`, { headers: { Host: u[1] }, tags: { name: "pdf" } });
+      check(pdf, { "pdf 200": (x) => x.status === 200 && x.body.length > 1000 });
+    }
+  }
   sleep(2 + Math.random() * 8);
 }
 

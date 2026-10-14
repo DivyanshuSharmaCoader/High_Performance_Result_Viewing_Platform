@@ -32,7 +32,7 @@ on:
         type: boolean
         default: true
       chaos:
-        description: "Failure to inject (P14.5): none, redis, postgres (during the first B run) or worker (while marksheets render)"
+        description: "Failure to inject (P14.5, P18.11): none, redis, postgres, dbslow (+50 ms per database round trip for 60 s; during the first B run) or worker (while marksheets render)"
         default: "none"
       compare:
         description: "Same-machine comparison instead of `runs`: none, replicas (1 vs 2 API containers), cache (read cache off vs on), or ref:<commit> (its API image vs this commit's)"
@@ -137,6 +137,11 @@ jobs:
                   echo "chaos: ${{ inputs.chaos }} at $(date -u +%T) (epoch $(date +%s)) during $scenario-$variant-$i" | tee -a benchmarks/results/runs/chaos.txt
                   if [ "${{ inputs.chaos }}" = redis ]; then
                     docker compose stop redis; sleep 60; docker compose start redis
+                  elif [ "${{ inputs.chaos }}" = dbslow ]; then
+                    # A slow database: 50 ms more on every packet from PostgreSQL, for a minute.
+                    netns() { docker run --rm --net container:scorecode-postgres-1 --cap-add NET_ADMIN \
+                      nicolaka/netshoot:v0.13 tc qdisc "$@" dev eth0 root; }
+                    netns add netem delay 50ms; sleep 60; netns del
                   else
                     docker compose restart postgres
                   fi
