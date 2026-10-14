@@ -160,6 +160,9 @@ jobs:
           sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl versions
           sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl jobs stats
           sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl logs api 5 >/dev/null
+          # The production checks, in the production image (not the test environment's dependencies).
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl storage-test
+          echo "ops@$DOMAIN" | sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl email-test
           sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl archive-logs
           sudo test -f "/var/log/scorecode/$(date -u -d yesterday +%F).log.gz"
           systemctl is-enabled scorecode-logs.timer

@@ -196,11 +196,18 @@ def cmd_storage_test(_: argparse.Namespace) -> None:
     one (both must be refused), delete. One object under _healthcheck/; prints outcomes only (no URLs)."""
 
     async def run() -> bool:
+        import urllib.error
+        import urllib.request
         import uuid
 
-        import httpx
-
         from app.core.container import Infra
+
+        def fetch(url: str) -> tuple[int, bytes]:  # the standard library: httpx is not in the runtime image
+            try:
+                with urllib.request.urlopen(url, timeout=20) as r:  # noqa: S310 - our own signed URLs
+                    return r.status, r.read()
+            except urllib.error.HTTPError as e:
+                return e.code, b""
 
         infra = Infra.build(get_settings(), app_name="scorecode-cli")
         key, body = f"_healthcheck/{uuid.uuid4()}.txt", b"scorecode storage test"
@@ -216,14 +223,12 @@ def cmd_storage_test(_: argparse.Namespace) -> None:
             report("write", True)
             report("read back", await infra.storage.get(key) == body)
             url = infra.storage.presigned_get(key, ttl_s=120)
-            async with httpx.AsyncClient(timeout=20) as client:
-                r = await client.get(url)
-                report("signed link", r.status_code == 200 and r.content == body, f"HTTP {r.status_code}")
-                r = await client.get(url.split("?", 1)[0])
-                report("unsigned link refused", r.status_code in (400, 401, 403), f"HTTP {r.status_code}")
-                tampered = url.replace("X-Amz-Signature=", "X-Amz-Signature=00", 1)
-                r = await client.get(tampered)
-                report("tampered link refused", r.status_code in (400, 401, 403), f"HTTP {r.status_code}")
+            code, content = await asyncio.to_thread(fetch, url)
+            report("signed link", code == 200 and content == body, f"HTTP {code}")
+            code, _ = await asyncio.to_thread(fetch, url.split("?", 1)[0])
+            report("unsigned link refused", code in (400, 401, 403), f"HTTP {code}")
+            code, _ = await asyncio.to_thread(fetch, url.replace("X-Amz-Signature=", "X-Amz-Signature=00", 1))
+            report("tampered link refused", code in (400, 401, 403), f"HTTP {code}")
             await infra.storage.delete(key)
             try:
                 await infra.storage.get(key)
