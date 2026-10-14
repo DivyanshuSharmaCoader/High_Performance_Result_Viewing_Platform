@@ -20,6 +20,11 @@ on:
       - "infra/caddy/**"
       - "infra/backup/**"
       - "infra/bundle/**"
+      - "infra/postgres/**"
+      - "backend/Dockerfile"
+      - "backend/uv.lock"
+      - "frontend/Dockerfile"
+      - "frontend/pnpm-lock.yaml"
       - ".github/workflows/release.yml"
 
 permissions:
@@ -179,6 +184,34 @@ jobs:
           sudo SCORECODE_VERSION="$(cat .deployed-version 2>/dev/null || echo "$V1")" REGISTRY=rehearsal docker compose \
             -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml --env-file env/deploy.env \
             logs --tail 80 migrate api worker proxy backup || true
+
+  # The same scan as a release, on branches: a vulnerable base image is found before a tag, not by it.
+  scan:
+    name: Build and scan images (branches; nothing is pushed)
+    if: "!startsWith(github.ref, 'refs/tags/v')"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build
+        run: |
+          set -euo pipefail
+          docker build -q --target runtime -t scan/backend backend
+          docker build -q -f frontend/Dockerfile -t scan/proxy .
+          docker build -q -t scan/postgres infra/postgres
+          docker build -q -t scan/backup infra/backup
+      - name: Trivy · backend
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "scan/backend", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - name: Trivy · proxy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "scan/proxy", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - name: Trivy · postgres
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "scan/postgres", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
+      - name: Trivy · backup
+        uses: aquasecurity/trivy-action@v0.36.0
+        with: { image-ref: "scan/backup", severity: CRITICAL, ignore-unfixed: true, exit-code: "1" }
 
   images:
     name: Build, scan and push images (tags only)

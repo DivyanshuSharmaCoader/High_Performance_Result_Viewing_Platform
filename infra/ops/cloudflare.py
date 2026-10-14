@@ -11,7 +11,8 @@
     infra/ops/with-secrets.sh run -- python3 infra/ops/cloudflare.py ssl-strict --yes    # "Full (strict)" + HTTPS
 
 Reads CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID, SCORECODE_DOMAIN and DEPLOY_HOST from the environment.
-`dns-plan` prints the records ScoreCode needs (apex, wildcard for tenants, admin, verify) next to what
+`dns-apply --yes --replace=IP,IP` may also replace several records sharing a name when every one of them
+points at an address named there. `dns-plan` prints the records ScoreCode needs (apex, wildcard for tenants, admin, verify) next to what
 exists; nothing changes until `dns-apply --yes`. Records that point elsewhere are listed, never deleted.
 """
 
@@ -89,7 +90,9 @@ def dns_list() -> None:
         print(f"{r['type']:6} {r['name']:40} {r['content'][:60]:60} proxied={r.get('proxied')}")
 
 
-def dns_plan(apply: bool = False) -> None:
+def dns_plan(apply: bool = False, replace: frozenset[str] = frozenset()) -> None:
+    """`replace`: addresses the owner checked and named (e.g. a registrar's parking page). Only records with
+    exactly those contents may be removed when several share a name; anything else is left for a person."""
     existing = records()
     for w in wanted():
         same = [r for r in existing if r["name"] == w["name"] and r["type"] in ("A", "AAAA", "CNAME")]
@@ -105,6 +108,11 @@ def dns_plan(apply: bool = False) -> None:
                 call("PUT", f"/zones/{zone()}/dns_records/{same[0]['id']}", w)
             elif not same:
                 call("POST", f"/zones/{zone()}/dns_records", w)
+            elif all(r["type"] == "A" and r["content"] in replace for r in same):
+                call("PUT", f"/zones/{zone()}/dns_records/{same[0]['id']}", w)
+                for r in same[1:]:
+                    call("DELETE", f"/zones/{zone()}/dns_records/{r['id']}")
+                    print(f"        removed A {r['content']} (named in --replace)")
             else:
                 print(f"        skipped: {len(same)} records share this name; resolve by hand")
                 continue
@@ -173,7 +181,8 @@ def main(argv: list[str]) -> None:
     elif cmd == "dns-plan":
         dns_plan()
     elif cmd == "dns-apply" and "--yes" in argv:
-        dns_plan(apply=True)
+        named = next((a.split("=", 1)[1] for a in argv if a.startswith("--replace=")), "")
+        dns_plan(apply=True, replace=frozenset(x for x in named.split(",") if x))
     elif cmd == "settings":
         settings()
     elif cmd == "ssl-strict" and "--yes" in argv:

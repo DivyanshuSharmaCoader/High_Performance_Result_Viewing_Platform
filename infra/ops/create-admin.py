@@ -25,7 +25,27 @@ def deploy_key() -> str:
     return own if Path(own).is_file() else os.environ["DEPLOY_SSH_KEY_FILE"]
 
 
+def _guessable(password: str) -> str | None:
+    """Why a password must not be used (never the password itself), or None."""
+    if len(password) < 14:
+        return "shorter than 14 characters"
+    if password.strip().upper() == "PLATFORM_ADMIN_PASSWORD" or "CHANGE-ME" in password.upper():
+        return "still the template's placeholder"
+    tracked = subprocess.run(["git", "ls-files", "-z"], capture_output=True, check=False).stdout.split(b"\0")  # noqa: S607
+    for name in filter(None, tracked):
+        try:
+            if password.encode() in Path(name.decode()).read_bytes():
+                return "it appears in the repository's files"
+        except OSError:
+            continue
+    return None
+
+
 def main() -> int:
+    why = _guessable(os.environ["PLATFORM_ADMIN_PASSWORD"])
+    if why:
+        print(f"refusing: PLATFORM_ADMIN_PASSWORD is guessable ({why}). Set a new one in the secrets file.", file=sys.stderr)
+        return 2
     host, key = os.environ["DEPLOY_HOST"], deploy_key()
     port = os.environ.get("DEPLOY_SSH_PORT") or "22"
     payload = "\n".join(os.environ[n].strip() for n in ("PLATFORM_ADMIN_EMAIL", "PLATFORM_ADMIN_NAME", "PLATFORM_ADMIN_PASSWORD"))
