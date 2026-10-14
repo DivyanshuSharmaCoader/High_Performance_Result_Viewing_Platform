@@ -21,8 +21,8 @@
 | | |
 |---|---|
 | Current phase | **Phase 18 — production completion** (Phases 0–15 complete; P16.1–P16.3 become P18.8–P18.15) |
-| Next step | P18.3 corrections after publication; P18.8 server baseline once SSH reaches the VPS |
-| Last updated | 2026-10-10 |
+| Next step | Owner actions (open blockers); then P18.8–P18.12 and P18.15 on the server. P18.6 waits for the owner to confirm the Sentry test event |
+| Last updated | 2026-10-14 |
 | Open blockers | (1) the VPS drops SSH on port 22 from the owner's laptop; (2) Brevo rejects the SMTP login (535); (3) `PLATFORM_ADMIN_PASSWORD` is guessable from the repository and must be replaced. D25 (Thapar branding) awaits owner action |
 
 ## 📊 Phase progress
@@ -46,7 +46,7 @@
 | 15 | Security review & hardening | 5 | 5 |
 | 16 | Deployment, backups, monitoring, runbooks | 6 | 3 |
 | 17 | Thapar & demo tenants, documentation, presentation (MVP complete) | 5 | 3 |
-| 18 | Production completion (school market) | 15 | 0 |
+| 18 | Production completion (school market) | 15 | 8 |
 
 _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHECKLIST.md` for the overall count)._
 
@@ -232,20 +232,20 @@ _Update the Done column when you tick boxes (or run `grep -c "\- \[x\]" docs/CHE
 The owner's production-completion mission (2026-10-10). Same ticking rules: CI-verified, or for the server
 steps, verified on the server with the evidence in the work log.
 
-- [ ] **P18.1** Baseline and scope · Done when: D23–D29 recorded; baseline in the work log
-- [ ] **P18.2** Secrets and configuration · Done when: `secrets-check.py` (SET / MISSING / INVALID FORMAT / CONNECTION FAILED) and `leak-scan.py` run clean; [configuration.md](configuration.md) maps every variable; gitleaks in pre-commit and CI
-- [ ] **P18.3** Corrections after publication · Done when: start correction → change marks → process → approve → republish as a new version; old marksheets and codes say "superseded"; only affected students notified; integration + E2E
-- [ ] **P18.4** Hindi and Punjabi for students and parents · Done when: i18n catalogue; result view and marksheet labels in en/hi/pa; tests + E2E
-- [ ] **P18.5** Tenant data export · Done when: an admin downloads all of the institution's data (ZIP of CSVs) from the UI; audited; isolation test
+- [x] **P18.1** Baseline and scope · Done when: D23–D29 recorded; baseline in the work log
+- [x] **P18.2** Secrets and configuration · Done when: `secrets-check.py` (SET / MISSING / INVALID FORMAT / CONNECTION FAILED) and `leak-scan.py` run clean; [configuration.md](configuration.md) maps every variable; gitleaks in pre-commit and CI
+- [x] **P18.3** Corrections after publication · Done when: start correction → change marks → process → approve → republish as a new version; old marksheets and codes say "superseded"; only affected students notified; integration + E2E
+- [x] **P18.4** Hindi and Punjabi for students and parents · Done when: i18n catalogue; result view and marksheet labels in en/hi/pa; tests + E2E
+- [x] **P18.5** Tenant data export · Done when: an admin downloads all of the institution's data (ZIP of CSVs) from the UI; audited; isolation test
 - [ ] **P18.6** Sentry, privacy-safe · Done when: scrubber unit-tested; a synthetic error from the CLI arrives without emails, phones, marks, ids, headers, cookies, tokens or query strings
-- [ ] **P18.7** Threat model and scans · Done when: [threat-model.md](security/threat-model.md); pip-audit, pnpm audit, bandit, semgrep, gitleaks, Trivy run with results recorded
+- [x] **P18.7** Threat model and scans · Done when: [threat-model.md](security/threat-model.md); pip-audit, pnpm audit, bandit, semgrep, gitleaks, Trivy run with results recorded
 - [ ] **P18.8** Server baseline · Done when: deploy user with key login verified; Docker on boot, log rotation, unattended security updates, time sync; firewall 22/80/443 (gate a for SSH hardening)
 - [ ] **P18.9** Production deploy · Done when: images from GHCR with the read-only token; health, restart, rollback to the previous image and migration rollback drilled on the server
 - [ ] **P18.10** Integrations in production · Done when: R2 upload/download/delete/denied; encrypted backup to S3 with a restore test; Brevo reset, invite and notice to the owner's address; GHCR pulls
 - [ ] **P18.11** Result-day load test on the deployed stack · Done when: report with real concurrency, p50/p95/p99, errors, CPU/RAM/DB connections; cold cache, PDFs, Redis down, DB slow
 - [ ] **P18.12** Production monitoring · Done when: health, queue, job failures, disk/memory, backup age, SMTP failures, quota warnings alert ALERT_EMAIL_TO; one test alert received
-- [ ] **P18.13** Business research · Done when: [docs/business/](business/) competitors and prices from official sources (links, access dates), unit economics, tiers by enrolment band, sensitivity analysis
-- [ ] **P18.14** Legal readiness · Done when: [docs/legal/](legal/) matrix (DPDP Act and Rules, IT Act, CERT-In, consumer protection, GST, children's data) and DRAFT documents, each marked for legal review
+- [x] **P18.13** Business research · Done when: [docs/business/](business/) competitors and prices from official sources (links, access dates), unit economics, tiers by enrolment band, sensitivity analysis
+- [x] **P18.14** Legal readiness · Done when: [docs/legal/](legal/) matrix (DPDP Act and Rules, IT Act, CERT-In, consumer protection, GST, children's data) and DRAFT documents, each marked for legal review
 - [ ] **P18.15** Go-live · Done when: DNS cut-over approved (gate b); health, TLS, storage, email, backups with restore, rollback verified; smoke test with synthetic accounts
 
 ---
@@ -260,6 +260,7 @@ Newest first. One line per session: date · what was done · what's next · bloc
 
 | Date | Step(s) | Notes / next / blockers |
 |---|---|---|
+| 2026-10-14 | P18.1–P18.5, P18.7, P18.13, P18.14 ticked | Verified by CI for e345c5b (all 7 jobs: 540+ integration tests incl. corrections, exports, closure and erasure, isolation and authz matrix; E2E incl. corrections.spec and languages.spec; semgrep, gitleaks, pip-audit, bandit, pnpm audit, Trivy). <br>**Built:** corrections after publication (P18.3); Hindi/Punjabi for students and bilingual marksheets (P18.4); data export (P18.5); privacy-safe Sentry (P18.6: scrubber tested through the real SDK; one synthetic event sent from the CLI, event 79f053309f8f4e26a1aa2d6d257ec828; arrival to be confirmed by the owner in Sentry); threat model with scan results (P18.7); business research and unit economics (P18.13); legal matrix, drafts, account closure with two-approval erasure, one-year retention, log archive and NIC/NPL time (P18.14). Server provisioning (sudo-only deploy user, bundle-image deploys, settings over SSH stdin) rehearsed end to end on Ubuntu 24.04 in release.yml. Monitoring: disk, memory, email-failure and near-limit alerts added (P18.12 needs the server). Load test: marksheet downloads and a slow-database failure added to k6/perf.yml (P18.11 needs the server). <br>**Blocked (owner):** SSH to the VPS times out on port 22; Brevo rejects the SMTP login (535); `PLATFORM_ADMIN_PASSWORD` is guessable from the repository. Gates waiting: (a) firewall/SSH hardening, (b) DNS for scorecode.website (apex has two stale A records). |
 | 2026-10-10 | Baseline for Phase 18 | **Done (CI-verified):** Phases 0–15; P16.4–P16.6; P17.1, P17.2, P17.4. <br>**Partial:** corrections after publication (the `correction_draft` state exists, no flow uses it); Sentry (a `before_send` drops cookies and request bodies; no URL, breadcrumb or field scrubbing, no CLI check); storage quotas exist per plan (`max_storage_mb`), upload size limits exist. <br>**Missing:** tenant data export; Hindi/Punjabi; semgrep; gitleaks in pre-commit; docs/configuration.md; threat-model.md as a single document; business and legal research; new-device sign-in notices. <br>**Unverified:** everything on a real server (P16.1–P16.3 were rehearsed in CI only). <br>**Ran today:** `secrets-check.py --connect`: Cloudflare, R2, S3 backups, GHCR, Sentry OK; SSH CONNECTION FAILED (port 22 times out; other hosts' port 22 reachable from the same network, so the VPS side drops it); SMTP CONNECTION FAILED (535, though the login and key have Brevo's shapes). `leak-scan.py`: no secret value anywhere in history; the files bucket's name equals the template's example; the admin password is a string found in the repository's files. DNS (read-only): the apex has two A records to AWS us-west-2 hosts that don't answer (Cloudflare 522); Brevo's DKIM, DMARC and verification records exist. <br>**Blocked:** P18.8–P18.10 and P18.15 on SSH; email on the SMTP key. |
 | 2026-10-09 | P14.4 ticked | `perf.yml compare=replicas`, one worker per container, 2,000 users, same runner (run 37866472727): 1 → 2 API containers gave 402–405 → 687–697 req/s (+71%), failures 2–4.8% → 0.03–0.64%, p95 2.6–4.3 s → 1.2 s, Caddy splitting CPU evenly. The earlier 2-workers-per-container run showed the opposite on one 4-vCPU machine (a second container added processes, not CPU). Both are in the [benchmark report](reports/benchmark-report.md) §4. |
 | 2026-10-09 | P17.4 ticked; ASVS gaps closed | P17.4: [reports](reports/README.md) verified by CI for bec0a0b (all 7 jobs; E2E 36 passed including the new accessibility spec, with the 8 demo steps skipped there and run by `demo.yml`). Also built after the reports, each tested with a caught mutant:<br>- **Accessibility (NFR-13, automated part):** axe on 15 screens. It found an unlabelled file input, off-screen save bars reachable by Tab (now `inert`), and unnamed selects.<br>- **Retention (ASVS 8.3.4):** `ops_purge()` every 6 h, per tenant under RLS. It also keeps audit partitions ahead, which before this only an API restart did.<br>- **Security notices (ASVS 2.2.3):** password and two-step changes are emailed to the person.<br>Remaining in 2.2.3: new-device sign-in. |
