@@ -109,6 +109,14 @@ services:
     volumes:
       - ./certs:/certs:ro
       - caddydata:/data
+    # Healthy once Caddy listens on 443 (0x01BB, state 0A = LISTEN), i.e. after its config and certificates
+    # loaded: `up --wait` and the smoke test after it must not race Caddy's start (seen in the rehearsal).
+    healthcheck:
+      test: ["CMD-SHELL", "awk '$$2 ~ /:01BB$$/ && $$4 == \"0A\"' /proc/net/tcp /proc/net/tcp6 | grep -q ."]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     depends_on:
       api: { condition: service_healthy }
 
