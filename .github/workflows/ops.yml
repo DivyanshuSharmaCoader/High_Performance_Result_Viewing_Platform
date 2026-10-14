@@ -49,7 +49,8 @@ jobs:
           q() { curl -fsS --get --data-urlencode "query=$1" http://127.0.0.1:59090/api/v1/query | python3 -c "import json,sys; r=json.load(sys.stdin)['data']['result']; print(r[0]['value'][1] if r else '')"; }
           for i in $(seq 1 30); do curl -fsS -o /dev/null -H 'Host: thapar.localhost:8080' http://127.0.0.1:8080/api/v1/tenant/config; done
           for i in $(seq 1 40); do
-            [ "$(q 'count(up == 1)')" -ge 5 ] 2>/dev/null && break
+            # Every target up, not a count: a new exporter would otherwise let one that's down slip by.
+            [ -n "$(q 'count(up)')" ] && [ "$(q 'count(up == 1)')" = "$(q 'count(up)')" ] && break
             sleep 5
           done
           curl -fsS http://127.0.0.1:59090/api/v1/targets | python3 -c "
@@ -57,7 +58,7 @@ jobs:
           for t in json.load(sys.stdin)['data']['activeTargets']:
               print(t['labels']['job'], t['scrapeUrl'], t['health'], t.get('lastError', ''))
           " | tee targets.txt
-          for job in api worker postgres pushgateway prometheus; do
+          for job in api worker node postgres pushgateway prometheus; do
             grep -q "^$job .* up" targets.txt || { echo "target $job is not up"; exit 1; }
           done
           for i in $(seq 1 20); do [ -n "$(q 'scorecode_jobs_in_state')" ] && break; sleep 5; done
