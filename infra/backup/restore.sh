@@ -52,6 +52,6 @@ for t in $forced; do psql -v ON_ERROR_STOP=1 -q -c "ALTER TABLE $t NO FORCE ROW 
 pg_restore --exit-on-error --jobs="$jobs" --section=data --dbname="$PGDATABASE" "$work/db.dump"
 pg_restore --exit-on-error --jobs="$jobs" --section=post-data --dbname="$PGDATABASE" "$work/db.dump"
 for t in $forced; do psql -v ON_ERROR_STOP=1 -q -c "ALTER TABLE $t FORCE ROW LEVEL SECURITY"; done
-psql -v ON_ERROR_STOP=1 -c "ANALYZE" > /dev/null
+psql -v ON_ERROR_STOP=1 -q -c "SET client_min_messages = error" -c "ANALYZE" > /dev/null  # catalogs: not ours
 printf '{"restored":"%s","into":"%s","forced_rls_tables":%s,"seconds":%s}\n' "$src" "$PGDATABASE" \
   "$(echo "$forced" | grep -c . || true)" "$(( $(date +%s) - started ))"

@@ -75,3 +75,23 @@ The `restore-drill` job runs the whole procedure against 8,000 students:
 6. Start the app and smoke test.
 
 It reports the **measured RTO**. Copy each result into the drill log: [drills/](drills/).
+
+## Restore test on the production server (monthly, and after any change to backups)
+A real restore of the newest production backup that never brings the age private key to the server:
+
+```bash
+infra/ops/with-secrets.sh run -- uv run --project backend python infra/ops/restore-test.py ~/path/to/backup-age-key.txt
+```
+
+1. It downloads the newest encrypted dump from `prod/db/` to a temporary folder on the Mac.
+2. `age` decrypts it there, with the key file named on the command line. The plaintext is streamed over SSH
+   and never written to the Mac's disk.
+3. `sudo scorecode-ctl restore-test` on the server restores it into a throwaway database with **no
+   network**, using `restore.sh` as the backup image runs it.
+4. It prints how many fingerprint lines match the live database, and the lines that differ (table names,
+   row counts and checksums, never rows). Rows written since the backup was taken (sessions, jobs) are
+   expected to differ.
+5. The scratch database and the plaintext are removed, also on failure.
+
+The release rehearsal (`release.yml`) runs the same path on every change to the deploy files, with its own
+key. Record each production result in [drills/](drills/).
