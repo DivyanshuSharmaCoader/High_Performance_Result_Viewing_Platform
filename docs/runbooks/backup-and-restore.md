@@ -19,6 +19,20 @@
 - To rotate: make a new key pair, set the new public key in `env/backup.env`, and keep the old private
   key until the last backup made with it expires.
 
+## What the server's backup credentials may do
+The backup job only writes (`s3 cp`, `s3 sync` without `--delete`), so the server's key needs no delete
+right. **Measured 2026-10-14:** the production backup key can put, get and **delete** objects; it can't
+list all buckets or read versioning or lifecycle settings. A key that can delete lets anyone who takes over
+the server erase the backups too. In the AWS console (free), as the owner:
+- Give the server's IAM user only `s3:PutObject` and `s3:GetObject` on `arn:aws:s3:::<backup-bucket>/*`
+  and `s3:ListBucket` on `arn:aws:s3:::<backup-bucket>`. No `s3:DeleteObject`.
+- Expire old backups with a **lifecycle rule** on the bucket (e.g. `prod/` after 35 days, `restore-test/`
+  after 1 day), not with the server's key.
+- Optional, stronger: versioning plus Object Lock in governance mode for the retention period.
+- Check afterwards: `secrets-check.py --connect backup-s3` writes, reads and tries to delete one object
+  under `_healthcheck/`. A refused delete is now the expected result; remove that object with the lifecycle
+  rule.
+
 ## Run one now
 ```bash
 dc run --rm backup backup.sh     # prints {"backup": "s3://…", "bytes": …, "sha256": …, "seconds": …}

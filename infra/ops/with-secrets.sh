@@ -61,7 +61,7 @@ guard() {
 }
 
 load() {
-  local line trimmed key val n=0
+  local line trimmed key val n=0 seen=" "
   while IFS= read -r line || [ -n "$line" ]; do
     n=$((n + 1))
     line=${line%$'\r'}
@@ -71,6 +71,8 @@ load() {
     key=${line%%=*}
     val=${line#*=}
     case "$key" in '' | *[!A-Za-z0-9_]* | [0-9]*) echo "with-secrets: line $n has an invalid name (skipped)" >&2; continue ;; esac
+    case "$seen" in *" $key "*) echo "with-secrets: line $n sets $key again (this later line wins)" >&2 ;; esac
+    seen="$seen$key "
     case "$val" in
       \"*\") val=${val#\"}; val=${val%\"} ;;
       \'*\') val=${val#\'}; val=${val%\'} ;;

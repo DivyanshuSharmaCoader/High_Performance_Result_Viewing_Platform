@@ -215,7 +215,13 @@ def _s3_roundtrip(prefix: str, endpoint: str | None, region: str | None) -> None
         s3.put_object(Bucket=bucket, Key=key, Body=b"scorecode healthcheck")
         if s3.get_object(Bucket=bucket, Key=key)["Body"].read() != b"scorecode healthcheck":
             raise CheckFailed("read back different bytes")
-        s3.delete_object(Bucket=bucket, Key=key)
+        try:
+            s3.delete_object(Bucket=bucket, Key=key)
+        except ClientError as e:
+            # The backup key should not be able to delete (docs/runbooks/backup-and-restore.md); the
+            # bucket's lifecycle rule removes the health-check object instead.
+            if prefix != "BACKUP_S3" or e.response.get("Error", {}).get("Code") != "AccessDenied":
+                raise
     except ClientError as e:
         raise CheckFailed(f"{e.response.get('Error', {}).get('Code', 'error')}") from None
     except BotoCoreError as e:
