@@ -60,7 +60,10 @@ no value is typed, printed or put on a command line. `remote.sh` steps run over 
 ## Roll back
 - **Automatic:** `deploy.sh` starts the previous version again if the new one doesn't become healthy or
   fails the smoke test. Check `deploy.log`.
-- **By hand:** `infra/ops/deploy.sh vPREVIOUS`. Images stay in GHCR, and the schema is compatible (see
-  above).
+- **By hand**, from the operator's Mac:
+  `infra/ops/with-secrets.sh run -- infra/ops/server/remote.sh deploy ctl rollback vPREVIOUS`
+  (`sudo scorecode-ctl versions` lists the releases kept on the server, the last five). It runs the same
+  deploy as a release: a backup first, then the earlier images from GHCR. Migrations are expand-only, so
+  the earlier code runs on the newer schema. Roll forward the same way with the newer version.
 - **If a release corrupted data:** this is not a rollback, it's a restore
   ([backup-and-restore.md](backup-and-restore.md)), from the backup `deploy.sh` took just before.

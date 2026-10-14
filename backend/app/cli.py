@@ -204,7 +204,8 @@ def cmd_storage_test(_: argparse.Namespace) -> None:
 
         def fetch(url: str) -> tuple[int, bytes]:  # the standard library: httpx is not in the runtime image
             try:
-                with urllib.request.urlopen(url, timeout=20) as r:  # noqa: S310 - our own signed URLs
+                # Our own signed https URLs to the object store: no file:// or custom schemes.
+                with urllib.request.urlopen(url, timeout=20) as r:  # noqa: S310  # nosec B310
                     return r.status, r.read()
             except urllib.error.HTTPError as e:
                 return e.code, b""

@@ -5,7 +5,10 @@ services:
   s3:
     image: scorecode/seaweedfs:dev
     # Built by the rehearsal job before the deploy (the server bundle carries no build contexts).
-    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/rehearsal/s3.json", "-ip.bind=0.0.0.0"]
+    # Small volumes, as in compose.yml: SeaweedFS's default (30 GB each) can't be allocated on a CI runner, so
+    # its first write failed with InternalError.
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/rehearsal/s3.json",
+              "-master.volumeSizeLimitMB=128", "-volume.max=50", "-ip.bind=0.0.0.0"]
     volumes:
       - ./infra/ops/rehearsal/s3.json:/etc/rehearsal/s3.json:ro
     healthcheck:
