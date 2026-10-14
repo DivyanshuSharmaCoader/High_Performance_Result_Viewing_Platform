@@ -49,8 +49,9 @@ jobs:
           q() { curl -fsS --get --data-urlencode "query=$1" http://127.0.0.1:59090/api/v1/query | python3 -c "import json,sys; r=json.load(sys.stdin)['data']['result']; print(r[0]['value'][1] if r else '')"; }
           for i in $(seq 1 30); do curl -fsS -o /dev/null -H 'Host: thapar.localhost:8080' http://127.0.0.1:8080/api/v1/tenant/config; done
           for i in $(seq 1 40); do
-            # Every target up, not a count: a new exporter would otherwise let one that's down slip by.
-            [ -n "$(q 'count(up)')" ] && [ "$(q 'count(up == 1)')" = "$(q 'count(up)')" ] && break
+            # Each expected job by name, up: the API and worker are found through Docker discovery and can
+            # appear after the others, so neither "N targets up" nor "all known targets up" is enough.
+            [ "$(q 'count(max by (job) (up{job=~"api|worker|node|postgres|pushgateway|prometheus"}) == 1)')" = 6 ] && break
             sleep 5
           done
           curl -fsS http://127.0.0.1:59090/api/v1/targets | python3 -c "
