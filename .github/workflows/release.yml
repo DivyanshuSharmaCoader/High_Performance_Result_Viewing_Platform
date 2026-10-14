@@ -181,8 +181,13 @@ jobs:
             | docker run --rm -i -v "$GITHUB_WORKSPACE/age-key.txt:/k:ro" --entrypoint age "rehearsal/scorecode-backup:$V1" -d -i /k \
             | sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl restore-test | tee "$GITHUB_WORKSPACE/restore-test.txt"
           grep -q '"restored":"/restore/db.dump"' "$GITHUB_WORKSPACE/restore-test.txt"
-          n=$(grep -o 'fingerprint: [0-9]* of [0-9]*' "$GITHUB_WORKSPACE/restore-test.txt")
-          test "$(echo "$n" | awk '{print $2}')" = "$(echo "$n" | awk '{print $4}')"  # nothing changed meanwhile here
+          grep -q 'lines identical to the live database' "$GITHUB_WORKSPACE/restore-test.txt"
+          # Only rows written since the backup may differ (the email test above, jobs, sessions); anything
+          # else (results, schema, policies, grants) must be identical.
+          if grep -E '^(live|restored):' "$GITHUB_WORKSPACE/restore-test.txt" \
+              | grep -vE ' rows (mail_sends|jobs|sessions|platform_sessions|idempotency_keys) [0-9]+$'; then
+            echo "the restore differs from the live database beyond rows written since the backup"; exit 1
+          fi
           # Nothing is left behind: no scratch container, no plaintext.
           test -z "$(sudo docker ps -aq --filter name=scorecode-restore-test)"
           test -z "$(sudo find /opt/scorecode -maxdepth 1 -name 'restore-test.*')"
