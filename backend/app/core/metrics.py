@@ -77,6 +77,14 @@ JOBS_BY_STATUS = Gauge(
     "Jobs by queue and status (queued = due now, not scheduled)",
     ["queue", "status"],
 )
+EMAILS = Counter("scorecode_emails_total", "Emails handed to the SMTP provider", ["outcome"])
+# Institutions at or above 90% of a plan limit (students, staff, storage...): set by a maintenance task.
+TENANTS_NEAR_LIMIT = Gauge(
+    "scorecode_tenants_near_limit",
+    "Institutions using at least 90% of a plan limit",
+    ["limit"],
+    multiprocess_mode="max",
+)
 PURGED = Counter("scorecode_purged_rows_total", "Rows removed by the retention purge", ["table"])
 MAINTENANCE_LAST = Gauge(
     "scorecode_maintenance_last_success_timestamp_seconds", "When the retention purge last completed"

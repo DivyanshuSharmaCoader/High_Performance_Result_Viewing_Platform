@@ -14,6 +14,7 @@ import aiosmtplib
 
 from app.core.config import Settings
 from app.core.logging import get_logger
+from app.core.metrics import EMAILS
 
 log = get_logger(__name__)
 
@@ -66,5 +67,7 @@ class SmtpMailer:
                 timeout=10,
             )
         except (aiosmtplib.SMTPException, OSError, TimeoutError) as exc:
+            EMAILS.labels("failed").inc()  # ScoreCodeEmailFailures alerts on these
             raise MailDeliveryError(type(exc).__name__) from exc
+        EMAILS.labels("sent").inc()
         return msg_id

@@ -110,6 +110,43 @@ groups:
           summary: "{{ $labels.queue }}: {{ $value }} jobs failed every attempt"
           runbook: docs/runbooks/stuck-publication.md
 
+  - name: host
+    rules:
+      - alert: ScoreCodeDiskFillingUp
+        expr: |
+          min by (mountpoint) (
+            node_filesystem_avail_bytes{mountpoint="/", fstype!~"tmpfs|overlay"}
+            / node_filesystem_size_bytes{mountpoint="/", fstype!~"tmpfs|overlay"}
+          ) < 0.15
+        for: 10m
+        labels: { severity: page }
+        annotations:
+          summary: "The server's disk is {{ $value | humanizePercentage }} free"
+          runbook: docs/runbooks/database-outage.md
+      - alert: ScoreCodeMemoryLow
+        expr: min(node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.10
+        for: 10m
+        labels: { severity: warn }
+        annotations:
+          summary: "Only {{ $value | humanizePercentage }} of the server's memory is available"
+          runbook: docs/runbooks/result-day.md
+
+  - name: email-and-plans
+    rules:
+      - alert: ScoreCodeEmailFailures
+        expr: sum(increase(scorecode_emails_total{outcome="failed"}[15m])) > 5
+        labels: { severity: warn }
+        annotations:
+          summary: More than 5 emails failed to reach the SMTP provider in 15 minutes (check the SMTP key)
+          runbook: docs/runbooks/security-incident.md
+      - alert: ScoreCodeTenantsNearLimit
+        expr: max by (limit) (scorecode_tenants_near_limit) > 0
+        for: 1h
+        labels: { severity: info }
+        annotations:
+          summary: "{{ $value }} institutions use at least 90% of their {{ $labels.limit }}"
+          runbook: docs/12-entitlements.md
+
   - name: data-safety
     rules:
       - alert: ScoreCodeBackupStale

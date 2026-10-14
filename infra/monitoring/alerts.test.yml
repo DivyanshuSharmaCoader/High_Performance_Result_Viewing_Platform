@@ -137,3 +137,61 @@ tests:
             exp_annotations:
               summary: "notifications: 2 jobs failed every attempt"
               runbook: docs/runbooks/stuck-publication.md
+
+  # Disk below 15% free for 10 minutes pages; memory below 10% warns.
+  - interval: 1m
+    input_series:
+      - series: 'node_filesystem_avail_bytes{mountpoint="/", fstype="ext4"}'
+        values: "20x5 10x20"
+      - series: 'node_filesystem_size_bytes{mountpoint="/", fstype="ext4"}'
+        values: "100x25"
+      - series: 'node_memory_MemAvailable_bytes'
+        values: "50x5 5x20"
+      - series: 'node_memory_MemTotal_bytes'
+        values: "100x25"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: ScoreCodeDiskFillingUp
+        exp_alerts: []
+      - eval_time: 18m
+        alertname: ScoreCodeDiskFillingUp
+        exp_alerts:
+          - exp_labels: { severity: page, mountpoint: "/" }
+            exp_annotations:
+              summary: "The server's disk is 10% free"
+              runbook: docs/runbooks/database-outage.md
+      - eval_time: 18m
+        alertname: ScoreCodeMemoryLow
+        exp_alerts:
+          - exp_labels: { severity: warn }
+            exp_annotations:
+              summary: "Only 5% of the server's memory is available"
+              runbook: docs/runbooks/result-day.md
+
+  # Emails failing at the provider (e.g. a rejected SMTP key).
+  - interval: 1m
+    input_series:
+      - series: 'scorecode_emails_total{outcome="failed", instance="w:9100"}'
+        values: "0 2 4 6 8 10 12 14 16"
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ScoreCodeEmailFailures
+        exp_alerts:
+          - exp_labels: { severity: warn }
+            exp_annotations:
+              summary: More than 5 emails failed to reach the SMTP provider in 15 minutes (check the SMTP key)
+              runbook: docs/runbooks/security-incident.md
+
+  # An institution near a plan limit, for an hour.
+  - interval: 15m
+    input_series:
+      - series: 'scorecode_tenants_near_limit{limit="max_students", instance="w:9100"}'
+        values: "1x8"
+    alert_rule_test:
+      - eval_time: 90m
+        alertname: ScoreCodeTenantsNearLimit
+        exp_alerts:
+          - exp_labels: { severity: info, limit: max_students }
+            exp_annotations:
+              summary: "1 institutions use at least 90% of their max_students"
+              runbook: docs/12-entitlements.md

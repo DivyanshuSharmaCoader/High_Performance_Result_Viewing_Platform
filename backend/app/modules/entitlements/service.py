@@ -21,6 +21,8 @@ from app.core.clock import utcnow
 from app.core.container import Infra
 from app.core.db import UnitOfWork
 from app.core.errors import FeatureNotInPlan, LimitExceeded
+from app.core.jobs import maintenance_task
+from app.core.metrics import TENANTS_NEAR_LIMIT
 from app.modules.entitlements.catalogue import FEATURES, FREE_PLAN_CODE, LIMIT_TO_USAGE_METRIC, F
 from app.modules.entitlements.models import (
     Feature,
@@ -231,3 +233,27 @@ def _limit_message(key: str, current: int, requested: int, limit: int) -> str:
         f"Your plan includes {limit:,} {noun}. You're using {current:,}, so {remaining:,} more can be added "
         f"but this action needs {requested:,}. Upgrade your plan or free up capacity to continue."
     )
+
+
+@maintenance_task
+async def report_tenants_near_limits(infra: Infra) -> dict[str, int]:
+    """How many institutions use at least 90% of each plan limit, for ScoreCodeTenantsNearLimit: a
+    chance to talk to them before a limit stops an import or a publication."""
+    near: dict[str, int] = dict.fromkeys(LIMIT_TO_USAGE_METRIC, 0)
+    async with infra.db.uow() as uow:
+        tenant_ids = (await uow.session.scalars(text("SELECT * FROM ops_tenant_ids()"))).all()
+    service = EntitlementService(infra)
+    for tenant_id in tenant_ids:
+        async with infra.db.uow(tenant_id) as uow:
+            ent = await service.effective(uow)
+            used = await service.usage(uow)
+        for key, metric in LIMIT_TO_USAGE_METRIC.items():
+            limit = ent.limit(key)
+            if not limit:
+                continue
+            scale = 1024 * 1024 if key == F.MAX_STORAGE_MB else 1
+            if used.get(metric, 0) >= 0.9 * limit * scale:
+                near[key] += 1
+    for key, n in near.items():
+        TENANTS_NEAR_LIMIT.labels(key).set(n)
+    return {"tenants_near_limit": sum(near.values())}

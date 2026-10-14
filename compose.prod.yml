@@ -146,6 +146,14 @@ services:
     profiles: [monitoring]
     <<: *hardened
     image: prom/pushgateway:v1.11.1
+  node-exporter:  # the host's disk and memory (ScoreCodeDiskFillingUp, ScoreCodeMemoryLow)
+    profiles: [monitoring]
+    image: prom/node-exporter:v1.9.1
+    command: ["--path.rootfs=/host"]
+    pid: host
+    read_only: true
+    volumes: ["/:/host:ro,rslave"]
+    restart: unless-stopped
   postgres-exporter:
     profiles: [monitoring]
     <<: *hardened

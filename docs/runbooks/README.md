@@ -6,13 +6,14 @@ What to do when something breaks, written before it breaks. Each alert in
 | Runbook | When |
 |---|---|
 | [api-down.md](api-down.md) | ScoreCodeAPIDown, ScoreCodeAPIInstanceDown; users see "can't reach ScoreCode" |
-| [database-outage.md](database-outage.md) | ScoreCodePostgresDown, ScoreCodeDatabaseUnreachableFromAPI, connections high |
+| [database-outage.md](database-outage.md) | ScoreCodePostgresDown, ScoreCodeDatabaseUnreachableFromAPI, connections high; ScoreCodeDiskFillingUp (free space first: old releases in /opt/scorecode/releases, `docker image prune` of unused versions, log archive) |
 | [redis-outage.md](redis-outage.md) | Redis down or evicting (no alert pages: the product keeps working) |
 | [stuck-publication.md](stuck-publication.md) | ScoreCodeScheduledPublicationLate, ScoreCodeQueueFallingBehind, ScoreCodeDeadJobs, ScoreCodeWorkerDown |
-| [result-day.md](result-day.md) | Before and during a big publication; ScoreCodeHigh5xxRate, slow reads, pool exhaustion |
+| [result-day.md](result-day.md) | Before and during a big publication; ScoreCodeHigh5xxRate, slow reads, pool exhaustion; ScoreCodeMemoryLow (fewer PDF processes: `PDF_PROCESSES=1`) |
 | [backup-and-restore.md](backup-and-restore.md) | ScoreCodeBackupStale; restoring after data loss; the monthly drill |
 | [deploy-and-rollback.md](deploy-and-rollback.md) | Installing a server, releasing, rolling back |
-| [security-incident.md](security-incident.md) | Credential stuffing, a leaked secret, a suspected cross-tenant exposure |
+| [security-incident.md](security-incident.md) | Credential stuffing, a leaked secret, a suspected cross-tenant exposure; ScoreCodeEmailFailures (a revoked or wrong SMTP key: `secrets-check.py --connect smtp`) |
+| (no runbook: a sales call) | ScoreCodeTenantsNearLimit: an institution uses 90% of a plan limit; offer the next plan before a limit stops it |
 | [tenant-offboarding.md](tenant-offboarding.md) | An institution leaves, or asks for its data |
 | [incident-template.md](incident-template.md) | Status updates, messages to institutions, the post-incident review |
 | [credentials.md](credentials.md) | What deployment needs from the owner, the one secrets file, and how it's used without being seen |
