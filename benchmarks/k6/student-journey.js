@@ -25,7 +25,8 @@ const SHAPES = {
   smoke: { executor: "constant-vus", vus: 10, duration: "20s" },
   A: { executor: "ramping-vus", startVUs: 0, stages: [{ duration: "1m", target: 100 }, { duration: "5m", target: 100 }], gracefulRampDown: "15s" },
   // VUS raises B's users (P14.4 needs a load that saturates one API container).
-  B: { executor: "ramping-vus", startVUs: 0, stages: [{ duration: "60s", target: Number(__ENV.VUS || 1000) }, { duration: "5m", target: Number(__ENV.VUS || 1000) }], gracefulRampDown: "15s" },
+  // HOLD shortens the hold phase (the VPS's step-wise runs: benchmarks/vps/).
+  B: { executor: "ramping-vus", startVUs: 0, stages: [{ duration: "60s", target: Number(__ENV.VUS || 1000) }, { duration: __ENV.HOLD || "5m", target: Number(__ENV.VUS || 1000) }], gracefulRampDown: "15s" },
 };
 const ENDPOINTS = ["config", "me", "latest", "stats", "history", "marksheet", "pdf", "csrf", "login"];
 

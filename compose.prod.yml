@@ -87,6 +87,10 @@ services:
 
   worker:
     mem_limit: 2560m
+    # At most one of the two CPUs, and half the API's weight when they compete: marksheet rendering at full
+    # CPU on this VPS made the host withhold CPU (steal) and the server stopped answering (2026-10-14).
+    cpus: 1.0
+    cpu_shares: 512
     <<: *backend
     command: ["scorecode", "worker"]
     environment:

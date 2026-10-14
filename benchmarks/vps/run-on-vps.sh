@@ -20,7 +20,7 @@ mkdir -p "$out" benchmarks/data && chmod 777 "$out" benchmarks/data
 cat > perf-limits.yml <<'YML'
 services:
   api: { mem_limit: 1536m }
-  worker: { mem_limit: 2g }
+  worker: { mem_limit: 2g, cpus: 1.0, cpu_shares: 512 }
   postgres: { mem_limit: 1g }
   s3: { mem_limit: 512m }
   proxy: { mem_limit: 256m }
@@ -74,14 +74,21 @@ done
 } | tee "$out/background.txt"
 q "SELECT pg_stat_statements_reset()" >/dev/null
 
-( while sleep 10; do echo "$(date +%s) $(awk '/MemAvailable|SwapTotal|SwapFree/ {printf "%s=%dMB ", $1, $2/1024}' /proc/meminfo) load=$(cut -d' ' -f1 /proc/loadavg)"; done ) > "$out/host-memory.txt" &
+# Every 10 s: memory, swap, load, and the share of CPU time in the interval that the host withheld (steal).
+( prev=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
+  while sleep 10; do
+    cur=$(awk '/^cpu / {t=0; for (i=2; i<=NF; i++) t+=$i; print t, $9}' /proc/stat)
+    steal=$(echo "$prev $cur" | awk '{d=$3-$1; printf "%.0f", d>0 ? 100*($4-$2)/d : 0}')
+    prev=$cur
+    echo "$(date +%s) $(awk '/MemAvailable|SwapTotal|SwapFree/ {printf "%s=%dMB ", $1, $2/1024}' /proc/meminfo) load=$(cut -d' ' -f1 /proc/loadavg) steal=${steal}%"
+  done ) > "$out/host-memory.txt" &
 sampler=$!
 network="${COMPOSE_PROJECT_NAME}_default"
 for spec in $RUNS; do
   IFS=: read -r scenario variant times <<< "$spec"
   for i in $(seq 1 "$times"); do
     since=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-    FORCE=1 K6_NETWORK=$network BENCH_DIR="$PWD/benchmarks" VUS=$VUS benchmarks/k6/run.sh "$scenario" "$variant" "$i"
+    FORCE=1 K6_NETWORK=$network BENCH_DIR="$PWD/benchmarks" VUS=$VUS HOLD=${HOLD:-5m} benchmarks/k6/run.sh "$scenario" "$variant" "$i"
     dc --profile app logs --no-log-prefix --since "$since" api 2>/dev/null > "$out/api-$scenario-$variant-$i.log" || true
     python3 benchmarks/k6/timeline.py --latency < "$out/api-$scenario-$variant-$i.log" > "$out/server-$scenario-$variant-$i.txt" || true
     python3 benchmarks/k6/timeline.py < "$out/api-$scenario-$variant-$i.log" > "$out/timeline-$scenario-$variant-$i.txt" || true

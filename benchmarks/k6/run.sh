@@ -41,5 +41,5 @@ sampler=$!
 trap 'kill $sampler 2>/dev/null || true' EXIT
 
 docker run --rm --memory "${K6_MEMORY:-2g}" --network "$network" -v "$bench:/bench" grafana/k6:latest run -q \
-  -e SCENARIO="$scenario" -e VARIANT="$variant" -e VUS="${VUS:-1000}" -e SUMMARY="/bench/results/runs/$tag.json" \
+  -e SCENARIO="$scenario" -e VARIANT="$variant" -e VUS="${VUS:-1000}" -e HOLD="${HOLD:-5m}" -e SUMMARY="/bench/results/runs/$tag.json" \
   /bench/k6/student-journey.js | tee "$runs/$tag.txt"

@@ -67,3 +67,22 @@ no value is typed, printed or put on a command line. `remote.sh` steps run over 
   the earlier code runs on the newer schema. Roll forward the same way with the newer version.
 - **If a release corrupted data:** this is not a rollback, it's a restore
   ([backup-and-restore.md](backup-and-restore.md)), from the backup `deploy.sh` took just before.
+
+## DNS cut-over (gate b) and its rollback
+Before: the release is healthy (`scorecode-ctl status`, `smoke`), the smoke test passes from outside
+against the VPS address with Cloudflare's Origin CA (`SMOKE_CONNECT_TO=<vps>:443 SMOKE_CACERT=origin-ca.pem`,
+never `curl -k`), and a rollback has been drilled.
+
+1. `cloudflare.py dns-list`: write down what the apex points at now (2026-10-14: two A records to
+   Spaceship's parking page, `54.149.79.189` and `34.216.117.25`).
+2. `cloudflare.py dns-apply --yes --replace=<those addresses>`: the apex points at the VPS (proxied);
+   `*`, `admin` and `verify` are created. Email records (Brevo DKIM, DMARC, the `brevo-code` TXT,
+   `send.*`) are other names or types and are never touched.
+3. `cloudflare.py ssl-strict --yes`: "Full (strict)", Always Use HTTPS, TLS 1.2 minimum.
+4. From outside, through Cloudflare: `SMOKE_BASE_DOMAIN=<domain> SMOKE_SCHEME=https infra/ops/smoke.sh`;
+   `curl -sI http://<domain>/` answers 301 to https; the certificate chain verifies normally.
+5. `gh variable set PRODUCTION_DOMAIN --body <domain>`: every later deploy smoke-tests through Cloudflare.
+
+**Rollback** (a serious failure after the switch): point the apex back with `dns-apply`'s update in the
+Cloudflare dashboard, or remove the four records; Cloudflare applies it within seconds (records are
+proxied, so no client caches the VPS address). The application itself rolls back with `ctl rollback`.
