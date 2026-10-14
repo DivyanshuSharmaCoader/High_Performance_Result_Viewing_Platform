@@ -9,8 +9,8 @@ above 200 was tested on the VPS. The same test on a CI runner of the same size i
 `benchmarks/vps/run-on-vps.sh`: perf.yml's journey on the VPS itself, as a second Compose project
 (`scorecodeperf`) beside production. It has its own containers, network and volumes, loopback ports only,
 and the same synthetic data (one institution, 8,000 students, 6 papers, published through the real
-services). The VPS: Hostinger KVM 2, 2 vCPU (AMD EPYC 9354P), 7.9 GB RAM, Ubuntu 24.04.5, production
-`v0.1.2` then `v0.1.3` running beside it (11 containers, no users: DNS was not yet switched).
+services; 2,000 in attempt 3). The VPS: Hostinger KVM 2, 2 vCPU (AMD EPYC 9354P), 7.9 GB RAM, Ubuntu 24.04.5, production
+`v0.1.2` then `v0.1.3` running beside it then `v0.1.4` (11 containers, no users: DNS was not yet switched).
 
 ## Attempt 1 (11:13–11:54 UTC, commit 9a50881)
 - Build, start, data load and publication: fine.
@@ -40,11 +40,11 @@ services). The VPS: Hostinger KVM 2, 2 vCPU (AMD EPYC 9354P), 7.9 GB RAM, Ubuntu
 - The likely cause: sustained full use of both vCPUs (the test worker's 2 PDF processes) makes the host
   throttle the VM, and then nothing on it, sshd and Caddy included, gets CPU.
 
-## Changes after attempt 2 (not yet released)
+## Changes after attempt 2 (released as v0.1.4, deployed 17:10)
 - The production worker is capped at **one CPU** (`cpus: 1.0`) with half the default CPU weight
   (`cpu_shares: 512`), so the API, the edge and SSH always keep a core. Production already runs one PDF
-  process (`PDF_PROCESSES=1`). Expect about 45 minutes for 8,000 marksheets instead of the 24 measured
-  with two processes on CI; scheduled releases render ahead of time (admin guide).
+  process (`PDF_PROCESSES=1`). Measured in attempt 3: about 2.1 marksheets a second, so about 64 minutes for 8,000 (24 with two
+  processes on CI); scheduled releases render ahead of time (admin guide).
 - The test stack's worker gets the same cap; its poller now waits for an explicit "finished" from the
   server and never removes anything when the server can't be reached.
 
@@ -87,6 +87,7 @@ was wrong and wrote nothing; fixed afterwards). Concurrency above 200.
   CPU no longer stalls the server.
 - **Not tested:** more than 200 at once. CPU was already at about two-thirds of the machine at 200, so
   the 1,000-student result day the CI runner handled (with 3–6% errors) is not shown to work here.
-- **Known limit:** on this plan, two cores at 100% for many minutes stalls the whole server. One stack's
-  rendering capped at one core is the next thing to verify, then the k6 journey, ideally with production
-  alone (no second stack) and k6 on another machine.
+- **Known limit:** on this plan, two cores at 100% for many minutes stalls the whole server (attempts 1
+  and 2). Rendering is now capped at one core, and that held in attempt 3.
+- **Next, to find the real ceiling:** 400 and then 600 students, with k6 on another machine and the host
+  sampler fixed (steal measured); stop at the first errors or at sustained steal.
