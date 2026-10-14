@@ -34,6 +34,13 @@ _PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     ),
     (re.compile(r"(?:(?<=\D)|^)(?:\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}(?=\D|$)"), "[phone]"),
     (re.compile(r"\b[A-Za-z0-9_-]{24,}\b"), "[token]"),  # long opaque strings: tokens, keys, codes
+    # Enrollment and roll numbers with letters in them (2021UCS0042, 21BCS101, CS2101, 21-BCS-101): two or
+    # more digits and a letter, alone or in up to four hyphenated parts with three or more digits.
+    (re.compile(r"\b(?=(?:[A-Za-z]*\d){2})(?=\d*[A-Za-z])[A-Za-z0-9]{5,}\b"), "[id]"),
+    (
+        re.compile(r"\b(?=[A-Za-z0-9-]*[A-Za-z])(?=(?:[A-Za-z-]*\d){3})[A-Za-z0-9]+(?:-[A-Za-z0-9]+){1,3}\b"),
+        "[id]",
+    ),
     (re.compile(r"\b\d+\.\d+\b"), "[n]"),  # marks, percentages, amounts
     (re.compile(r"\b\d{5,}\b"), "[number]"),  # enrollment and roll numbers, phone fragments
 )

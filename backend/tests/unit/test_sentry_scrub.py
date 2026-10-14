@@ -41,6 +41,28 @@ def test_scrub_text_removes_people_and_secrets_and_keeps_the_sentence() -> None:
     assert scrub_text("Division by zero in grading") == "Division by zero in grading"
 
 
+@pytest.mark.parametrize(
+    "roll", ["2021UCS0042", "21BCS101", "CS2101", "102UCS", "21-BCS-101", "UCS-2021-0042"]
+)
+def test_scrub_text_removes_enrollment_numbers_with_letters(roll: str) -> None:
+    assert scrub_text(f"no result for student {roll} in cohort") == "no result for student [id] in cohort"
+
+
+@pytest.mark.parametrize(
+    "kept",
+    [
+        "GET /api/v1/me/results stats",
+        "retry 3 of 5 on worker-1",
+        "exam held on 2026-10-14",
+        "utf-8 decode failed",
+        "HTTP 503 from storage",
+        "S3 bucket unavailable",
+    ],
+)
+def test_scrub_text_keeps_ordinary_words_numbers_and_dates(kept: str) -> None:
+    assert scrub_text(kept) == kept
+
+
 def _event() -> dict[str, Any]:
     return {
         "message": "Login failed for test.parent@example.com",
