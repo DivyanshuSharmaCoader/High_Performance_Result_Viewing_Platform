@@ -15,13 +15,35 @@ RUNS=${RUNS:-"B:cold:1 B:preauth:1"}
 VUS=${VUS:-1000}
 out=benchmarks/results/runs
 mkdir -p "$out" benchmarks/data && chmod 777 "$out" benchmarks/data
-dc() { docker compose "$@"; }
+# Memory limits for the test stack too (compose.yml has none), and a watchdog: on 2026-10-14 the first run,
+# beside production on an 8 GB server without swap, starved the machine for 20 minutes.
+cat > perf-limits.yml <<'YML'
+services:
+  api: { mem_limit: 1536m }
+  worker: { mem_limit: 2g }
+  postgres: { mem_limit: 1g }
+  s3: { mem_limit: 512m }
+  proxy: { mem_limit: 256m }
+YML
+dc() { docker compose -f compose.yml -f perf-limits.yml "$@"; }
+(
+  while sleep 5; do
+    avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
+    if [ "$avail" -lt 700 ]; then
+      echo "WATCHDOG: only ${avail} MB available; stopping the test stack to protect production" | tee -a "$out/watchdog.txt"
+      docker ps -q --filter "label=com.docker.compose.project=$COMPOSE_PROJECT_NAME" | xargs -r docker kill >/dev/null
+      docker ps -q --filter ancestor=grafana/k6:latest | xargs -r docker kill >/dev/null
+      break
+    fi
+  done
+) &
+watchdog=$!
 q() { dc exec -T postgres psql -U postgres -d scorecode -Atc "$1"; }
 cleanup() {
   dc --profile app down -v --rmi local --remove-orphans >/dev/null 2>&1 || true
   docker builder prune -f >/dev/null 2>&1 || true
 }
-trap cleanup EXIT
+trap 'kill $watchdog 2>/dev/null || true; cleanup' EXIT
 
 {
   echo "commit $(cat .commit 2>/dev/null || echo unknown)"
@@ -52,6 +74,8 @@ done
 } | tee "$out/background.txt"
 q "SELECT pg_stat_statements_reset()" >/dev/null
 
+( while sleep 10; do echo "$(date +%s) $(awk '/MemAvailable|SwapTotal|SwapFree/ {printf "%s=%dMB ", $1, $2/1024}' /proc/meminfo) load=$(cut -d' ' -f1 /proc/loadavg)"; done ) > "$out/host-memory.txt" &
+sampler=$!
 network="${COMPOSE_PROJECT_NAME}_default"
 for spec in $RUNS; do
   IFS=: read -r scenario variant times <<< "$spec"
@@ -66,4 +90,5 @@ for spec in $RUNS; do
 done
 q "SELECT calls, round(total_exec_time::numeric, 1) AS total_ms, round(mean_exec_time::numeric, 3) AS mean_ms, left(query, 120)
    FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 15" > "$out/pg_stat_statements.txt"
+kill $sampler 2>/dev/null || true
 echo "== done; results in $out"
