@@ -182,11 +182,12 @@ tests:
               summary: More than 5 emails failed to reach the SMTP provider in 15 minutes (check the SMTP key)
               runbook: docs/runbooks/security-incident.md
 
-  # An institution near a plan limit, for an hour.
-  - interval: 15m
+  # An institution near a plan limit, for an hour. (Samples every minute: a gap longer than Prometheus's
+  # 5-minute lookback makes the series stale and restarts the `for`.)
+  - interval: 1m
     input_series:
       - series: 'scorecode_tenants_near_limit{limit="max_students", instance="w:9100"}'
-        values: "1x8"
+        values: "1x120"
     alert_rule_test:
       - eval_time: 90m
         alertname: ScoreCodeTenantsNearLimit
