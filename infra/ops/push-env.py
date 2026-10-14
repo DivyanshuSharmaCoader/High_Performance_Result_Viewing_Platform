@@ -14,6 +14,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 SEND = [
     "SCORECODE_DOMAIN",
@@ -26,8 +27,15 @@ SEND = [
 ]
 
 
+def deploy_key() -> str:
+    """The deploy account's own key (never root's) when there is one; DEPLOY_USER_KEY_FILE overrides."""
+    own = os.environ.get("DEPLOY_USER_KEY_FILE") or str(Path.home() / ".ssh" / "scorecode_deploy")
+    return own if Path(own).is_file() else os.environ["DEPLOY_SSH_KEY_FILE"]
+
+
 def ssh(user: str, *args: str, stdin: bytes) -> subprocess.CompletedProcess[bytes]:
-    host, key, port = os.environ["DEPLOY_HOST"], os.environ["DEPLOY_SSH_KEY_FILE"], os.environ.get("DEPLOY_SSH_PORT") or "22"
+    host, port = os.environ["DEPLOY_HOST"], os.environ.get("DEPLOY_SSH_PORT") or "22"
+    key = deploy_key() if user == "deploy" else os.environ["DEPLOY_SSH_KEY_FILE"]
     return subprocess.run(  # noqa: S603 - fixed argv
         ["ssh", "-i", key, "-p", port, "-o", "BatchMode=yes", "-o", "StrictHostKeyChecking=yes",
          f"{user}@{host}", *args],

@@ -6,6 +6,8 @@
     infra/ops/with-secrets.sh run -- python3 infra/ops/cloudflare.py dns-plan            # what go-live changes
     infra/ops/with-secrets.sh run -- python3 infra/ops/cloudflare.py dns-apply --yes     # gate (b): owner approves
     infra/ops/with-secrets.sh run -- python3 infra/ops/cloudflare.py origin-cert DIR     # writes DIR/origin.pem + key
+    ... remote.sh deploy ctl make-csr | ... cloudflare.py sign-csr | ... remote.sh deploy ctl install-cert
+                                     # the same certificate, with the key made on the server and kept there
     infra/ops/with-secrets.sh run -- python3 infra/ops/cloudflare.py ssl-strict --yes    # "Full (strict)" + HTTPS
 
 Reads CLOUDFLARE_API_TOKEN, CLOUDFLARE_ZONE_ID, SCORECODE_DOMAIN and DEPLOY_HOST from the environment.
@@ -147,6 +149,23 @@ def origin_cert(out_dir: str) -> None:
     print(f"wrote {cert} and {key} (expires {r['result']['expires_on']})")
 
 
+def sign_csr() -> None:
+    """A CSR on stdin (from the server's `scorecode-ctl make-csr`), the Origin CA certificate on stdout.
+    Only public material passes through here; the private key never leaves the server."""
+    domain = _env("SCORECODE_DOMAIN")
+    csr = sys.stdin.read(20000)
+    if "BEGIN CERTIFICATE REQUEST" not in csr:
+        sys.exit("cloudflare: no CSR on stdin")
+    r = call("POST", "/certificates", {
+        "hostnames": [domain, f"*.{domain}"],
+        "requested_validity": 5475,
+        "request_type": "origin-ecc",
+        "csr": csr,
+    })  # fmt: skip
+    sys.stdout.write(r["result"]["certificate"].strip() + "\n")
+    print(f"cloudflare: origin certificate issued (expires {r['result']['expires_on']})", file=sys.stderr)
+
+
 def main(argv: list[str]) -> None:
     cmd = argv[0] if argv else ""
     if cmd == "dns-list":
@@ -159,6 +178,8 @@ def main(argv: list[str]) -> None:
         settings()
     elif cmd == "ssl-strict" and "--yes" in argv:
         ssl_strict()
+    elif cmd == "sign-csr":
+        sign_csr()
     elif cmd == "origin-cert" and len(argv) > 1:
         origin_cert(argv[1])
     else:

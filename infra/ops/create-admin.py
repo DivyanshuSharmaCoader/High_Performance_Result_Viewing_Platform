@@ -19,8 +19,14 @@ from pathlib import Path
 OUT = Path(os.environ.get("ADMIN_TOTP_OUT", str(Path.home() / "Desktop" / "ScoreCode-console-2FA.txt")))
 
 
+def deploy_key() -> str:
+    """The deploy account's own key (never root's) when there is one; DEPLOY_USER_KEY_FILE overrides."""
+    own = os.environ.get("DEPLOY_USER_KEY_FILE") or str(Path.home() / ".ssh" / "scorecode_deploy")
+    return own if Path(own).is_file() else os.environ["DEPLOY_SSH_KEY_FILE"]
+
+
 def main() -> int:
-    host, key = os.environ["DEPLOY_HOST"], os.environ["DEPLOY_SSH_KEY_FILE"]
+    host, key = os.environ["DEPLOY_HOST"], deploy_key()
     port = os.environ.get("DEPLOY_SSH_PORT") or "22"
     payload = "\n".join(os.environ[n].strip() for n in ("PLATFORM_ADMIN_EMAIL", "PLATFORM_ADMIN_NAME", "PLATFORM_ADMIN_PASSWORD"))
     r = subprocess.run(  # noqa: S603 - fixed argv
