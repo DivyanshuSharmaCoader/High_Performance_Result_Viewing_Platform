@@ -20,7 +20,7 @@ failures=0
 check() {  # check <name> <url> <expected status> [header regex...]
   local name=$1 url=$2 want=$3; shift 3
   local headers status
-  headers=$(curl -sS -o /dev/null -D - --max-time 10 "${connect[@]}" "$url") || { echo "FAIL $name: $url unreachable"; failures=$((failures + 1)); return; }
+  headers=$(curl -sS -o /dev/null -D - --max-time 10 ${connect[@]+"${connect[@]}"} "$url") || { echo "FAIL $name: $url unreachable"; failures=$((failures + 1)); return; }
   status=$(printf '%s' "$headers" | head -1 | awk '{print $2}')
   if [ "$status" != "$want" ]; then echo "FAIL $name: $url answered $status, expected $want"; failures=$((failures + 1)); return; fi
   for pattern in "$@"; do
@@ -33,7 +33,7 @@ check() {  # check <name> <url> <expected status> [header regex...]
 
 body() {  # body <name> <url> <regex>
   local out
-  out=$(curl -sS --max-time 10 "${connect[@]}" "$2") || { echo "FAIL $1: unreachable"; failures=$((failures + 1)); return; }
+  out=$(curl -sS --max-time 10 ${connect[@]+"${connect[@]}"} "$2") || { echo "FAIL $1: unreachable"; failures=$((failures + 1)); return; }
   if printf '%s' "$out" | grep -qE "$3"; then echo "ok   $1"; else echo "FAIL $1: body doesn't match /$3/"; failures=$((failures + 1)); fi
 }
 
