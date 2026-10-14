@@ -167,15 +167,106 @@ def cmd_sentry_test(_: argparse.Namespace) -> None:
 
     if not init_sentry(get_settings(), "cli"):
         raise SystemExit("SCORECODE_SENTRY_DSN is not set: nothing was sent.")
+    from sentry_sdk.transport import HttpTransport
+
+    statuses: list[int] = []
+    original = HttpTransport._update_rate_limits
+
+    def record(self: HttpTransport, response: object) -> None:  # every reply from Sentry passes here
+        statuses.append(int(getattr(response, "status", 0)))
+        original(self, response)  # type: ignore[arg-type]
+
+    HttpTransport._update_rate_limits = record  # type: ignore[method-assign,assignment]
     try:
         raise RuntimeError(SENTRY_TEST)
     except RuntimeError as exc:
         event_id = sentry_sdk.capture_exception(exc)
-    sent = sentry_sdk.flush(timeout=15)
+    sentry_sdk.flush(timeout=15)
+    accepted = bool(statuses) and all(code == 200 for code in statuses)
     print(
-        f"event id: {event_id} ({'delivered to the SDK transport' if sent is not False else 'flush timed out'})"
+        f"event id: {event_id}; Sentry answered HTTP {statuses or 'nothing'} ({'accepted' if accepted else 'NOT accepted'})"
     )
     print(f"Sentry should show only: {scrub_text(SENTRY_TEST)}")
+    if not accepted:
+        raise SystemExit(1)
+
+
+def cmd_storage_test(_: argparse.Namespace) -> None:
+    """The file store as the app uses it (P18.10): write, read, a signed link, an unsigned and a tampered
+    one (both must be refused), delete. One object under _healthcheck/; prints outcomes only (no URLs)."""
+
+    async def run() -> bool:
+        import uuid
+
+        import httpx
+
+        from app.core.container import Infra
+
+        infra = Infra.build(get_settings(), app_name="scorecode-cli")
+        key, body = f"_healthcheck/{uuid.uuid4()}.txt", b"scorecode storage test"
+        ok = True
+
+        def report(name: str, good: bool, detail: str = "") -> None:
+            nonlocal ok
+            ok &= good
+            print(f"{'ok  ' if good else 'FAIL'} {name}{f' ({detail})' if detail else ''}")
+
+        try:
+            await infra.storage.put(key, body, "text/plain")
+            report("write", True)
+            report("read back", await infra.storage.get(key) == body)
+            url = infra.storage.presigned_get(key, ttl_s=120)
+            async with httpx.AsyncClient(timeout=20) as client:
+                r = await client.get(url)
+                report("signed link", r.status_code == 200 and r.content == body, f"HTTP {r.status_code}")
+                r = await client.get(url.split("?", 1)[0])
+                report("unsigned link refused", r.status_code in (400, 401, 403), f"HTTP {r.status_code}")
+                tampered = url.replace("X-Amz-Signature=", "X-Amz-Signature=00", 1)
+                r = await client.get(tampered)
+                report("tampered link refused", r.status_code in (400, 401, 403), f"HTTP {r.status_code}")
+            await infra.storage.delete(key)
+            try:
+                await infra.storage.get(key)
+                report("delete", False, "still there")
+            except Exception:  # the store's not-found error
+                report("delete", True)
+        finally:
+            await infra.close()
+        return ok
+
+    if not asyncio.run(run()):
+        raise SystemExit(1)
+
+
+def cmd_email_test(_: argparse.Namespace) -> None:
+    """One plain test email through the configured SMTP provider (P18.10). The address comes on stdin (one
+    line), so it is never in a command line or a log; it counts against the daily email budget."""
+
+    async def run() -> None:
+        from app.core.container import Infra
+        from app.core.mailer import OutgoingEmail
+        from app.modules.notifications import budget
+
+        to = sys.stdin.readline().strip()
+        if "@" not in to or len(to) > 254:
+            raise SystemExit("one email address on stdin")
+        infra = Infra.build(get_settings(), app_name="scorecode-cli")
+        try:
+            if (until := await budget.take(infra, bulk=False)) is not None:
+                raise SystemExit(f"the daily email budget is spent until {until:%Y-%m-%d %H:%M} UTC")
+            message_id = await infra.mailer.send(
+                OutgoingEmail(
+                    to=to,
+                    subject="ScoreCode email test",
+                    text="This is a test from your ScoreCode server. No action is needed.",
+                    html="<p>This is a test from your ScoreCode server. No action is needed.</p>",
+                )
+            )
+            print(f"accepted by the SMTP provider; message id {message_id}")
+        finally:
+            await infra.close()
+
+    asyncio.run(run())
 
 
 def cmd_create_platform_user(args: argparse.Namespace) -> None:
@@ -238,6 +329,12 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser(
         "sentry-test", help="send one synthetic, scrubbed error to Sentry (prints the event id only)"
     ).set_defaults(fn=cmd_sentry_test)
+    sub.add_parser(
+        "storage-test", help="write, read, link (signed, unsigned, tampered) and delete one test object"
+    ).set_defaults(fn=cmd_storage_test)
+    sub.add_parser("email-test", help="send one plain test email; the address comes on stdin").set_defaults(
+        fn=cmd_email_test
+    )
 
     rotate = sub.add_parser(
         "reencrypt-secrets",

@@ -13,6 +13,8 @@
 #   sudo scorecode-ctl monitoring up|down     the Prometheus/Alertmanager/Grafana profile
 #   sudo scorecode-ctl jobs stats|dead|retry  the job queue (scorecode jobs)
 #   sudo scorecode-ctl sentry-test            send one synthetic error to Sentry (scrubbed)
+#   sudo scorecode-ctl storage-test           the file store as the app uses it: write, read, links, delete
+#   sudo scorecode-ctl email-test             one plain test email; the address on stdin
 #   sudo scorecode-ctl registry-login USER    log the root Docker client in to GHCR; token on stdin
 #   sudo scorecode-ctl create-platform-admin  the first console account; EMAIL, NAME, PASSWORD on stdin
 #   sudo scorecode-ctl install-cert           origin certificate on stdin (PEM); the key is made here
@@ -101,6 +103,8 @@ case "$cmd" in
     dc exec -T api scorecode jobs "$1"
     ;;
   sentry-test) dc exec -T api scorecode sentry-test ;;
+  storage-test) dc exec -T api scorecode storage-test ;;
+  email-test) head -c 300 | dc exec -T api scorecode email-test ;;  # the address on stdin, one line
   registry-login)
     [[ ${1:-} =~ ^[A-Za-z0-9-]{1,39}$ ]] || exit 2
     docker login ghcr.io -u "$1" --password-stdin >/dev/null && echo "logged in to ghcr.io"
