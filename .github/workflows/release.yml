@@ -78,7 +78,9 @@ jobs:
       - name: Settings from the operator's values (render-env, through sudo)
         run: |
           set -euo pipefail
-          recipient=$(docker run --rm --entrypoint age-keygen "rehearsal/scorecode-backup:$V1" 2>/dev/null | grep -o 'age1[0-9a-z]*')
+          # The rehearsal's own key pair: the private half stays on this runner, for the restore test.
+          docker run --rm --entrypoint age-keygen "rehearsal/scorecode-backup:$V1" > age-key.txt 2>/dev/null
+          recipient=$(grep -o 'age1[0-9a-z]*' age-key.txt)
           cat > values.txt <<EOF
           SCORECODE_DOMAIN=$DOMAIN
           FILES_S3_ENDPOINT=http://s3:8333
@@ -162,6 +164,24 @@ jobs:
           sudo test -f "/var/log/scorecode/$(date -u -d yesterday +%F).log.gz"
           systemctl is-enabled scorecode-logs.timer
           test -f /etc/systemd/timesyncd.conf.d/scorecode.conf
+      - name: A real restore of the newest backup (scorecode-ctl restore-test), decrypted off the server
+        run: |
+          set -euo pipefail
+          cd /opt/scorecode
+          dcr() { sudo SCORECODE_VERSION="$V2" REGISTRY=rehearsal docker compose -f compose.prod.yml \
+            -f infra/ops/rehearsal/compose.override.yml --env-file env/deploy.env "$@"; }
+          newest=$(dcr run --rm -T --entrypoint aws backup --endpoint-url http://s3:8333 s3 ls --recursive \
+            s3://scorecode-backups/prod/db/ | sort | tail -1 | awk '{print $4}')
+          test -n "$newest"
+          # As on the owner's Mac (infra/ops/restore-test.py): fetch, decrypt here, stream to the server.
+          dcr run --rm -T --entrypoint aws backup --endpoint-url http://s3:8333 s3 cp "s3://scorecode-backups/$newest" - \
+            | docker run --rm -i -v "$GITHUB_WORKSPACE/age-key.txt:/k:ro" --entrypoint age "rehearsal/scorecode-backup:$V1" -d -i /k \
+            | sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl restore-test | tee restore-test.txt
+          grep -q '"restored":"/restore/db.dump"' restore-test.txt
+          grep -q 'lines identical to the live database' restore-test.txt
+          # Nothing is left behind: no scratch container, no plaintext.
+          test -z "$(sudo docker ps -aq --filter name=scorecode-restore-test)"
+          test -z "$(sudo find /opt/scorecode -maxdepth 1 -name 'restore-test.*')"
       - name: Hardening as deployed
         run: |
           set -euo pipefail

@@ -5,6 +5,8 @@
 #   sudo scorecode-ctl logs SERVICE [LINES]   recent logs of one service
 #   sudo scorecode-ctl restart SERVICE        restart one service (api, worker, proxy, redis, backup, ...)
 #   sudo scorecode-ctl backup                 an encrypted backup now (as the nightly job does)
+#   sudo scorecode-ctl restore-test           a DECRYPTED dump on stdin, restored into a throwaway database
+#                                             with no network, compared with the live one, then removed
 #   sudo scorecode-ctl smoke                  the smoke test against this machine
 #   sudo scorecode-ctl versions               releases kept on disk, and the deployed one
 #   sudo scorecode-ctl rollback VERSION       deploy an earlier release again
@@ -46,6 +48,36 @@ case "$cmd" in
     ;;
   restart) service "${1:-}"; dc restart "$1" ;;
   backup) dc run --rm backup backup.sh ;;
+  restore-test)
+    # P18.10: a real restore, without the age key ever coming here (the operator decrypts on their own
+    # machine: infra/ops/restore-test.py). The scratch database has no network; all of it is removed.
+    [ -n "$version" ] || { echo "nothing deployed yet" >&2; exit 3; }
+    work=$(mktemp -d /opt/scorecode/restore-test.XXXXXX); chmod 700 "$work"
+    name=scorecode-restore-test-$$
+    trap 'docker rm -f "$name" >/dev/null 2>&1 || true; rm -rf "$work"' EXIT
+    head -c 8000000000 > "$work/db.dump"
+    [ "$(head -c 5 "$work/db.dump")" = PGDMP ] || { echo "not a pg_dump custom-format dump" >&2; exit 2; }
+    chown -R 10001 "$work"  # the backup image's user, the only one besides root that may read it
+    echo "received $(du -h "$work/db.dump" | cut -f1) dump; starting a scratch database"
+    docker run -d --name "$name" --network none --env-file env/db.env "$REGISTRY/scorecode-postgres:$version" >/dev/null
+    for _ in $(seq 1 60); do
+      docker logs "$name" 2>&1 | grep -q "PostgreSQL init process complete" \
+        && docker exec "$name" pg_isready -q -U postgres 2>/dev/null && break
+      sleep 2
+    done
+    docker exec "$name" pg_isready -q -U postgres || { echo "scratch database did not start" >&2; exit 1; }
+    # The backup image's restore.sh, sharing only the scratch database's (empty) network namespace.
+    docker run --rm --network "container:$name" --env-file env/db.env -v "$work:/restore:ro" \
+      -e PGHOST=127.0.0.1 -e PGUSER=scorecode_migrator -e PGDATABASE=scorecode -e RESTORE_DUMP=/restore/db.dump \
+      --entrypoint sh "$REGISTRY/scorecode-backup:$version" -c 'PGPASSWORD=$SCORECODE_MIGRATOR_PASSWORD exec restore.sh'
+    live=$(dc ps -q postgres)
+    FP_CONTAINER=$live infra/ops/db-fingerprint.sh > "$work/live.txt"
+    FP_CONTAINER=$name infra/ops/db-fingerprint.sh > "$work/restored.txt"
+    same=$(comm -12 <(sort "$work/live.txt") <(sort "$work/restored.txt") | wc -l)
+    echo "fingerprint: $same of $(wc -l < "$work/live.txt") lines identical to the live database"
+    # What differs (names, counts and checksums only): rows written since the backup was taken.
+    diff <(sort "$work/live.txt") <(sort "$work/restored.txt") | grep -E '^[<>]' | sed 's/^</live:    /; s/^>/restored:/' || true
+    ;;
   smoke)
     domain=$(grep -E '^BASE_DOMAIN=' env/deploy.env | head -1 | cut -d= -f2 | awk '{print $1}')
     # Straight to this machine's edge, trusting Cloudflare's Origin CA (the origin certificate's issuer).

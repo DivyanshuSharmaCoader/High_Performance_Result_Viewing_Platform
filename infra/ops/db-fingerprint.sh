@@ -6,8 +6,12 @@
 # and still isolates tenants.
 #
 #   infra/ops/db-fingerprint.sh            # the compose stack's postgres container, as the superuser
+#   FP_CONTAINER=<name> infra/ops/db-fingerprint.sh   # any container (scorecode-ctl restore-test)
 set -euo pipefail
-psql() { docker compose exec -T postgres psql -U postgres -d scorecode -v ON_ERROR_STOP=1 -At "$@"; }
+psql() {
+  if [ -n "${FP_CONTAINER:-}" ]; then docker exec -i "$FP_CONTAINER" psql -U postgres -d scorecode -v ON_ERROR_STOP=1 -At "$@"
+  else docker compose exec -T postgres psql -U postgres -d scorecode -v ON_ERROR_STOP=1 -At "$@"; fi
+}
 psql -c "SELECT 'alembic_version ' || version_num FROM alembic_version"
 for table in $(psql -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename"); do
   psql -c "SELECT 'rows $table ' || count(*) FROM \"$table\""
