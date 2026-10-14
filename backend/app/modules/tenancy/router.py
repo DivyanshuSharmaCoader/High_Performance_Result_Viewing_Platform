@@ -21,6 +21,7 @@ from app.modules.entitlements.trial import TrialService
 from app.modules.identity.permissions import P
 from app.modules.publishing.read_cache import StudentReads
 from app.modules.tenancy import onboarding
+from app.modules.tenancy.closure import ClosureService
 from app.modules.tenancy.models import TenantSettings
 
 router = APIRouter(prefix="/api/v1/admin", tags=["settings"])
@@ -281,3 +282,51 @@ async def dismiss_onboarding(
     s.onboarding_dismissed_at = utcnow() if body.dismissed else None
     await uow.flush()
     return await get_onboarding(uow)
+
+
+# ---- closing the account (P18.14) -----------------------------------------------------------------
+class ClosureIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    reason: str = Field(min_length=3, max_length=500)
+    confirm: str = Field(
+        min_length=1, max_length=32, description="The institution's address (slug), typed out"
+    )
+
+
+class ClosureOut(BaseModel):
+    requested: bool
+    requested_at: datetime | None
+    delete_after: datetime | None
+    reason: str | None
+
+
+def _closure(s: Any) -> ClosureOut:
+    return ClosureOut(
+        requested=s.requested, requested_at=s.requested_at, delete_after=s.delete_after, reason=s.reason
+    )
+
+
+@router.get("/closure")
+async def closure_state(uow: UoW, infra: InfraDep, _: Principal = require(P.ACCOUNT_CLOSE)) -> ClosureOut:
+    return _closure(await ClosureService(infra).state(uow))
+
+
+@router.post("/closure", status_code=201)
+async def request_closure(
+    body: ClosureIn,
+    uow: UoW,
+    tenant: TenantDep,
+    infra: InfraDep,
+    principal: Principal = require(P.ACCOUNT_CLOSE),
+) -> ClosureOut:
+    state = await ClosureService(infra).request(
+        uow, principal, reason=body.reason, confirm=body.confirm, slug=tenant.slug
+    )
+    return _closure(state)
+
+
+@router.delete("/closure")
+async def cancel_closure(
+    uow: UoW, infra: InfraDep, principal: Principal = require(P.ACCOUNT_CLOSE)
+) -> ClosureOut:
+    return _closure(await ClosureService(infra).cancel(uow, principal))

@@ -71,6 +71,8 @@ export interface TenantDetail {
   host: string;
   official_name: string;
   contact_email: string | null;
+  /** The institution's own request to close its account (P18.14). */
+  closure: { requested_at: string; delete_after: string; reason: string | null; erasable: boolean } | null;
   current_plan: string | null;
   subscriptions: {
     id: string;
@@ -215,6 +217,7 @@ export type CorrectionPreview = Schemas["CorrectionPreviewOut"];
 export type CorrectionChange = Schemas["CorrectionChangeOut"];
 export type DataExport = Schemas["DataExportOut"];
 export type ExportLink = Schemas["ExportLinkOut"];
+export type Closure = Schemas["ClosureOut"];
 export type MarksheetProgress = Schemas["MarksheetProgressOut"];
 export type Marksheet = Schemas["MarksheetOut"];
 export type Inbox = Schemas["InboxOut"];

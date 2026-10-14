@@ -244,7 +244,9 @@ QR on marksheet → https://verify.scorecode.in/v/7KQ3-M9XD-PA2F-8RTC-WV6H-Q (co
 | Backup copies | Managed snapshots + nightly encrypted `pg_dump` to a second provider/region object storage; object storage versioning for PDFs |
 | Drills | Monthly automated restore to a scratch DB + smoke test; result recorded in ops log |
 
-**Retention of operational data (as built, migration 0016).**
+**Retention of operational data (as built, migrations 0016 and 0020).** Records of processing are kept
+for a year (DPDP Rules 2025, rule 8(3), from May 2027; CERT-In directions 2022: logs 180 days in India);
+copies of raw data go sooner (minimisation). Legal questions: [readiness matrix](legal/readiness-matrix.md).
 - The worker runs `ops_purge()` a minute after it starts and then every 6 hours. It is idempotent, so
   every worker may run it. Counts go to `scorecode_purged_rows_total{table}`.
 - It deletes tenant rows under each tenant's own RLS context in turn: the function sets the context per
@@ -253,14 +255,16 @@ QR on marksheet → https://verify.scorecode.in/v/7KQ3-M9XD-PA2F-8RTC-WV6H-Q (co
 
 | Data | Kept for | Why it goes |
 |---|---|---|
-| Sessions (staff, students, platform) | 30 days after they ended (expiry or sign-out) | Addresses and user agents are personal data |
-| Activation, invitation and reset tokens; sign-up requests | 30 days after expiry | Single-use, no value once expired |
+| Sessions (staff, students, platform) | 365 days after they ended (expiry or sign-out) | Addresses and user agents are traffic data: kept a year as a record of processing, then deleted |
+| Activation, invitation and reset tokens | 365 days after expiry | Hashes only; a record of who was invited or reset when |
+| Unused sign-up requests | 30 days after expiry | Never became an account (minimisation) |
 | Idempotency keys | until expiry (24 h) | Only deduplicate retries |
-| Background jobs | 30 days after success or cancellation; 90 days after failure | Payloads hold ids; failures are kept longer for investigation |
+| Background jobs | 365 days after they finished | Payloads hold ids: a record of processing |
 | Import staging rows (raw student data and marks from uploaded files) | 30 days after the import ended | The import's summary row stays as the record |
 | Uploaded import files (the spreadsheets) | 30 days after every import that used them ended | The stored object is deleted and the file row marked `purged_at` (ingestion maintenance task). Copies synced to the backup bucket go with that bucket's lifecycle rule |
-| Email delivery records | 90 days | Provider ids and errors, for troubleshooting only |
+| Email delivery records | 365 days | Provider ids and errors: a record of what was sent |
 | In-app notifications | 365 days | A notice of a result, not the result |
+| Server and application logs | 365 days, on the server in India (`scorecode-ctl archive-logs`, daily) | CERT-In: 180 days in India; DPDP: a year of processing logs |
 | **Never purged here:** audit logs, publications, published results, statistics, verification records, marks | | The record, kept per the institution's agreement. Deleted only when an institution leaves (runbooks/tenant-offboarding.md) |
 
 The same job keeps the audit log's monthly partitions three months ahead, so an API that runs for months

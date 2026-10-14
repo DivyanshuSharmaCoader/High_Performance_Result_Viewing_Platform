@@ -198,6 +198,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/closure": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Closure State */
+        get: operations["closure_state_api_v1_admin_closure_get"];
+        put?: never;
+        /** Request Closure */
+        post: operations["request_closure_api_v1_admin_closure_post"];
+        /** Cancel Closure */
+        delete: operations["cancel_closure_api_v1_admin_closure_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/cohorts": {
         parameters: {
             query?: never;
@@ -2210,6 +2229,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/tenants/{tenant_id}/erase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Erasure
+         * @description Second approval of an institution's own request to close (P18.14). The worker erases its data.
+         */
+        post: operations["approve_erasure_api_v1_platform_tenants__tenant_id__erase_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/tenants/{tenant_id}/overrides/{feature_key}": {
         parameters: {
             query?: never;
@@ -2687,6 +2726,27 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** ClosureIn */
+        ClosureIn: {
+            /**
+             * Confirm
+             * @description The institution's address (slug), typed out
+             */
+            confirm: string;
+            /** Reason */
+            reason: string;
+        };
+        /** ClosureOut */
+        ClosureOut: {
+            /** Delete After */
+            delete_after: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Requested */
+            requested: boolean;
+            /** Requested At */
+            requested_at: string | null;
+        };
         /** CohortAssignIn */
         CohortAssignIn: {
             /**
@@ -2965,6 +3025,16 @@ export interface components {
             updated_by_name: string | null;
             /** Version */
             version: number;
+        };
+        /** EraseIn */
+        EraseIn: {
+            /**
+             * Confirm
+             * @description The institution's address (slug), typed out
+             */
+            confirm: string;
+            /** Reason */
+            reason: string;
         };
         /** ExamActionOut */
         ExamActionOut: {
@@ -5863,6 +5933,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrandingOut"];
+                };
+            };
+        };
+    };
+    closure_state_api_v1_admin_closure_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosureOut"];
+                };
+            };
+        };
+    };
+    request_closure_api_v1_admin_closure_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClosureIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosureOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_closure_api_v1_admin_closure_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClosureOut"];
                 };
             };
         };
@@ -10072,6 +10215,41 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_erasure_api_v1_platform_tenants__tenant_id__erase_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EraseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OkOut"];
                 };
             };
             /** @description Validation Error */

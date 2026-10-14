@@ -1,4 +1,5 @@
-"""The retention purge (docs/10 §12, ASVS 8.3.4; migration 0016): old operational rows go, in every tenant,
+"""The retention purge (docs/10 §12, ASVS 8.3.4; migrations 0016 and 0020): old operational rows go, in
+every tenant,
 under each tenant's own RLS context. What's recent stays, and the record (audit, results) is never
 touched. The runtime role still can't delete append-only rows itself."""
 
@@ -66,7 +67,7 @@ async def _ageing_rows(app, infra, t) -> dict[str, uuid.UUID]:
             ).scalar_one()
         await s.execute(
             text(
-                "UPDATE sessions SET expires_at = now() - interval '40 days', absolute_expires_at = now() - interval '40 days'"
+                "UPDATE sessions SET expires_at = now() - interval '400 days', absolute_expires_at = now() - interval '400 days'"
             )
         )
         await s.execute(
@@ -78,11 +79,17 @@ async def _ageing_rows(app, infra, t) -> dict[str, uuid.UUID]:
         ids["import_old"], ids["import_new"] = uuid.UUID(old_import), uuid.UUID(new_import)
         ids["job_old"] = await enqueue(uow, "test.stats", {})
         ids["job_new"] = await enqueue(uow, "test.stats", {})
+        ids["job_month"] = await enqueue(uow, "test.stats", {})
     await Worker(infra, ["test-stats"]).drain()
     async with infra.db.uow(t.id) as uow:
         await uow.session.execute(
-            text("UPDATE jobs SET finished_at = now() - interval '40 days' WHERE id = :j"),
+            text("UPDATE jobs SET finished_at = now() - interval '400 days' WHERE id = :j"),
             {"j": ids["job_old"]},
+        )
+        # A record of processing from last month is kept for a year now (DPDP Rules, rule 8(3)).
+        await uow.session.execute(
+            text("UPDATE jobs SET finished_at = now() - interval '40 days' WHERE id = :j"),
+            {"j": ids["job_month"]},
         )
     return ids
 
@@ -114,6 +121,7 @@ async def test_the_purge_removes_old_operational_rows_in_every_tenant_and_keeps_
             assert await _exists(s, "SELECT 1 FROM notifications WHERE id = :i", i=ids["inapp_new"])
             assert not await _exists(s, "SELECT 1 FROM jobs WHERE id = :i", i=ids["job_old"])
             assert await _exists(s, "SELECT 1 FROM jobs WHERE id = :i", i=ids["job_new"])
+            assert await _exists(s, "SELECT 1 FROM jobs WHERE id = :i", i=ids["job_month"])
             assert not await _exists(
                 s, "SELECT 1 FROM import_rows WHERE import_job_id = :i", i=ids["import_old"]
             )

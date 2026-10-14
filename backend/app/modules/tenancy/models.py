@@ -88,3 +88,8 @@ class TenantSettings(TenantScoped, Versioned, Timestamps, Base):
     )
     onboarding_dismissed_at: Mapped[datetime | None]
     default_grading_scheme_id: Mapped[uuid.UUID | None]  # pre-selected for new exams
+    # Closing the account (P18.14, tenancy/closure.py): set by the owner; erased after closure_delete_after.
+    closure_requested_at: Mapped[datetime | None]
+    closure_requested_by: Mapped[uuid.UUID | None]
+    closure_reason: Mapped[str | None] = mapped_column(Text)
+    closure_delete_after: Mapped[datetime | None]

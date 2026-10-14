@@ -12,3 +12,4 @@ def load_job_handlers() -> None:
     from app.modules.notifications import jobs as _notifications  # noqa: F401
     from app.modules.publishing import jobs as _publishing  # noqa: F401
     from app.modules.results import jobs as _results  # noqa: F401
+    from app.modules.tenancy import closure as _closure  # noqa: F401  (the erasure maintenance task)

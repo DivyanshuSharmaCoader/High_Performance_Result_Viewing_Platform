@@ -367,6 +367,7 @@ export default function TenantDetailPage() {
   const [planOpen, setPlanOpen] = useState(false);
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [statusAction, setStatusAction] = useState<"suspend" | "reactivate" | null>(null);
+  const [erasing, setErasing] = useState(false);
   const [removeKey, setRemoveKey] = useState<string | null>(null);
   const tenant = useQuery({
     queryKey: ["tenant", id],
@@ -394,6 +395,17 @@ export default function TenantDetailPage() {
       setStatusAction(null);
     },
     onError: (e) => toast.error(e instanceof ApiError ? e.detail : "Couldn't change status"),
+  });
+  const erase = useMutation({
+    mutationFn: (reason: string) =>
+      api.post(`/api/v1/platform/tenants/${id}/erase`, { confirm: tenant.data?.slug ?? "", reason }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["tenant", id] });
+      void qc.invalidateQueries({ queryKey: ["tenant-audit", id] });
+      toast.success("Erasure approved — the portal is offline; the data is erased within minutes");
+      setErasing(false);
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.detail : "Couldn't approve the erasure"),
   });
   const removeOverride = useMutation({
     mutationFn: ({ key, reason }: { key: string; reason: string }) =>
@@ -470,6 +482,31 @@ export default function TenantDetailPage() {
       {t.status === "suspended" && t.status_reason && (
         <Callout tone="danger" title="Suspended" className="mb-6">
           {t.status_reason}
+        </Callout>
+      )}
+      {t.closure && t.status !== "closed" && (
+        <Callout
+          tone="warning"
+          className="mb-6"
+          title={
+            t.status === "closing"
+              ? "Erasure approved — the data is being erased"
+              : `The institution asked to close its account on ${formatDateTime(t.closure.requested_at)}`
+          }
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span>
+              {t.closure.reason && <>“{t.closure.reason}” · </>}
+              {t.closure.erasable
+                ? "Its 30 days to export and change its mind have passed."
+                : `It can export and change its mind until ${formatDateTime(t.closure.delete_after)}.`}
+            </span>
+            {canManage && t.closure.erasable && t.status !== "closing" && (
+              <Button variant="danger" size="sm" onClick={() => setErasing(true)}>
+                Erase permanently…
+              </Button>
+            )}
+          </div>
         </Callout>
       )}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -632,6 +669,19 @@ export default function TenantDetailPage() {
         onConfirm={(reason) => {
           if (statusAction) setStatus.mutate({ action: statusAction, reason });
         }}
+      />
+      <ConfirmDialog
+        open={erasing}
+        onOpenChange={(o) => !o && setErasing(false)}
+        title={`Erase ${t.name} permanently?`}
+        description="The portal goes offline now and every record and file of this institution is deleted within minutes. A tombstone, the subscription records and the platform audit log remain; encrypted backups expire on their own schedule. This can't be undone."
+        confirmLabel="Erase permanently"
+        variant="danger"
+        requireReason
+        reasonLabel="Reason (kept in the platform audit log)"
+        confirmText={t.slug}
+        loading={erase.isPending}
+        onConfirm={(reason) => erase.mutate(reason)}
       />
       <ConfirmDialog
         open={removeKey !== null}

@@ -110,6 +110,10 @@ and adjust the bands, pass rules and rounding.
   Passwords and other secrets are never included.
 - It takes a minute or two; download it with your password. Each export is kept seven days, then deleted.
   Up to five exports a day. Every request and download is in the audit log.
+- **Close the account** (owner only, same page): asks for your password, a reason and your institution's
+  address. Every administrator is emailed. For 30 days nothing changes: keep working, export, or *Cancel
+  closure*. After that, ScoreCode staff confirm and all your institution's data is erased; encrypted
+  backups expire within about a month. No fee and no notice period.
 
 ## 8. Keeping track
 - **Audit log:** who did what and when, across everything above, with before and after values.

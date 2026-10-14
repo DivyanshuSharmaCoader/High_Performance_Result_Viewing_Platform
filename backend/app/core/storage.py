@@ -29,6 +29,7 @@ class ObjectStore(Protocol):
     async def put(self, key: str, data: bytes, content_type: str) -> None: ...
     async def get(self, key: str) -> bytes: ...
     async def delete(self, key: str) -> None: ...
+    async def delete_prefix(self, prefix: str) -> int: ...
     def presigned_get(self, key: str, *, filename: str | None = None, ttl_s: int | None = None) -> str: ...
     async def ping(self) -> bool: ...
 
@@ -74,6 +75,23 @@ class S3ObjectStore:
 
     async def delete(self, key: str) -> None:
         await anyio.to_thread.run_sync(lambda: self._client.delete_object(Bucket=self.bucket, Key=key))
+
+    async def delete_prefix(self, prefix: str) -> int:
+        """Every object under ``prefix`` (e.g. one tenant's ``tenants/<id>/``), a thousand per request."""
+        if not prefix.endswith("/") or len(prefix) < 10:
+            raise ValueError("refusing a short or open-ended prefix")
+
+        def _run() -> int:
+            removed = 0
+            pages = self._client.get_paginator("list_objects_v2").paginate(Bucket=self.bucket, Prefix=prefix)
+            for page in pages:
+                keys: list[Any] = [{"Key": o["Key"]} for o in page.get("Contents", [])]
+                if keys:
+                    self._client.delete_objects(Bucket=self.bucket, Delete={"Objects": keys, "Quiet": True})
+                    removed += len(keys)
+            return removed
+
+        return await anyio.to_thread.run_sync(_run)
 
     def presigned_get(self, key: str, *, filename: str | None = None, ttl_s: int | None = None) -> str:
         params: dict[str, Any] = {"Bucket": self.bucket, "Key": key}

@@ -153,6 +153,10 @@ jobs:
           sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl versions
           sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl jobs stats
           sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl logs api 5 >/dev/null
+          sudo -u deploy sudo -n /usr/local/sbin/scorecode-ctl archive-logs
+          sudo test -f "/var/log/scorecode/$(date -u -d yesterday +%F).log.gz"
+          systemctl is-enabled scorecode-logs.timer
+          test -f /etc/systemd/timesyncd.conf.d/scorecode.conf
       - name: Hardening as deployed
         run: |
           set -euo pipefail

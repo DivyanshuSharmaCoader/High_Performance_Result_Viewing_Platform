@@ -49,7 +49,13 @@ APT::Periodic::AutocleanInterval "7";
 EOF
   # Ubuntu's default 50unattended-upgrades takes the security pocket only; never reboot on our behalf.
   echo 'Unattended-Upgrade::Automatic-Reboot "false";' > /etc/apt/apt.conf.d/52scorecode-no-reboot
+  # CERT-In directions (2022): clocks synchronised with NIC's or NPL's NTP servers (or ones traceable to
+  # them); Ubuntu's pool stays as the fallback.
+  install -d /etc/systemd/timesyncd.conf.d
+  printf '[Time]\nNTP=samay1.nic.in samay2.nic.in time.nplindia.org\nFallbackNTP=ntp.ubuntu.com\n' \
+    > /etc/systemd/timesyncd.conf.d/scorecode.conf
   timedatectl set-ntp true || echo "warning: could not switch on time sync" >&2
+  systemctl restart systemd-timesyncd 2>/dev/null || true
 
   echo "== Docker Engine"
   if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1; then
@@ -104,6 +110,14 @@ Defaults:deploy !requiretty
 EOF
   chmod 440 /etc/sudoers.d/scorecode
   visudo -cf /etc/sudoers.d/scorecode >/dev/null
+
+  echo "== daily log archive (kept 365 days on this server)"
+  printf '[Unit]\nDescription=Archive yesterday'"'"'s ScoreCode container logs\n[Service]\nType=oneshot\nExecStart=/usr/local/sbin/scorecode-ctl archive-logs\n' \
+    > /etc/systemd/system/scorecode-logs.service
+  printf '[Unit]\nDescription=Archive ScoreCode logs daily\n[Timer]\nOnCalendar=*-*-* 00:20:00 UTC\nPersistent=true\n[Install]\nWantedBy=timers.target\n' \
+    > /etc/systemd/system/scorecode-logs.timer
+  systemctl daemon-reload
+  systemctl enable --now scorecode-logs.timer >/dev/null
 
   echo "== firewall rules (written, not enabled)"
   if ! ufw status | grep -q "Status: active"; then  # an active firewall keeps its rules; we only add ours

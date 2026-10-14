@@ -98,6 +98,25 @@ async def reactivate_tenant(
     return OkOut()
 
 
+class EraseIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    confirm: str = Field(
+        min_length=3, max_length=32, description="The institution's address (slug), typed out"
+    )
+    reason: str = Field(min_length=3, max_length=500)
+
+
+@router.post("/tenants/{tenant_id}/erase")
+async def approve_erasure(
+    tenant_id: uuid.UUID, body: EraseIn, uow: PlatformUoW, infra: InfraDep, principal: ManageTenants
+) -> OkOut:
+    """Second approval of an institution's own request to close (P18.14). The worker erases its data."""
+    await PlatformService(infra).approve_erasure(
+        uow, principal, tenant_id, confirm=body.confirm, reason=body.reason
+    )
+    return OkOut()
+
+
 class PlanChangeIn(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     plan_code: str = Field(min_length=2, max_length=32)

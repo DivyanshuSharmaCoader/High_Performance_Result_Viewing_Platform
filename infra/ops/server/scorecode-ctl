@@ -16,6 +16,8 @@
 #   sudo scorecode-ctl install-cert           origin certificate on stdin (PEM); the key is made here
 #   sudo scorecode-ctl make-csr               a new origin key (kept here) and its CSR on stdout
 #   sudo scorecode-ctl render-env             settings files from the operator's values on stdin
+#   sudo scorecode-ctl archive-logs           yesterday's container logs to /var/log/scorecode, gzipped,
+#                                             kept 365 days (daily timer; CERT-In: 180 days in India)
 #
 # Each subcommand maps to a fixed command line; arguments are validated, nothing reaches a shell.
 set -euo pipefail
@@ -81,6 +83,18 @@ case "$cmd" in
       scorecode create-platform-user --email "$email" --name "$name" --role platform_admin
     ;;
   render-env) exec /usr/bin/python3 /usr/local/lib/scorecode/render-env.py ;;
+  archive-logs)
+    # The apps' logs are structured and redacted; this keeps them a year on this server (in India).
+    install -d -m 750 /var/log/scorecode
+    day=$(date -u -d yesterday +%F)
+    out=/var/log/scorecode/$day.log.gz
+    if [ -n "$version" ] && [ ! -s "$out" ]; then
+      dc --profile monitoring logs --no-color --timestamps --since "${day}T00:00:00Z" \
+        --until "$(date -u +%F)T00:00:00Z" | gzip -9 > "$out.tmp" && mv "$out.tmp" "$out" && chmod 640 "$out"
+    fi
+    find /var/log/scorecode -name '*.log.gz' -mtime +365 -delete
+    ls -1 /var/log/scorecode | tail -3
+    ;;
   make-csr)
     install -d -m 750 certs
     domain=$(grep -E '^BASE_DOMAIN=' env/deploy.env | head -1 | cut -d= -f2 | awk '{print $1}')

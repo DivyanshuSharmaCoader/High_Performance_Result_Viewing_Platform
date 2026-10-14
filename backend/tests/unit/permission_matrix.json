@@ -2,6 +2,7 @@
  "institution_owner": [
   "academics.manage",
   "academics.view",
+  "account.close",
   "account.mfa",
   "analytics.view",
   "audit.view",

@@ -876,6 +876,81 @@
         "title": "ChangePasswordIn",
         "type": "object"
       },
+      "ClosureIn": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "The institution's address (slug), typed out",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Confirm",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "confirm"
+        ],
+        "title": "ClosureIn",
+        "type": "object"
+      },
+      "ClosureOut": {
+        "properties": {
+          "delete_after": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delete After"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "requested": {
+            "title": "Requested",
+            "type": "boolean"
+          },
+          "requested_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested At"
+          }
+        },
+        "required": [
+          "requested",
+          "requested_at",
+          "delete_after",
+          "reason"
+        ],
+        "title": "ClosureOut",
+        "type": "object"
+      },
       "CohortAssignIn": {
         "additionalProperties": false,
         "properties": {
@@ -1707,6 +1782,30 @@
           "updated_by_name"
         ],
         "title": "EntryOut",
+        "type": "object"
+      },
+      "EraseIn": {
+        "additionalProperties": false,
+        "properties": {
+          "confirm": {
+            "description": "The institution's address (slug), typed out",
+            "maxLength": 32,
+            "minLength": 3,
+            "title": "Confirm",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirm",
+          "reason"
+        ],
+        "title": "EraseIn",
         "type": "object"
       },
       "ExamActionOut": {
@@ -9872,6 +9971,85 @@
         ]
       }
     },
+    "/api/v1/admin/closure": {
+      "delete": {
+        "operationId": "cancel_closure_api_v1_admin_closure_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosureOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Cancel Closure",
+        "tags": [
+          "settings"
+        ]
+      },
+      "get": {
+        "operationId": "closure_state_api_v1_admin_closure_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosureOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Closure State",
+        "tags": [
+          "settings"
+        ]
+      },
+      "post": {
+        "operationId": "request_closure_api_v1_admin_closure_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClosureIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClosureOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Closure",
+        "tags": [
+          "settings"
+        ]
+      }
+    },
     "/api/v1/admin/cohorts": {
       "get": {
         "operationId": "list_cohorts_api_v1_admin_cohorts_get",
@@ -16407,6 +16585,60 @@
           }
         },
         "summary": "Tenant Detail",
+        "tags": [
+          "platform"
+        ]
+      }
+    },
+    "/api/v1/platform/tenants/{tenant_id}/erase": {
+      "post": {
+        "description": "Second approval of an institution's own request to close (P18.14). The worker erases its data.",
+        "operationId": "approve_erasure_api_v1_platform_tenants__tenant_id__erase_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EraseIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OkOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Erasure",
         "tags": [
           "platform"
         ]

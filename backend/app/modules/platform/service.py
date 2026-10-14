@@ -187,6 +187,17 @@ class PlatformService:
             "host": f"{t.slug}.{self.infra.settings.base_domain}",
             "official_name": settings.official_name if settings else t.name,
             "contact_email": settings.contact_email if settings else None,
+            # Closing the account (P18.14): the owner's request, and when erasure may be approved.
+            "closure": (
+                {
+                    "requested_at": settings.closure_requested_at,
+                    "delete_after": settings.closure_delete_after,
+                    "reason": settings.closure_reason,
+                    "erasable": settings.closure_delete_after <= utcnow(),
+                }
+                if settings and settings.closure_delete_after
+                else None
+            ),
             "current_plan": next((p.code for s, p in subs if s is current), None),
             "subscriptions": [
                 {
@@ -239,6 +250,45 @@ class PlatformService:
         host_key = f"tenant:host:{tenant.slug}.{self.infra.settings.base_domain}"
         keys = [host_key, f"t:{tenant.id}:ent", f"t:{tenant.id}:config"]
         uow.after_commit(lambda: self.infra.cache.delete(*keys))
+
+    async def approve_erasure(
+        self, uow: UnitOfWork, principal: Principal, tenant_id: uuid.UUID, *, confirm: str, reason: str
+    ) -> None:
+        """The second approval of closing an account (P18.14; tenancy/closure.py). Takes the portal offline
+        and signs everyone out; the worker erases the data soon after."""
+        t = await self._tenant(uow, tenant_id, lock=True)
+        if confirm.strip().lower() != t.slug:
+            raise ValidationFailed("Type the institution's address exactly to confirm.", field="confirm")
+        due = (
+            await uow.session.scalars(
+                select(TenantSettings.closure_delete_after).where(TenantSettings.tenant_id == t.id)
+            )
+        ).one_or_none()
+        if due is None:
+            raise InvalidState("This institution hasn't asked to close its account.")
+        if due > utcnow():
+            raise InvalidState(f"The institution can export and change its mind until {due:%d %B %Y}.")
+        if t.status in ("closing", "closed"):
+            raise InvalidState("Erasure is already approved or done.")
+        before = t.status
+        t.status, t.status_reason = "closing", reason.strip()[:500]
+        await uow.session.execute(
+            update(Session)
+            .where(Session.tenant_id == t.id, Session.revoked_at.is_(None))
+            .values(revoked_at=utcnow())
+        )
+        await self._invalidate_tenant(uow, t)
+        await record_platform(
+            uow,
+            Actor.from_principal(principal),
+            "tenant.erasure_approved",
+            target_tenant_id=t.id,
+            entity_type="tenant",
+            entity_id=t.id,
+            before={"status": before},
+            after={"status": "closing", "delete_after": due.isoformat()},
+            reason=reason.strip(),
+        )
 
     async def set_status(
         self, uow: UnitOfWork, principal: Principal, tenant_id: uuid.UUID, *, suspend: bool, reason: str
