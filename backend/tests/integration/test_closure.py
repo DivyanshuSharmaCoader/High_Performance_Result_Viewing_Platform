@@ -25,7 +25,9 @@ KEPT = {"tenant_subscriptions", "tenant_trials"}
 
 
 async def _rows(infra, tenant_id) -> dict[str, int]:  # type: ignore[no-untyped-def]
-    """Rows per tenant table, read as the schema owner under that tenant's own RLS context."""
+    """Rows per tenant table for one tenant, read as the schema owner. The WHERE matters: a few tables
+    let the owner see every tenant (definer policies on jobs and verification_records; signup_requests
+    has no RLS), so the RLS context alone would count other institutions' rows."""
     conn = await asyncpg.connect(
         host=PG_HOST, port=PG_PORT, user="scorecode_migrator", password="migrator-dev-pw", database=TEST_DB
     )
@@ -33,7 +35,7 @@ async def _rows(infra, tenant_id) -> dict[str, int]:  # type: ignore[no-untyped-
         async with conn.transaction():
             await conn.execute("SELECT set_config('app.tenant_id', $1, true)", str(tenant_id))
             return {
-                name: await conn.fetchval(f"SELECT count(*) FROM {name}")
+                name: await conn.fetchval(f"SELECT count(*) FROM {name} WHERE tenant_id = $1", tenant_id)
                 for name, table in metadata.tables.items()
                 if "tenant_id" in table.c
             }
