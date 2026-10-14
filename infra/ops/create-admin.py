@@ -27,8 +27,8 @@ def deploy_key() -> str:
 
 def _guessable(password: str) -> str | None:
     """Why a password must not be used (never the password itself), or None."""
-    if len(password) < 14:
-        return "shorter than 14 characters"
+    if len(password) < 12:  # the platform's own minimum (modules/platform/bootstrap.py); it checks more
+        return "shorter than 12 characters"
     if password.strip().upper() == "PLATFORM_ADMIN_PASSWORD" or "CHANGE-ME" in password.upper():
         return "still the template's placeholder"
     tracked = subprocess.run(["git", "ls-files", "-z"], capture_output=True, check=False).stdout.split(b"\0")  # noqa: S607

@@ -62,6 +62,15 @@ EOF
   timedatectl set-ntp true || echo "warning: could not switch on time sync" >&2
   systemctl restart systemd-timesyncd 2>/dev/null || true
 
+  echo "== swap (2 GB; a memory spike slows the machine instead of freezing it)"
+  # 2026-10-14: a load test beside production filled the 8 GB of RAM and, with no swap, the server stopped
+  # answering for 20 minutes. Containers also have memory limits (compose.prod.yml).
+  if ! swapon --show=NAME --noheadings | grep -q .; then
+    fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile
+    grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  fi
+  echo 'vm.swappiness=10' > /etc/sysctl.d/60-scorecode-swap.conf && sysctl -q -p /etc/sysctl.d/60-scorecode-swap.conf
+
   echo "== Docker Engine"
   if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1; then
     install -m 0755 -d /etc/apt/keyrings
@@ -124,7 +133,7 @@ EOF
   systemctl daemon-reload
   systemctl enable --now scorecode-logs.timer >/dev/null
 
-  echo "== firewall rules (written, not enabled)"
+  echo "== firewall rules (22, 80, 443; ufw is switched on separately, gate a)"
   if ! ufw status | grep -q "Status: active"; then  # an active firewall keeps its rules; we only add ours
     ufw default deny incoming >/dev/null
     ufw default allow outgoing >/dev/null
