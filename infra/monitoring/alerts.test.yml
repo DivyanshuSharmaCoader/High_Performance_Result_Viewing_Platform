@@ -182,6 +182,20 @@ tests:
               summary: More than 5 emails failed to reach the SMTP provider in 15 minutes (check the SMTP key)
               runbook: docs/runbooks/security-incident.md
 
+  # Backups near the free storage allowance.
+  - interval: 1m
+    input_series:
+      - series: 'scorecode_backup_stored_bytes{job="scorecode_backup"}'
+        values: "4100000000x5"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: ScoreCodeBackupStorageHigh
+        exp_alerts:
+          - exp_labels: { severity: warn }
+            exp_annotations:
+              summary: "Backups occupy 3.818GiB in the backup bucket: near the free allowance"
+              runbook: docs/runbooks/backup-and-restore.md
+
   # The daily email budget ran out: notices wait.
   - interval: 1m
     input_series:

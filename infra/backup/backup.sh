@@ -50,6 +50,11 @@ if [ -n "${BACKUP_FILES_S3_URI:-}" ]; then
 fi
 
 took=$(( $(date +%s) - started ))
+# What the backups occupy in total (one LIST request per 1,000 objects): ScoreCodeBackupStorageHigh warns
+# before it nears the free allowance, so no storage is ever billed by surprise (docs/16 §5).
+# shellcheck disable=SC2086
+stored=$(aws $endpoint s3 ls --recursive --summarize "${BACKUP_S3_URI%/}/" 2>/dev/null | awk '/Total Size:/ {print $3}')
+stored=${stored:-0}
 if [ -n "${PUSHGATEWAY_URL:-}" ]; then
   cat <<METRICS | curl -fsS --data-binary @- "${PUSHGATEWAY_URL%/}/metrics/job/scorecode_backup" || echo "warning: pushgateway unreachable" >&2
 # TYPE scorecode_backup_last_success_timestamp_seconds gauge
@@ -58,6 +63,8 @@ scorecode_backup_last_success_timestamp_seconds $(date +%s)
 scorecode_backup_size_bytes $size
 # TYPE scorecode_backup_duration_seconds gauge
 scorecode_backup_duration_seconds $took
+# TYPE scorecode_backup_stored_bytes gauge
+scorecode_backup_stored_bytes $stored
 METRICS
 fi
-printf '{"backup":"%s","bytes":%s,"sha256":"%s","seconds":%s}\n' "$key" "$size" "$sha" "$took"
+printf '{"backup":"%s","bytes":%s,"sha256":"%s","seconds":%s,"stored_bytes":%s}\n' "$key" "$size" "$sha" "$took" "$stored"

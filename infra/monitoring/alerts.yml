@@ -155,6 +155,14 @@ groups:
 
   - name: data-safety
     rules:
+      - alert: ScoreCodeBackupStorageHigh
+        # 4 GB: 80% of the 5 GB of S3 Standard in AWS's 12-month free tier. Past the allowance S3 bills
+        # about $0.025 per GB-month (ap-southeast-2, 2026-10-14). Lower BACKUP_S3 retention or decide.
+        expr: max(scorecode_backup_stored_bytes) > 4e9
+        labels: { severity: warn }
+        annotations:
+          summary: "Backups occupy {{ $value | humanize1024 }}B in the backup bucket: near the free allowance"
+          runbook: docs/runbooks/backup-and-restore.md
       - alert: ScoreCodeBackupStale
         expr: time() - max(scorecode_backup_last_success_timestamp_seconds) > 26 * 3600
         labels: { severity: page }
