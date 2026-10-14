@@ -2,10 +2,11 @@
 
 > **DRAFT — requires legal review (and a chartered accountant for credit notes) before use.**
 
-- **Cancel any time.** Turn off renewal in Settings → Plan, or email [support address]. Your plan stays
+- **Cancel any time.** Email [support address] (billing is manual today: decision D17; a self-service
+  switch comes with online payments). Your plan stays
   active until the end of the period you paid for. No cancellation fee, no notice period.
-- **No surprise renewals.** We remind the owner [30] and [7] days before a renewal. Renewal happens only
-  with a payment you make or authorise.
+- **No surprise renewals.** Renewal happens only with a payment you make or authorise. [To build with
+  online billing: reminders to the owner 30 and 7 days before a renewal.]
 - **Refunds.** [Proposal for review:] within 30 days of first paying for a plan, a full refund if you
   haven't published results on that plan; after that, no refund for the current period, except where we
   failed to provide the service (prorated). Refunds go back to the original payment method within [10]
