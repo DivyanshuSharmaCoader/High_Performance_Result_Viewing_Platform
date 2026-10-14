@@ -141,10 +141,23 @@ class CheckFailed(Exception):
     """Carries a sanitised reason only."""
 
 
+def _tls() -> ssl.SSLContext:
+    """The python.org build has no CA bundle of its own: certifi if installed, else the system's, so a
+    missing bundle can't show up as a failed connection."""
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        if not os.path.exists(ssl.get_default_verify_paths().openssl_cafile) and os.path.exists("/etc/ssl/cert.pem"):
+            return ssl.create_default_context(cafile="/etc/ssl/cert.pem")
+        return ssl.create_default_context()
+
+
 def _http(url: str, headers: dict[str, str] | None = None, timeout: float = 15) -> tuple[int, bytes]:
     req = urllib.request.Request(url, headers=headers or {})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310 - fixed https URLs only
+        with urllib.request.urlopen(req, timeout=timeout, context=_tls()) as r:  # noqa: S310 - fixed https URLs only
             return r.status, r.read()
     except urllib.error.HTTPError as e:
         return e.code, b""
@@ -221,10 +234,10 @@ def check_smtp() -> None:
     port = int(env("SMTP_PORT") or "587")
     try:
         if port == 465:
-            client: smtplib.SMTP = smtplib.SMTP_SSL(env("SMTP_HOST"), port, timeout=15)
+            client: smtplib.SMTP = smtplib.SMTP_SSL(env("SMTP_HOST"), port, timeout=15, context=_tls())
         else:
             client = smtplib.SMTP(env("SMTP_HOST"), port, timeout=15)
-            client.starttls(context=ssl.create_default_context())
+            client.starttls(context=_tls())
         client.login(env("SMTP_USERNAME"), env("SMTP_PASSWORD"))
         client.quit()
     except smtplib.SMTPAuthenticationError:
