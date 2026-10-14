@@ -124,5 +124,6 @@ and adjust the bands, pass rules and rounding.
 ## Good practice
 - Turn on two-step sign-in for every administrator.
 - Publish from a reliable connection, and *schedule* when timing matters. A scheduled release prepares the
-  marksheet PDFs beforehand; for several thousand students, schedule it at least half an hour ahead.
+  marksheet PDFs beforehand, about 2 a second on the current server: for 8,000 students, schedule it at
+  least an hour and a half ahead.
 - Before a big result day, tell ScoreCode support the date and the number of students.
