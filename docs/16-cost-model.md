@@ -71,3 +71,20 @@ Using the proposed plans ([02](02-business-model.md)):
 6. Free-tier limits that bound resource use (students, storage, emails, publications/year).
 7. SMS/WhatsApp only as pass-through paid add-ons.
 8. Enterprise dedicated deployments priced at ≥2–3× their infra cost plus ops fee.
+
+## 5. The production account's limits and billable thresholds (checked 2026-10-14)
+Prices change: check each provider's page before relying on a figure. "Free" below means the plan in use.
+
+| Service | Plan in use | Free allowance | What happens past it | Safeguard in ScoreCode |
+|---|---|---|---|---|
+| Hostinger VPS | KVM 2, paid monthly | 2 vCPU, 8 GB RAM, 96 GB disk | Fixed price; no usage billing | Disk-filling and memory alerts (`ScoreCodeDiskFillingUp`, `ScoreCodeMemoryLow`); Docker logs capped at 20 MB × 5 per container |
+| Cloudflare R2 (files) | Free tier, Standard ([pricing](https://developers.cloudflare.com/r2/pricing/)) | 10 GB-month, 1 M Class A and 10 M Class B operations a month; egress free | $0.015/GB-month; $4.50 per million Class A, $0.36 per million Class B. **No hard cap**: it bills | Per-institution storage limits by plan (docs/12) with the near-limit alert; PDFs rendered once and stored; owner: watch R2 usage in the dashboard |
+| AWS S3 (backups) | New account credits | Up to $200 in Free Tier credits for new accounts (AWS pricing page) | Normal S3 rates for the region | Nightly dumps of a few MB to a few GB; owner: a lifecycle rule on `prod/` (e.g. 35 days) and an **AWS Budget** alert at $1 (free) |
+| Brevo (email) | Free | **300 emails a day**, SMTP included ([help](https://help.brevo.com/hc/en-us/articles/208580669)) | Sending stops for the day; no charge | **Daily budget** (migration 0022): 280 in any 24 hours for the app, 60 of them kept for resets and invitations; result notices wait up to 48 h, then are skipped; `ScoreCodeEmailBudgetSpent` alert |
+| Sentry | Developer (free) ([pricing](https://sentry.io/pricing/)) | 5,000 errors a month, 1 user, 30-day lookback | Not stated on the pricing page; with no payment method nothing is billed | Errors only: no traces, no profiles, no replays |
+| GitHub Actions | Free, private repository | 2,000 minutes a month | Billed (about $0.006/minute for Linux) only when the account's Actions budget allows it; otherwise runs stop | A new push cancels the run in progress; load tests run only by hand; owner: keep the Actions budget at $0 in Billing |
+| Cloudflare DNS, proxy, Origin CA | Free | — | — | — |
+
+**Capacity consequence of the email plan:** on Brevo's free plan, an institution with more than about 220
+students can't get every result notice by email on result day. Every student still sees the result in the
+portal and the in-app notice. The fix is a paid email plan, which needs the owner's approval (gate c).

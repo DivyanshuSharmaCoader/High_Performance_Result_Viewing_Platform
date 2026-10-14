@@ -14,7 +14,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, cast
 
 import anyio
@@ -35,6 +35,7 @@ from app.modules.entitlements.catalogue import F
 from app.modules.entitlements.service import EntitlementService
 from app.modules.examinations.models import Examination
 from app.modules.identity.models import User
+from app.modules.notifications import budget
 from app.modules.notifications.emails import render
 from app.modules.notifications.models import Notification, NotificationDelivery
 from app.modules.publishing.changes import changed_students
@@ -216,6 +217,23 @@ class Notifier:
                 await self._mark(tenant_id, delivery_id, status="skipped")
                 skipped += 1
                 continue
+            until = await budget.take(self.infra, bulk=True)
+            if until is not None:
+                # The day's email budget is spent: the rest stay queued (the publish screen shows them as
+                # waiting) and a new batch picks them up when the budget frees up. Students see their
+                # results in the portal meanwhile; only the email waits.
+                rest = [str(w[0]) for w in work[n:]]
+                if until - note.created_at > timedelta(hours=self.infra.settings.mail_notice_max_delay_hours):
+                    # A notice days late helps no one: these are skipped, recorded as such.
+                    for w in work[n:]:
+                        await self._mark(tenant_id, w[0], status="skipped", error="daily-limit")
+                    log.warning("notification_emails_skipped_daily_limit", skipped=len(rest))
+                    return {"sent": sent, "failed": failed, "skipped": skipped + len(rest)}
+                async with self.infra.db.uow(tenant_id) as uow:
+                    await enqueue(uow, "notifications.send_batch", {"deliveries": rest}, run_at=until)
+                log.warning("notification_emails_deferred_daily_limit", deferred=len(rest))
+                return {"sent": sent, "failed": failed, "skipped": skipped, "deferred": len(rest),
+                        "deferred_until": until.isoformat()}  # fmt: skip
             if n:
                 await anyio.sleep(gap)
             template = note.kind  # the inbox kind names its email template

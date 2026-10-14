@@ -23,12 +23,14 @@ def _url() -> str:
 
 
 # Indexes written by hand in migrations (expression indexes with operator classes), invisible to models.
-HAND_MANAGED_INDEXES = {"ix_students__name_trgm"}
+HAND_MANAGED_INDEXES = {"ix_students__name_trgm", "ix_mail_sends_sent_at"}
+# Tables reached only through SECURITY DEFINER functions, with no model (0022's email budget).
+HAND_MANAGED_TABLES = {"mail_sends"}
 
 
 def include_object(obj, name, type_, reflected, compare_to):  # type: ignore[no-untyped-def]
     # Monthly audit partitions are managed by migrations/maintenance, not by autogenerate.
-    if type_ == "table" and name and name.startswith("audit_logs_p"):
+    if type_ == "table" and name and (name.startswith("audit_logs_p") or name in HAND_MANAGED_TABLES):
         return False
     return not (type_ == "index" and name in HAND_MANAGED_INDEXES)
 

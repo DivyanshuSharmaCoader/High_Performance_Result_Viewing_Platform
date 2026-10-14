@@ -27,6 +27,9 @@ with development secrets, insecure cookies, a non-HTTPS public scheme or develop
 | `SCORECODE_SMTP_HOST` / `_PORT` / `_USERNAME` / `_PASSWORD` / `_STARTTLS` | Mailpit | Outgoing email (SES/Postmark SMTP in production) |
 | `SCORECODE_MAIL_FROM` | `ScoreCode <no-reply@scorecode.localhost>` | Sender address (deliverability: docs/14 §R) |
 | `SCORECODE_MAIL_RATE_PER_SECOND` | `10` | Emails per second per sending job; keep the total under the provider's rate |
+| `SCORECODE_MAIL_DAILY_LIMIT` | `0` (none) | Emails in any 24 hours, for every process together: the email plan's daily cap (production 280, under Brevo free's 300) |
+| `SCORECODE_MAIL_DAILY_RESERVE` | `60` | Part of the daily limit result notices leave for password resets, invitations and security notices |
+| `SCORECODE_MAIL_NOTICE_MAX_DELAY_HOURS` | `48` | A result notice that can't be sent within this long after publishing is skipped (`daily-limit`); the portal shows the result anyway |
 | `SCORECODE_SECRET_KEY` | dev value | ≥ 32 chars; derives the field-encryption key (TOTP secrets) |
 | `SCORECODE_ABUSE_SIGNAL_KEY` | dev value | ≥ 32 chars, required outside development. Keys the hashes of trial identity signals (docs/12 §6). **Never rotate it**: a new key forgets every trial already taken. |
 | `SCORECODE_RATE_TRIAL_START_PER_HOUR` | 5 | Trial start attempts per client IP |

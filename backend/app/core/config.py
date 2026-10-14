@@ -77,6 +77,11 @@ class Settings(BaseSettings):
     smtp_starttls: bool = False
     mail_from: str = "ScoreCode <no-reply@scorecode.localhost>"
     mail_rate_per_second: float = 10.0  # per worker job; stay under the provider's sending rate
+    # The provider's daily cap (Brevo free: 300), shared by every process over a rolling 24 hours; 0 = none.
+    # Result notices stop `mail_daily_reserve` short of it, kept for resets, invitations and security notices.
+    mail_daily_limit: int = 0
+    mail_daily_reserve: int = 60
+    mail_notice_max_delay_hours: int = 48  # result notices not sent by then are skipped (the portal has them)
 
     # --- Security ---------------------------------------------------------------------------------
     trust_proxy_headers: bool = False  # true only behind our own Caddy, which overwrites X-Real-IP

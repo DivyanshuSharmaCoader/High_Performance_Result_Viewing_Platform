@@ -17,6 +17,7 @@ from app.core.db import UnitOfWork
 from app.core.jobs import JobContext, enqueue, registry
 from app.core.logging import get_logger
 from app.core.mailer import OutgoingEmail
+from app.modules.notifications import budget
 
 log = get_logger(__name__)
 
@@ -180,13 +181,29 @@ async def queue_email(
 async def send_email_job(ctx: JobContext) -> dict[str, Any]:
     template = ctx.job.payload["template"]
     email = render(template, ctx.job.payload["params"])
+    # Account emails may use the reserve; if even that is spent, a copy waits for the budget instead of
+    # failing against the provider (this job then holds nothing sensitive).
+    until = await budget.take(ctx.infra, bulk=False)
+    if until is not None:
+        async with ctx.infra.db.uow(ctx.job.tenant_id) as uow:
+            await enqueue(
+                uow, "notifications.send_email", ctx.job.payload, run_at=until,
+                tenant_scoped=ctx.job.tenant_id is not None,
+            )  # fmt: skip
+            await _forget(uow, ctx, template)
+        log.warning("email_deferred_daily_limit", template=template)
+        return {"deferred_until": until.isoformat()}
     message_id = await ctx.infra.mailer.send(email)
     if TEMPLATES[template].sensitive:
         async with ctx.infra.db.uow(ctx.job.tenant_id) as uow:
-            await uow.session.execute(
-                text(
-                    "UPDATE jobs SET payload = jsonb_build_object('template', CAST(:t AS text)) WHERE id = :id"
-                ),
-                {"t": template, "id": ctx.job.id},
-            )
+            await _forget(uow, ctx, template)
     return {"message_id": message_id}
+
+
+async def _forget(uow: UnitOfWork, ctx: JobContext, template: str) -> None:
+    """A sent (or handed-on) email's job keeps its template name only: no address, no token."""
+    if TEMPLATES[template].sensitive:
+        await uow.session.execute(
+            text("UPDATE jobs SET payload = jsonb_build_object('template', CAST(:t AS text)) WHERE id = :id"),
+            {"t": template, "id": ctx.job.id},
+        )

@@ -139,6 +139,12 @@ groups:
         annotations:
           summary: More than 5 emails failed to reach the SMTP provider in 15 minutes (check the SMTP key)
           runbook: docs/runbooks/security-incident.md
+      - alert: ScoreCodeEmailBudgetSpent
+        expr: sum(increase(scorecode_emails_total{outcome="deferred"}[1h])) > 0
+        labels: { severity: info }
+        annotations:
+          summary: The day's email budget is spent; result notices wait (up to 48 h, then are skipped)
+          runbook: docs/16-cost-model.md
       - alert: ScoreCodeTenantsNearLimit
         expr: max by (limit) (scorecode_tenants_near_limit) > 0
         for: 1h

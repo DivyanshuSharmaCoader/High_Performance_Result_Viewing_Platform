@@ -114,6 +114,9 @@ no test names it, though its default may still be exercised.
 | `SCORECODE_SMTP_STARTTLS` | `False` | `core/mailer` | — |
 | `SCORECODE_MAIL_FROM` | dev URL | `core/mailer` | — |
 | `SCORECODE_MAIL_RATE_PER_SECOND` | `10.0` | `modules/notifications/service` | — |
+| `SCORECODE_MAIL_DAILY_LIMIT` | `0` (none; production `280`) | `modules/notifications/budget` (migration 0022) | test_mail_budget |
+| `SCORECODE_MAIL_DAILY_RESERVE` | `60` | `modules/notifications/budget`: kept for account emails | test_mail_budget |
+| `SCORECODE_MAIL_NOTICE_MAX_DELAY_HOURS` | `48` | `modules/notifications/service`: later result notices are skipped | test_mail_budget |
 | `SCORECODE_TRUST_PROXY_HEADERS` | `False` | `web/middleware` | test_auth |
 | `SCORECODE_SECRET_KEY` | `(secret)` | `core/container` | test_core, test_mfa |
 | `SCORECODE_ABUSE_SIGNAL_KEY` | `(secret)` | `modules/entitlements/trial` | test_core |

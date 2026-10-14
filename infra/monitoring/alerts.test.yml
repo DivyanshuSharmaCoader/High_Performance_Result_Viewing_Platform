@@ -182,6 +182,20 @@ tests:
               summary: More than 5 emails failed to reach the SMTP provider in 15 minutes (check the SMTP key)
               runbook: docs/runbooks/security-incident.md
 
+  # The daily email budget ran out: notices wait.
+  - interval: 1m
+    input_series:
+      - series: 'scorecode_emails_total{outcome="deferred", instance="w:9100"}'
+        values: "0 0 1 2 3 3 3 3 3 3"
+    alert_rule_test:
+      - eval_time: 8m
+        alertname: ScoreCodeEmailBudgetSpent
+        exp_alerts:
+          - exp_labels: { severity: info }
+            exp_annotations:
+              summary: The day's email budget is spent; result notices wait (up to 48 h, then are skipped)
+              runbook: docs/16-cost-model.md
+
   # An institution near a plan limit, for an hour. (Samples every minute: a gap longer than Prometheus's
   # 5-minute lookback makes the series stale and restarts the `for`.)
   - interval: 1m
