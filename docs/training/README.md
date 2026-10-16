@@ -6,6 +6,7 @@ through Periodic Test 1 for Class 10, Section A.
 
 | File | What it is |
 |---|---|
+| [COMPLETION_REPORT.md](COMPLETION_REPORT.md) | What was delivered, where the app differed from the brief, and what still needs a person |
 | [VIDEO_PLAN.md](VIDEO_PLAN.md) | The modules, the people in the story, what each video shows and checks |
 | [INDEX.md](INDEX.md) | Which videos to watch, by role, by task and by screen |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Common problems, the exact messages, and what to do |
