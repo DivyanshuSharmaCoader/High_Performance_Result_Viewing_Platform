@@ -31,7 +31,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - name: Start the full stack (fresh database: the recordings create everything they show)
+      - name: "Start the full stack (fresh database: the recordings create everything they show)"
         run: docker compose --profile app up -d --build --wait
       - uses: pnpm/action-setup@v6
         with: { package_json_file: frontend/package.json }
