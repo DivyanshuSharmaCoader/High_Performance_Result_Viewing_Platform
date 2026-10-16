@@ -16,6 +16,8 @@ export default defineConfig({
   outputDir: "../test-results/training-artifacts",
   use: {
     locale: "en-IN",
+    // The browser's own controls (date fields) follow its language, not the page locale: dd/mm/yyyy.
+    launchOptions: { args: ["--lang=en-IN"] },
     timezoneId: "Asia/Kolkata",
     actionTimeout: 20_000, // a missing element fails in seconds, not at the 15-minute test timeout
     trace: "retain-on-failure",

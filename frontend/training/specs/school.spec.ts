@@ -861,11 +861,11 @@ test("m12-plan-settings", async ({ browser }) => {
     await lesson.point(page.getByText("Free", { exact: true }).filter({ visible: true }).first());
   });
   await lesson.beat("usage", async () => {
-    await lesson.point(page.getByRole("heading", { name: "Usage" }));
+    await lesson.point(page.getByRole("heading", { name: "Usage", exact: true }));
     await lesson.point(page.getByText("Active students").filter({ visible: true }).first());
   });
   await lesson.beat("compare", async () => {
-    await lesson.point(page.getByRole("heading", { name: "Compare plans" }));
+    await lesson.point(page.getByRole("heading", { name: "Compare plans", exact: true }));
   });
   await lesson.beat("trial", async () => {
     const trial = page.getByRole("region", { name: /Try everything in Pro/ });
@@ -883,7 +883,7 @@ test("m12-plan-settings", async ({ browser }) => {
     await expect(page.getByText("Settings saved")).toBeVisible();
   });
   await lesson.beat("policy", async () => {
-    await lesson.point(page.getByRole("heading", { name: "Results policy" }));
+    await lesson.point(page.getByRole("heading", { name: "Results policy", exact: true }));
     await lesson.point(page.getByLabel("Verification page").first());
     await lesson.point(page.getByLabel("Language for students and marksheets").first());
   });
