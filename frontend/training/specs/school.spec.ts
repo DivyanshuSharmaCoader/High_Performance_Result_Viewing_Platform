@@ -212,7 +212,7 @@ test("m04-grading", async ({ browser }) => {
   });
   await lesson.beat("default", async () => {
     await lesson.click(nav.getByRole("link", { name: "Grading" }));
-    const badge = page.getByText("Default", { exact: true }).first();
+    const badge = page.getByText("Default", { exact: true }).filter({ visible: true }).first();
     await expect(badge).toBeVisible();
     await lesson.point(badge);
     await lesson.point(page.getByRole("button", { name: "Actions for Class 10 grading" }));
@@ -262,7 +262,7 @@ test("m05-students", async ({ browser }) => {
   await lesson.beat("added", async () => {
     await lesson.click(dialog.getByRole("button", { name: "Add student" }));
     await expect(page.getByRole("heading", { name: /Aarav Sharma/ }).first()).toBeVisible();
-    await lesson.point(page.getByText("10A").first());
+    await lesson.point(page.getByText("10A").filter({ visible: true }).first());
   });
   await lesson.beat("code", async () => {
     await lesson.click(page.getByRole("button", { name: "Issue activation code" }));
@@ -313,7 +313,12 @@ test("m05-students", async ({ browser }) => {
     await expect(page.getByRole("heading", { name: "Import complete" })).toBeVisible({ timeout: 30_000 });
   });
   await lesson.beat("done", async () => {
-    await lesson.point(page.getByText(/5 added/).first());
+    await lesson.point(
+      page
+        .getByText(/5 added/)
+        .filter({ visible: true })
+        .first(),
+    );
     await lesson.click(page.getByRole("link", { name: "View students" }));
     await expect(page.getByRole("table").getByRole("row")).toHaveCount(7); // header + Aarav + five
   });
@@ -347,8 +352,8 @@ test("m06-staff", async ({ browser }) => {
     await expect(dialog).toBeHidden();
   });
   await lesson.beat("listed", async () => {
-    await expect(page.getByText(SCHOOL.teacherName).first()).toBeVisible();
-    await lesson.point(page.getByText(SCHOOL.teacherName).first());
+    await expect(page.getByText(SCHOOL.teacherName).filter({ visible: true }).first()).toBeVisible();
+    await lesson.point(page.getByText(SCHOOL.teacherName).filter({ visible: true }).first());
   });
   await lesson.beat("accept", async () => {
     await lesson.click(page.getByRole("button", { name: "Account menu" }));
@@ -603,7 +608,9 @@ test("m09-marks-entry", async ({ browser }) => {
   await lesson.beat("submit", async () => {
     await lesson.click(page.getByRole("button", { name: "Submit paper" }));
     await lesson.click(page.getByRole("dialog").getByRole("button", { name: "Submit paper" }));
-    await expect(page.getByText("Submitted", { exact: true }).first()).toBeVisible();
+    await expect(
+      page.getByText("Submitted", { exact: true }).filter({ visible: true }).first(),
+    ).toBeVisible();
   });
   await lesson.beat("switch", async () => {
     await lesson.click(page.getByRole("button", { name: "Account menu" }));
@@ -850,12 +857,12 @@ test("m12-plan-settings", async ({ browser }) => {
   await lesson.beat("intro");
   await lesson.beat("plan", async () => {
     await lesson.click(nav.getByRole("link", { name: "Plan & usage" }));
-    await expect(page.getByText("Free", { exact: true }).first()).toBeVisible();
-    await lesson.point(page.getByText("Free", { exact: true }).first());
+    await expect(page.getByText("Free", { exact: true }).filter({ visible: true }).first()).toBeVisible();
+    await lesson.point(page.getByText("Free", { exact: true }).filter({ visible: true }).first());
   });
   await lesson.beat("usage", async () => {
     await lesson.point(page.getByRole("heading", { name: "Usage" }));
-    await lesson.point(page.getByText("Active students").first());
+    await lesson.point(page.getByText("Active students").filter({ visible: true }).first());
   });
   await lesson.beat("compare", async () => {
     await lesson.point(page.getByRole("heading", { name: "Compare plans" }));
@@ -911,7 +918,7 @@ test("m12-plan-settings", async ({ browser }) => {
     await expect(page.getByRole("button", { name: "Remove logo" })).toBeVisible();
   });
   await lesson.beat("theme", async () => {
-    await lesson.point(page.getByText("Available on Starter and above").first());
+    await lesson.point(page.getByText("Available on Starter and above").filter({ visible: true }).first());
   });
   await lesson.beat("outro");
   await lesson.finish();
@@ -1013,7 +1020,7 @@ test("m14-troubleshooting", async ({ browser }) => {
     await lesson.click(
       page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Plan & usage" }),
     );
-    await lesson.point(page.getByText("Active students").first());
+    await lesson.point(page.getByText("Active students").filter({ visible: true }).first());
   });
   await lesson.beat("recap", async () => {
     const menu = page.getByRole("navigation", { name: "Main" });
@@ -1033,7 +1040,7 @@ test("m01-orientation", async ({ browser }) => {
   await page.goto(url(slug, "/login"));
   await lesson.beat("intro");
   await lesson.beat("school", async () => {
-    await lesson.point(page.getByText(SCHOOL.name).first());
+    await lesson.point(page.getByText(SCHOOL.name).filter({ visible: true }).first());
   });
   await lesson.beat("roles");
   await lesson.beat("no_parent");
