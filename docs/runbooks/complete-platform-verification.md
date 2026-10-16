@@ -79,8 +79,8 @@ names the failing part.
 cd ~/Desktop/ResultHub && infra/ops/with-secrets.sh run -- uv run --project backend python infra/ops/secrets-check.py --connect cloudflare smtp ghcr ssh 2>&1 | grep -E "^connection|INVALID|MISSING"
 ```
 **Expect:** `connection cloudflare: OK`, `smtp: OK`, `ghcr: OK`, `ssh: OK`.
-**Known on 2026-10-16:** `ssh: CONNECTION FAILED (key not accepted)`. That check uses root, and
-root's key no longer works; the `deploy` account (PRE-03) does. Fix: SEC-12.
+If `ssh: CONNECTION FAILED (key not accepted)`: the root key's passphrase isn't loaded in the Mac's SSH
+agent (typical after a restart). See SEC-12.
 
 ### PRE-06 What these tests will never do
 None of the commands here deploy a release, change DNS, delete production data or backups, or create a
@@ -710,11 +710,17 @@ curl -sS --max-time 15 -o /dev/null -w "/metrics answers %{http_code} as %{conte
 cd ~/Desktop/ResultHub && infra/ops/with-secrets.sh run -- sh -c 'ssh -o BatchMode=yes -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive -o ConnectTimeout=10 root@"$DEPLOY_HOST" true 2>&1 | tail -1; ssh -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=10 -i "$DEPLOY_SSH_KEY_FILE" root@"$DEPLOY_HOST" true 2>/dev/null && echo "root key: works" || echo "root key: refused"'
 ```
 **Expect:** `Permission denied (publickey)` (passwords are off), then `root key: works`.
-**Known 2026-10-16:** `root key: refused`. To restore it:
-1. Hostinger hPanel → VPS → **SSH keys** → add the text of `~/.ssh/scorecode_vm.pub`, the `.pub` file:
-   the public half only.
-2. Or 🛟 web console as root → `nano /root/.ssh/authorized_keys` → paste that one line → Ctrl-O, Enter,
-   Ctrl-X.
+**If `root key: refused`:** first check it isn't the Mac (2026-10-16: it was):
+1. `ssh-add -l` should list `scorecode-production`.
+2. If it says "no identities", run `ssh-add --apple-use-keychain ~/.ssh/scorecode_vm` and type the key's
+   passphrase.
+3. To load it automatically after restarts, add these lines to `~/.ssh/config`:
+   `Host 62.72.59.149` / `  UseKeychain yes` / `  AddKeysToAgent yes`.
+
+Only if `ssh -v` shows the server *not* accepting the key, restore root's key (the public `.pub` file
+only):
+- Hostinger hPanel → VPS → **SSH keys**, or
+- 🛟 web console → `nano /root/.ssh/authorized_keys`.
 
 Never paste a file without `.pub`: that's a private key.
 
@@ -762,7 +768,8 @@ PASS only after you've looked.
 Search the `ALERT_EMAIL_TO` inbox (and spam) for **ScoreCodeTestAlert**, sent 2026-10-14 at about
 10:57 UTC; Brevo accepted it.
 **Expect:** found.
-A fresh test alert needs root on the server: **BLOCKED** until SEC-12 is fixed. Then ask Claude for one.
+A fresh test alert was sent on 2026-10-16 at 10:54 UTC (Alertmanager: 1 email sent, 0 failed): look
+for that one too. Claude can send another through root on request.
 
 ### OBS-06 Time sync and the log-archive timer · 🖥️ · `READ-ONLY`
 ```bash
@@ -841,7 +848,7 @@ Never tag during verification.
   with 3–6% of requests refused.
 - **Nothing above 200 is shown to work on this server.**
 
-### PERF-02 Re-run the 200-student step on the server · 🖥️ · `PROD CHANGE` — **BLOCKED** while root SSH is refused (the script connects as root)
+### PERF-02 Re-run the 200-student step on the server · 🖥️ · `PROD CHANGE` (connects as root)
 A separate test stack runs beside production for about 40 minutes. Production stays up, guarded by
 memory and CPU-steal watchdogs. Run it at a quiet hour:
 ```bash

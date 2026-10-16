@@ -11,7 +11,7 @@ run only if you choose (it changes production or needs a business decision).
 **CI coverage:** an automated test that covers the same behaviour and passed in CI run 38622551671
 (commit f55a3c9: 350+38 unit, 573 integration, 38 end-to-end). It is not proof that production works.
 
-Counts: PASS 24, PARTIAL 2, FAIL 3, BLOCKED 5, NOT TESTED 72, NOT IMPLEMENTED 1, READ 4, total 111.
+Counts: PASS 27, PARTIAL 3, FAIL 1, BLOCKED 3, NOT TESTED 72, NOT IMPLEMENTED 1, READ 4, total 111.
 
 | ✓ | Test ID | Feature | Where | Who | Status | Evidence / reference | CI coverage | Your result |
 |---|---|---|---|---|---|---|---|---|
@@ -19,7 +19,7 @@ Counts: PASS 24, PARTIAL 2, FAIL 3, BLOCKED 5, NOT TESTED 72, NOT IMPLEMENTED 1,
 | [ ] | PRE-02 | Check the secrets file is complete (names only) | Mac Terminal | Claude ran | **PASS** | exit code 0 |  | |
 | [ ] | PRE-03 | Which release is running, and is it healthy? | Mac Terminal | Claude ran | **PASS** | deployed v0.1.4; api, postgres, proxy, redis healthy |  | |
 | [ ] | PRE-04 | Public smoke test (no secrets needed) | Mac Terminal | Claude ran | **PASS** | 8/8 through Cloudflare, normal TLS |  | |
-| [ ] | PRE-05 | Provider logins work, nothing is written | Mac Terminal | Claude ran | **FAIL (ssh only)** | cloudflare, smtp, ghcr OK; ssh: key not accepted (root) — SEC-12 |  | |
+| [ ] | PRE-05 | Provider logins work, nothing is written | Mac Terminal | Claude ran | **PASS** | 2026-10-16: cloudflare, smtp, ghcr, ssh all OK (ssh after the key was reloaded into the agent) |  | |
 | [ ] | PRE-06 | What these tests will never do | Read | You (read) | **READ** |  |  | |
 | [ ] | WEB-01 | Homepage and navigation | Browser | You | **NOT TESTED** |  |  | |
 | [ ] | WEB-02 | Plans page and live plan data | Mac Terminal + Browser | Claude ran | **PASS** | 4 plans: free 150, starter 600, growth 2000, pro 5000 |  | |
@@ -103,12 +103,12 @@ Counts: PASS 24, PARTIAL 2, FAIL 3, BLOCKED 5, NOT TESTED 72, NOT IMPLEMENTED 1,
 | [ ] | SEC-09 | No secret value is in the repository | Mac Terminal | Claude ran | **PASS** | every name not found |  | |
 | [ ] | SEC-10 | Audit logs | Browser | You | **NOT TESTED** |  | test_audit | |
 | [ ] | SEC-11 | Monitoring and internal ports aren't public | Mac Terminal | Claude ran | **PASS** | /metrics → text/html; only 22 and 443 open |  | |
-| [ ] | SEC-12 | SSH is keys-only, and root can be recovered | Mac Terminal | Claude ran | **FAIL** | passwords refused (PASS); root key refused (FAIL) — owner restores |  | |
+| [ ] | SEC-12 | SSH is keys-only, and root can be recovered | Mac Terminal | Claude ran | **PASS** | 2026-10-16: passwords refused; root key works; root by key only; ufw active |  | |
 | [ ] | OBS-01 | Health endpoints | Mac Terminal | Claude ran | **PASS** | /healthz, /readyz, /plans 200 in ~0.14 s |  | |
 | [ ] | OBS-02 | DNS and Cloudflare settings | Mac Terminal | Claude ran | **PASS** | 4 proxied A records; Brevo records present; strict, HTTPS on, TLS 1.2 |  | |
 | [ ] | OBS-03 | Logs: structured and free of personal data | Mac Terminal | You | **NOT TESTED** |  |  | |
 | [ ] | OBS-04 | Sentry receives a scrubbed error | Mac Terminal + Dashboard | Claude ran | **PARTIAL** | accepted by Sentry, HTTP 200 (2026-10-14); content not yet viewed in Sentry |  | |
-| [ ] | OBS-05 | Alert emails arrive | Inbox | Blocked | **BLOCKED** | a new alert needs root (SEC-12); check the 2026-10-14 email |  | |
+| [ ] | OBS-05 | Alert emails arrive | Inbox | Claude ran | **PARTIAL** | test alert 2026-10-16 10:54 UTC: Alertmanager email notifications 0→1, 0 failed; inbox receipt not confirmed |  | |
 | [ ] | OBS-06 | Time sync and the log-archive timer | Mac Terminal | Claude ran | **PASS** | NTP synced (samay1.nic.in); log timer last ran 2026-10-16 00:20 |  | |
 | [ ] | OBS-07 | Disk, memory, swap | Mac Terminal | Claude ran | **PASS** | disk 9%, swap 2 GB / 0 used, load 0.26 |  | |
 | [ ] | DEP-01 | CI is green on the deployed code | Mac Terminal | Claude ran | **PASS** | f55a3c9: CI, Ops, Release success |  | |
@@ -118,7 +118,7 @@ Counts: PASS 24, PARTIAL 2, FAIL 3, BLOCKED 5, NOT TESTED 72, NOT IMPLEMENTED 1,
 | [ ] | DEP-05 | Migration rollback | Read | Blocked | **BLOCKED** | needs a release with a migration | test_migrations | |
 | [ ] | DEP-06 | How a release happens (read only) | Read | You (read) | **READ** |  |  | |
 | [ ] | PERF-01 | What has been measured (read) | Read | Claude ran | **PASS (2026-10-14)** | 200 concurrent, 0 errors on the VPS |  | |
-| [ ] | PERF-02 | Re-run the 200-student step on the server | Mac Terminal | Blocked | **BLOCKED** | root SSH refused (SEC-12) |  | |
+| [ ] | PERF-02 | Re-run the 200-student step on the server | Mac Terminal | Claude ran | **PASS** | 2026-10-16: 200 VUs, 0.00% failed both runs, p95 41–172 ms; MemAvailable ≥5,250 MB, swap 0, steal ≤17%; production 99/99 probes 200 |  | |
 | [ ] | PERF-03 | Find the ceiling (400, then 600) | Read | Blocked | **BLOCKED** | needs a second machine for k6 |  | |
 | [ ] | PERF-04 | Marksheet throughput in your own test | Browser | You | **NOT TESTED** |  |  | |
 | [ ] | LEG-01 | Documents that exist (all DRAFT) | Read | You (read) | **READ** |  |  | |

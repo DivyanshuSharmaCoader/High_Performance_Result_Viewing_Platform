@@ -19,11 +19,13 @@ The step-by-step checks are in [complete-platform-verification.md](../runbooks/c
 | Public domain | `scorecode.website`, `admin.`, `verify.`, `*.` → the VPS through Cloudflare (Full strict, Always HTTPS, TLS 1.2+); edge certificate Let's Encrypt, valid to 2027-01-07 |
 
 **New findings during this audit**
-- **Root SSH with the operator's key fails** (`Permission denied (publickey)`; `secrets-check --connect ssh`:
-  key not accepted). It worked on 2026-10-14. The `deploy` account still works, so releases, `scorecode-ctl`
-  and restore tests are unaffected. Root-only steps (re-running the server baseline, the Alertmanager test
-  alert) are BLOCKED until the owner restores `~/.ssh/scorecode_vm.pub` in root's authorized keys
-  (Hostinger hPanel → VPS → SSH keys) or says the change was intended.
+- **Root SSH: resolved, and the first diagnosis here was wrong.** Root logins failed with
+  `Permission denied (publickey)`. Port 22 was reachable, and verbose SSH showed the server *accepting*
+  the key (`SHA256:1Kt77…tJI`). The real cause was on the Mac: `~/.ssh/scorecode_vm` has a passphrase,
+  and after the Mac restarted, the SSH agent no longer held it, so non-interactive logins couldn't sign.
+  Root's authorized keys had not changed. Fixed by the owner with
+  `ssh-add --apple-use-keychain ~/.ssh/scorecode_vm`; verified in fresh shells (SEC-12 PASS,
+  `secrets-check --connect ssh` OK). No server change was made. To keep it after a restart, see SEC-12.
 - **The production restore test failed for the owner** (it hung, then decryption failed). Checked here
   without the private key:
   - The server encrypts backups to exactly the `BACKUP_AGE_RECIPIENT` in the secrets file (compared by
@@ -82,12 +84,12 @@ schools), H high, M medium, L low.
 | F-34 | Backup bucket safety: delete refused for the server key, versioning, lifecycle by prefix (35 d / 1 d / 1 d) | Bucket configured by the owner | — | PROD VERIFIED from object metadata (2026-10-14) | docs/runbooks/backup-and-restore.md | BAK-07, BAK-08: noncurrent-version expiry on the two 1-day rules not visible to the backup key | M | Owner (AWS console) |
 | F-35 | Cost safeguards: backup-size alert at 4 GB; email budget; container limits; AWS budget | App side IMPLEMENTED | DEPLOYED | AUTO PASS (alert unit tests in Ops) | `alerts.yml`, docs/16 §5 | BAK-09: AWS Budget and Free Tier alerts (owner; the backup key can't see billing) | M | Owner |
 | F-36 | Sentry, errors only, scrubbed (emails, phones, IDs, marks, tokens, mixed enrollment numbers) | IMPLEMENTED | DEPLOYED | AUTO PASS (`test_sentry_scrub.py`); PROD VERIFIED (`sentry-test` HTTP 200 accepted, 2026-10-14) | `core/sentry.py` | OBS-04: owner opens the event in Sentry and confirms it carries nothing personal | H | Owner's Sentry login |
-| F-37 | Monitoring: Prometheus, Alertmanager (email), node and Postgres exporters; alerts for health, queue, disk, memory, backup age and size, SMTP failures, email budget, near-limit | IMPLEMENTED | DEPLOYED (monitoring profile up) | Alert rules AUTO PASS (Ops `promtool test`); a test alert was accepted by Brevo (1 sent, 0 failed, 2026-10-14); **receipt not confirmed** | `infra/monitoring` | OBS-05 (owner confirms the 2026-10-14 alert email; a new one needs root, BLOCKED) | H | Owner; root SSH |
+| F-37 | Monitoring: Prometheus, Alertmanager (email), node and Postgres exporters; alerts for health, queue, disk, memory, backup age and size, SMTP failures, email budget, near-limit | IMPLEMENTED | DEPLOYED (monitoring profile up) | Alert rules AUTO PASS (Ops `promtool test`); test alerts accepted by Brevo (2026-10-14, and 2026-10-16 10:54 UTC: notifications 0→1, 0 failed); **receipt not confirmed** | `infra/monitoring` | OBS-05 (owner confirms the alert emails arrived) | H | Owner |
 | F-38 | Health and readiness (`/healthz`, `/readyz`), structured logs, 365-day log archive in India, NIC/NPL time | IMPLEMENTED | DEPLOYED | PROD VERIFIED (`/healthz`, `/readyz` 200 publicly; log timer enabled; time from samay1.nic.in, 2026-10-14) | `scorecode-ctl archive-logs` | OBS-01, OBS-06 | M | — |
 | F-39 | Release pipeline: build, Trivy scan (critical stops it), private GHCR, sudo-only deploy, automatic restore-point backup, automatic rollback, branch-level image scan | IMPLEMENTED | v0.1.1–v0.1.4 released this way | PROD VERIFIED (v0.1.0 stopped by Trivy as designed; four releases; rollback drill v0.1.3→v0.1.2→v0.1.3, 59 s / 58 s) | `.github/workflows/release.yml` | DEP-05 migration rollback | M | — |
-| F-40 | Server hardening: deploy user without docker group, sudo for two programs, key-only SSH, ufw 22/443, swap, unattended upgrades | IMPLEMENTED | Applied 2026-10-14 | PROD VERIFIED 2026-10-14; **root key access now FAIL (see §1)** | `infra/ops/server/bootstrap.sh` | Restore root's key or confirm; SEC-12 | H | Owner |
+| F-40 | Server hardening: deploy user without docker group, sudo for two programs, key-only SSH, ufw 22/443, swap, unattended upgrades | IMPLEMENTED | Applied 2026-10-14 | PROD VERIFIED 2026-10-14 and 2026-10-16 (passwords refused, root by key only, ufw active) | `infra/ops/server/bootstrap.sh` | Keep the root key loaded after restarts (SEC-12 note) | L | Owner |
 | F-41 | Security controls: tenant isolation (RLS + host-bound sessions), authorisation matrix, CSRF, rate limits, breached-password check, security headers, honeypot on sign-up | IMPLEMENTED | DEPLOYED | AUTO PASS (`test_isolation.py`, `test_authz_matrix.py`, `test_security_hardening.py`, `test_breached_passwords.py`); headers and CSRF PROD VERIFIED | docs/security/threat-model.md | SEC-01–04 with two test schools | C | ONB-01 ×2 |
-| F-42 | Performance: result-day journey | IMPLEMENTED (k6, perf.yml, VPS script) | — | 200 concurrent on the VPS: 0 errors, p95 ≤ 0.65 s; CI 2-vCPU runner: 1,000 concurrent with 3–6% refused | benchmarks/results/2026-10-14-*.md | PERF-03: 400 and 600 with k6 on another machine; **nothing above 200 is shown to work on this server** | H | A second machine for k6 |
+| F-42 | Performance: result-day journey | IMPLEMENTED (k6, perf.yml, VPS script) | — | 200 concurrent on the VPS, twice (2026-10-14 and 2026-10-16): 0 errors, p95 0.04–0.65 s; CI 2-vCPU runner: 1,000 concurrent with 3–6% refused | benchmarks/results/2026-10-14-*.md | PERF-03: 400 and 600 with k6 on another machine; **nothing above 200 is shown to work on this server** | H | A second machine for k6 |
 | F-43 | Legal documents and readiness matrix (DPDP Act/Rules, IT Act, CERT-In, consumer, GST) | Drafts written | Not published in the product | Not reviewed | docs/legal/ | Lawyer and CA review; owner decisions (backup location, grievance officer, entity) | C | Lawyer, CA |
 
 ## 3. Summary
@@ -107,8 +109,8 @@ no real (test) school has gone through it on production yet. **This is the main 
 **Partial:** monitoring (alerts defined and tested; receipt not confirmed), backup safety (noncurrent
 versions on the 1-day rules unverified), performance (200 concurrent proven; 1,000 not).
 
-**Broken or unavailable:** the owner's production restore (F-33; fixed tooling, re-run pending) and root
-SSH access (§1).
+**Broken or unavailable:** the owner's production restore (F-33; tooling fixed, re-run pending). Root SSH
+(§1) is resolved.
 
 **Not implemented:** online payments, invoices and GST handling (F-26). Plans are enforced, but there is
 no way to take money in the product.
@@ -123,18 +125,17 @@ no way to take money in the product.
   over two days or are skipped (docs/16 §5).
 
 **Needs the owner:** platform console first sign-in (PLAT-01); a test school with your own email (ONB-01);
-the restore re-run (BAK-05); confirming the test emails and alert arrived (COM-01, OBS-05); root SSH key
-(§1); AWS budget alerts (BAK-09); legal and tax reviews (LEG-*).
+the restore re-run (BAK-05); confirming the test emails and alerts arrived (COM-01, OBS-05); AWS budget
+alerts (BAK-09); legal and tax reviews (LEG-*).
 
 **Before real schools use it (blockers):**
 1. BAK-05: a production restore that succeeds with your key.
 2. A complete school workflow on production with a test school (ONB-01 → RES-11), including email receipt.
 3. Two-school isolation checked on production (SEC-01–03).
 4. PLAT-01: your console sign-in works, so you can manage plans and suspend schools.
-5. Root SSH restored, or recovery confirmed through the Hostinger console.
-6. Legal: DPA and privacy notice reviewed; grievance contact named. To charge money: payments and
+5. Legal: DPA and privacy notice reviewed; grievance contact named. To charge money: payments and
    invoices (F-26) and the GST decision.
-7. Capacity: either prove more than 200 concurrent students (PERF-03), or limit early schools to sizes the
+6. Capacity: either prove more than 200 concurrent students (PERF-03), or limit early schools to sizes the
    measured capacity covers.
 
 **Can wait until after the first schools:** online checkout (if billing stays manual), higher-capacity

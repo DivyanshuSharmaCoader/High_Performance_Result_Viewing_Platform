@@ -78,8 +78,30 @@ take about 64 minutes). No duplicates.
 **Production during the run:** 105 of 105 probes from outside (`/api/v1/plans`, every 15 s, verified
 TLS) answered 200; the slowest took 0.84 s. SSH stayed reachable.
 
-**Not measured:** host-level memory, swap and CPU steal during attempt 3 (the sampler's awk expression
-was wrong and wrote nothing; fixed afterwards). Concurrency above 200.
+**Not measured in attempt 3:** host memory, swap and steal (the sampler's awk expression was wrong;
+fixed, and measured in attempt 4). Concurrency above 200.
+
+## Attempt 4: the same step, repeated 2026-10-16 (10:55–11:45 UTC, commit 6913f4c)
+The same 2,000 students and 200 virtual users, now with the host sampler working.
+
+| | Pre-authenticated | Sign-in first |
+|---|---|---|
+| Requests | 26,403 · **139.5/s** | 26,947 · **142.3/s** |
+| Failed | **0.00%** | **0.00%** |
+| Latest result p50 / p95 / p99 | 6.3 / 45 / 161 ms | 6.9 / 89 / 372 ms |
+| Class statistics p50 / p95 / p99 | 5.4 / 41 / 127 ms | 6.0 / 79 / 355 ms |
+| `/me` p50 / p95 / p99 | 12.1 / 89 / 309 ms | 13.6 / 172 / 725 ms |
+| Marksheet link p50 / p95 / p99 | 15.9 / 85 / 206 ms | 17.7 / 142 / 549 ms |
+| Sign-in p50 / p95 | — | 51.9 / 1,177 ms |
+
+- **Host**, every 10 s during the load: MemAvailable never below 5,250 MB; swap never used; load peaked
+  at 6.4; CPU steal at most 17% (7.6% on average). The watchdogs never fired.
+- **Marksheets:** 2,000 in 847 s (about 2.4 a second, worker capped at one CPU).
+- **Production:** 99 of 99 outside probes answered 200; the slowest took 0.59 s.
+- **Cleanup:** the test stack and its folder were removed.
+- **Why faster than attempt 3:** not established. The code was the same (v0.1.4 behaviour), and attempt
+  3 ran shortly after a failed run had left the host busy. Both runs are kept; the range is the
+  honest figure.
 
 ## What this means
 - **Tested on the VPS:** 200 students using the portal at once (about 135 requests a second) with no
