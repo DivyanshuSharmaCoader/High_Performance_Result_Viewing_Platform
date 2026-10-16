@@ -3,10 +3,12 @@
  * from the one before. Every step is done through the real interface; assertions check the real result
  * on screen, so a recording only exists if the workflow worked.
  */
+import path from "node:path";
+
 import { expect, test, type Browser, type Page } from "@playwright/test";
 
 import { apiAs, latestEmail, linkFrom, url } from "../../e2e/support";
-import { Lesson, SCHOOL, saveState, state } from "../support";
+import { Lesson, OUT, SCHOOL, saveState, state } from "../support";
 
 test.describe.configure({ mode: "serial" });
 
@@ -830,7 +832,9 @@ test("m11-student-result", async ({ browser }) => {
     await lesson.point(card);
     const download = page.waitForEvent("download");
     await lesson.click(card.getByRole("button", { name: "Download" }));
-    expect((await download).suggestedFilename()).toMatch(/^Marksheet-SPS1001-.+\.pdf$/);
+    const file = await download;
+    expect(file.suggestedFilename()).toMatch(/^Marksheet-SPS1001-.+\.pdf$/);
+    await file.saveAs(path.join(OUT, "m11-marksheet-SPS1001.pdf")); // kept as evidence (TEST_EVIDENCE.md)
   });
   let verifyUrl = "";
   await lesson.beat("share", async () => {

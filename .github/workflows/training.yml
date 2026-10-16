@@ -52,6 +52,7 @@ jobs:
           path: |
             frontend/test-results/training/*.webm
             frontend/test-results/training/*.timeline.json
+            frontend/test-results/training/*.pdf
             frontend/test-results/training-artifacts/
           retention-days: 14
       - name: Stack logs on failure
