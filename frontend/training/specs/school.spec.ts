@@ -204,7 +204,7 @@ test("m04-grading", async ({ browser }) => {
     await expect(page.getByRole("heading", { name: "Class 10 grading" }).first()).toBeVisible();
   });
   await lesson.beat("bands", async () => {
-    await lesson.point(page.getByText("A1", { exact: true }).first());
+    await lesson.point(page.getByRole("textbox", { name: "Band 1 grade" }));
     await lesson.point(page.getByLabel("Pass mark per paper (%)", { exact: false }).first());
   });
   await lesson.beat("tryit", async () => {
@@ -212,12 +212,10 @@ test("m04-grading", async ({ browser }) => {
   });
   await lesson.beat("default", async () => {
     await lesson.click(nav.getByRole("link", { name: "Grading" }));
-    const actions = page.getByRole("button", { name: "Actions for Class 10 grading" });
-    await lesson.click(actions);
-    const make = page.getByRole("menuitem", { name: "Make default" });
-    if (await make.isVisible()) await lesson.click(make);
-    else await page.keyboard.press("Escape");
-    await lesson.point(page.getByText("Default").first());
+    const badge = page.getByText("Default", { exact: true }).first();
+    await expect(badge).toBeVisible();
+    await lesson.point(badge);
+    await lesson.point(page.getByRole("button", { name: "Actions for Class 10 grading" }));
   });
   await lesson.beat("versions");
   await lesson.beat("outro");

@@ -39,8 +39,8 @@
   },
   {
    "id": "default",
-   "en": "Back in the list, make this scheme your school's default. New examinations will use it unless you choose another.",
-   "hi": "सूची में वापस जाकर इस scheme को स्कूल की default बनाएँ। नई परीक्षाएँ यही scheme इस्तेमाल करेंगी, जब तक आप कोई और न चुनें।"
+   "en": "Back in the list, the first scheme is already your school's default, so new examinations use it. With more than one scheme, choose Make default from its menu.",
+   "hi": "सूची में वापस जाकर देखें: पहली scheme अपने आप स्कूल की default बन जाती है, इसलिए नई परीक्षाएँ इसी को इस्तेमाल करती हैं। एक से ज़्यादा scheme हों, तो उसके menu से Make default चुनें।"
   },
   {
    "id": "versions",
