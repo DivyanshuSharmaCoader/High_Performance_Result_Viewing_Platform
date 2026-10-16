@@ -33,3 +33,7 @@ What to do when something breaks, written before it breaks. Each alert in
   - Deep health: the platform console, or `GET /api/v1/platform/health/deep` (platform sign-in).
 - Below, `dc` means
   `SCORECODE_VERSION=$(cat .deployed-version) docker compose -f compose.prod.yml --env-file env/deploy.env`.
+
+## Verification
+- [complete-platform-verification.md](complete-platform-verification.md): every feature, step by step, with copy-paste commands and expected results.
+- [acceptance-checklist.md](acceptance-checklist.md): one row per test, with its status and evidence.
