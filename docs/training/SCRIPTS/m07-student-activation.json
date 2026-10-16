@@ -1,0 +1,51 @@
+{
+ "id": "m07-student-activation",
+ "title": {
+  "en": "Module 7 · A student activates their account",
+  "hi": "भाग 7 · विद्यार्थी अपना account activate करता है"
+ },
+ "role": "Student",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "This module is for students, and for staff who help them. The student needs their enrollment number and the activation code from the school.",
+   "hi": "यह भाग विद्यार्थियों के लिए है, और उन स्टाफ़ के लिए जो उनकी मदद करते हैं। विद्यार्थी को अपना enrollment number और स्कूल से मिला activation code चाहिए।"
+  },
+  {
+   "id": "open",
+   "en": "On the school's sign-in page, click Activate your student account.",
+   "hi": "स्कूल के sign-in पेज पर Activate your student account पर क्लिक करें।"
+  },
+  {
+   "id": "fill",
+   "en": "Enter the enrollment number and the activation code exactly as printed.",
+   "hi": "Enrollment number और activation code ठीक वैसे ही भरें जैसे छपे हैं।"
+  },
+  {
+   "id": "password",
+   "en": "Choose a password of at least ten characters and type it again to confirm.",
+   "hi": "कम से कम दस अक्षरों का पासवर्ड चुनें और पुष्टि के लिए उसे दोबारा लिखें।"
+  },
+  {
+   "id": "activate",
+   "en": "Click Activate and sign in. The code now stops working, so nobody else can use it.",
+   "hi": "Activate and sign in पर क्लिक करें। अब यह code काम करना बंद कर देता है, ताकि कोई और इसका इस्तेमाल न कर सके।"
+  },
+  {
+   "id": "portal",
+   "en": "Aarav is now in his student portal. There are no results yet. They will appear here when the school publishes them.",
+   "hi": "Aarav अब अपने student portal में है। अभी कोई परिणाम नहीं है। जब स्कूल परिणाम प्रकाशित करेगा, वे यहीं दिखेंगे।"
+  },
+  {
+   "id": "signout",
+   "en": "To sign out, open the account menu and click Sign out. Next time, Aarav signs in with his enrollment number and password.",
+   "hi": "Sign out करने के लिए account menu खोलें और Sign out पर क्लिक करें। अगली बार Aarav अपने enrollment number और पासवर्ड से लॉग इन करेगा।"
+  },
+  {
+   "id": "outro",
+   "en": "Next, we create the examination: Periodic Test 1.",
+   "hi": "अगले भाग में हम परीक्षा बनाएँगे: Periodic Test 1।"
+  }
+ ]
+}

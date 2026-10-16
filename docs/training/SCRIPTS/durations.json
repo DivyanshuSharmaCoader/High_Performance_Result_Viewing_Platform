@@ -29,5 +29,53 @@
   "credits": 10999,
   "more_courses": 6806,
   "outro": 11413
+ },
+ "m04-grading": {
+  "intro": 12522,
+  "open": 4370,
+  "template": 18490,
+  "name": 6417,
+  "bands": 8413,
+  "tryit": 9308,
+  "default": 10144,
+  "versions": 11311,
+  "outro": 4961
+ },
+ "m05-students": {
+  "intro": 8239,
+  "open": 4546,
+  "fill": 12586,
+  "cohort": 5566,
+  "added": 6041,
+  "code": 11219,
+  "import_intro": 9442,
+  "upload_bad": 12105,
+  "errors": 9111,
+  "fix": 9555,
+  "ready": 6493,
+  "commit": 5553,
+  "done": 5806,
+  "outro": 9281
+ },
+ "m06-staff": {
+  "intro": 11130,
+  "open": 4407,
+  "fill": 8697,
+  "role": 11142,
+  "send": 5929,
+  "listed": 5787,
+  "accept": 9279,
+  "teacher_home": 7779,
+  "outro": 6319
+ },
+ "m07-student-activation": {
+  "intro": 11489,
+  "open": 5361,
+  "fill": 5691,
+  "password": 5822,
+  "activate": 9059,
+  "portal": 9233,
+  "signout": 10272,
+  "outro": 4679
  }
 }

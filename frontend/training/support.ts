@@ -17,8 +17,12 @@ export const SCHOOL = {
   name: "Sunrise Public School",
   ownerName: "Sunita Sharma",
   ownerEmail: "sunita.sharma@sunrise-school.example",
-  // A test-only password for the throwaway recording stack; never used anywhere real.
+  // Test-only passwords for the throwaway recording stack; never used anywhere real.
   ownerPassword: "sunrise-training-owner-2026",
+  teacherName: "Amit Kumar",
+  teacherEmail: "amit.kumar@sunrise-school.example",
+  teacherPassword: "sunrise-training-teacher-2026",
+  student: { enrollment: "SPS1001", name: "Aarav Sharma", password: "aarav-training-2026" },
 };
 
 export function saveState(values: Record<string, string>): void {
@@ -74,7 +78,7 @@ export class Lesson {
   static async start(browser: Browser, id: string): Promise<Lesson> {
     const context = await browser.newContext({
       viewport: { width: 1440, height: 810 },
-      recordVideo: { dir: path.join(OUT, "raw", id), size: { width: 1920, height: 1080 } },
+      recordVideo: { dir: path.join(OUT, "raw", id), size: { width: 1440, height: 810 } }, // scaled to 1080p later
       locale: "en-IN",
       timezoneId: "Asia/Kolkata",
     });
@@ -128,6 +132,23 @@ export class Lesson {
   async choose(target: Locator, option: string | { label: string }): Promise<void> {
     await this.point(target);
     await target.selectOption(option);
+  }
+
+  /** Pick the option whose text contains ``text`` (option labels often add the code or session). */
+  async chooseContaining(target: Locator, text: string): Promise<void> {
+    await this.point(target);
+    const options = await target.locator("option").allTextContents();
+    const match = options.find((o) => o.includes(text));
+    if (!match) throw new Error(`no option containing "${text}" in ${JSON.stringify(options)}`);
+    await target.selectOption({ label: match });
+  }
+
+  /** Upload a file through the page's own file picker button. */
+  async upload(button: Locator, name: string, text: string): Promise<void> {
+    await this.point(button);
+    const chooser = this.page.waitForEvent("filechooser");
+    await button.click();
+    await (await chooser).setFiles({ name, mimeType: "text/csv", buffer: Buffer.from(text) });
   }
 
   /** Close the window (the video is written), keep it as OUT/<id>.webm with OUT/<id>.timeline.json. */

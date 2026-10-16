@@ -1,0 +1,56 @@
+{
+ "id": "m06-staff",
+ "title": {
+  "en": "Module 6 · Invite teachers and staff",
+  "hi": "भाग 6 · शिक्षकों और स्टाफ़ को आमंत्रित करें"
+ },
+ "role": "Owner or Administrator (teacher: Faculty)",
+ "plan": "Every plan (Free: 5 staff accounts, 2 of them administrators)",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "Each teacher gets their own account. A teacher, called Faculty in ScoreCode, can enter marks only for the subjects you assign to them.",
+   "hi": "हर शिक्षक का अपना account होता है। शिक्षक, जिन्हें ScoreCode में Faculty कहते हैं, सिर्फ़ उन्हीं विषयों के अंक भर सकते हैं जो आप उन्हें देते हैं।"
+  },
+  {
+   "id": "open",
+   "en": "Open Staff in the menu and click Invite staff.",
+   "hi": "मेन्यू में Staff खोलें और Invite staff पर क्लिक करें।"
+  },
+  {
+   "id": "fill",
+   "en": "Enter the teacher's name and email. Here, our mathematics teacher, Mr. Amit Kumar. The email address is fictional.",
+   "hi": "शिक्षक का नाम और ईमेल भरें। यहाँ हमारे गणित शिक्षक, Mr. Amit Kumar। यह ईमेल पता काल्पनिक है।"
+  },
+  {
+   "id": "role",
+   "en": "Choose the role. Faculty enters marks. Administrator manages students, examinations, results and settings. For a teacher, choose Faculty.",
+   "hi": "Role चुनें। Faculty अंक भरते हैं। Administrator विद्यार्थी, परीक्षाएँ, परिणाम और settings संभालते हैं। शिक्षक के लिए Faculty चुनें।"
+  },
+  {
+   "id": "send",
+   "en": "Click Send invitation. The teacher receives an email with a link.",
+   "hi": "Send invitation पर क्लिक करें। शिक्षक को एक लिंक वाला ईमेल मिलता है।"
+  },
+  {
+   "id": "listed",
+   "en": "The teacher appears in the staff list as invited, until they accept.",
+   "hi": "जब तक शिक्षक स्वीकार नहीं करते, वे staff list में invited दिखते हैं।"
+  },
+  {
+   "id": "accept",
+   "en": "Now we see what the teacher does. They open the link in the email, choose a password, and click Create account.",
+   "hi": "अब देखते हैं कि शिक्षक क्या करते हैं। वे ईमेल का लिंक खोलते हैं, पासवर्ड चुनते हैं, और Create account पर क्लिक करते हैं।"
+  },
+  {
+   "id": "teacher_home",
+   "en": "The teacher lands on Marks entry. They see only their own assignments, and none of the administrative menus.",
+   "hi": "शिक्षक सीधे Marks entry पर पहुँचते हैं। उन्हें सिर्फ़ अपने काम दिखते हैं, administrative मेन्यू नहीं।"
+  },
+  {
+   "id": "outro",
+   "en": "Next, a student activates their account and signs in for the first time.",
+   "hi": "अगले भाग में एक विद्यार्थी अपना account activate करके पहली बार लॉग इन करेगा।"
+  }
+ ]
+}

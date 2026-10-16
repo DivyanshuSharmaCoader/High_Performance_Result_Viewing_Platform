@@ -1,0 +1,81 @@
+{
+ "id": "m05-students",
+ "title": {
+  "en": "Module 5 · Add and import students",
+  "hi": "भाग 5 · विद्यार्थी जोड़ें और import करें"
+ },
+ "role": "Owner or Administrator",
+ "plan": "Every plan (Free: up to 150 active students; 5,000 rows per import)",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "There are two ways to add students: one at a time, or many at once from a spreadsheet. We show both.",
+   "hi": "विद्यार्थी जोड़ने के दो तरीके हैं: एक-एक करके, या एक spreadsheet से एक साथ कई। हम दोनों दिखाएँगे।"
+  },
+  {
+   "id": "open",
+   "en": "Open Students in the menu and click Add student.",
+   "hi": "मेन्यू में Students खोलें और Add student पर क्लिक करें।"
+  },
+  {
+   "id": "fill",
+   "en": "Enter the enrollment number and the full name. The enrollment number must be unique, because the student will use it to sign in. Here we add Aarav Sharma.",
+   "hi": "Enrollment number और पूरा नाम भरें। Enrollment number हर विद्यार्थी का अलग होना चाहिए, क्योंकि विद्यार्थी इसी से लॉग इन करेगा। यहाँ हम Aarav Sharma को जोड़ रहे हैं।"
+  },
+  {
+   "id": "cohort",
+   "en": "In the Cohort field, choose his section: Class 10, Section A.",
+   "hi": "Cohort वाले खाने में उसका सेक्शन चुनें: Class 10, Section A।"
+  },
+  {
+   "id": "added",
+   "en": "Click Add student. Aarav's page opens, with his section.",
+   "hi": "Add student पर क्लिक करें। Aarav का पेज उसके सेक्शन के साथ खुल जाता है।"
+  },
+  {
+   "id": "code",
+   "en": "To let Aarav create his own password, click Issue activation code. The code is shown only once: give it to the student or print it.",
+   "hi": "Aarav को अपना पासवर्ड खुद बनाने देने के लिए Issue activation code पर क्लिक करें। यह code सिर्फ़ एक बार दिखता है: इसे विद्यार्थी को दें या print करें।"
+  },
+  {
+   "id": "import_intro",
+   "en": "Now the faster way. Open Imports. You can upload a CSV or Excel file with one row for each student.",
+   "hi": "अब तेज़ तरीका। Imports खोलें। आप CSV या Excel फ़ाइल upload कर सकते हैं, जिसमें हर विद्यार्थी की एक पंक्ति हो।"
+  },
+  {
+   "id": "upload_bad",
+   "en": "We upload a file with some mistakes on purpose: a missing name, an enrollment number written twice, and a section that doesn't exist.",
+   "hi": "हम जानबूझकर कुछ गलतियों वाली फ़ाइल upload कर रहे हैं: एक नाम छूटा हुआ है, एक enrollment number दो बार लिखा है, और एक ऐसा सेक्शन है जो मौजूद नहीं है।"
+  },
+  {
+   "id": "errors",
+   "en": "ScoreCode checks every row first and saves nothing yet. Each problem is listed with its row and a reason.",
+   "hi": "ScoreCode पहले हर पंक्ति जाँचता है और अभी कुछ भी save नहीं करता। हर गलती उसकी पंक्ति और कारण के साथ दिखती है।"
+  },
+  {
+   "id": "fix",
+   "en": "Correct the file and click Upload fixed file. You can also download the checked file to see the problems inside your spreadsheet.",
+   "hi": "फ़ाइल ठीक करें और Upload fixed file पर क्लिक करें। आप checked फ़ाइल download करके अपनी spreadsheet में भी गलतियाँ देख सकते हैं।"
+  },
+  {
+   "id": "ready",
+   "en": "Now every row is correct. ScoreCode tells you exactly how many new students will be added.",
+   "hi": "अब हर पंक्ति सही है। ScoreCode साफ़ बताता है कि कितने नए विद्यार्थी जुड़ेंगे।"
+  },
+  {
+   "id": "commit",
+   "en": "Only now does anything change. Click Import, and confirm.",
+   "hi": "अब जाकर ही कुछ बदलता है। Import पर क्लिक करें, और पुष्टि करें।"
+  },
+  {
+   "id": "done",
+   "en": "The import is complete. Open the student list to check the new students.",
+   "hi": "Import पूरा हो गया। नए विद्यार्थियों को देखने के लिए student list खोलें।"
+  },
+  {
+   "id": "outro",
+   "en": "Remember the order: upload, check, fix, and only then import. Next, we invite the teachers.",
+   "hi": "क्रम याद रखें: upload, जाँच, सुधार, और उसके बाद ही import। अगले भाग में हम शिक्षकों को आमंत्रित करेंगे।"
+  }
+ ]
+}

@@ -78,7 +78,9 @@ test("m03-academic-structure", async ({ browser }) => {
   await signInAs(lesson, slug, SCHOOL.ownerEmail, SCHOOL.ownerPassword);
   await lesson.beat("intro");
   await lesson.beat("open", async () => {
-    await lesson.click(page.getByRole("link", { name: "Structure" }));
+    await lesson.click(
+      page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Structure" }),
+    );
     await expect(page).toHaveURL(url(slug, "/admin/academics"));
   });
   let dialog = page.getByRole("dialog");
@@ -175,5 +177,232 @@ test("m03-academic-structure", async ({ browser }) => {
   await lesson.beat("outro", async () => {
     await expect(page.getByRole("row")).toHaveCount(6); // header + five subjects
   });
+  await lesson.finish();
+});
+
+test("m04-grading", async ({ browser }) => {
+  const slug = state().slug!;
+  const lesson = await Lesson.start(browser, "m04-grading");
+  const { page } = lesson;
+  await signInAs(lesson, slug, SCHOOL.ownerEmail, SCHOOL.ownerPassword);
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await lesson.beat("intro");
+  let dialog = page.getByRole("dialog");
+  await lesson.beat("open", async () => {
+    await lesson.click(nav.getByRole("link", { name: "Grading" }));
+    await expect(page.getByRole("heading", { name: "Grading", exact: true })).toBeVisible();
+    await lesson.click(page.getByRole("button", { name: "New scheme" }).first());
+    dialog = page.getByRole("dialog");
+  });
+  await lesson.beat("template", async () => {
+    await lesson.click(dialog.getByText("9-band scale (CBSE-style)"));
+  });
+  await lesson.beat("name", async () => {
+    await lesson.type(dialog.getByLabel("Name"), "Class 10 grading");
+    await lesson.click(dialog.getByRole("button", { name: "Create scheme" }));
+    await expect(page.getByRole("heading", { name: "Class 10 grading" })).toBeVisible();
+  });
+  await lesson.beat("bands", async () => {
+    await lesson.point(page.getByText("A1", { exact: true }).first());
+    await lesson.point(page.getByLabel("Pass mark per paper (%)", { exact: false }).first());
+  });
+  await lesson.beat("tryit", async () => {
+    await lesson.point(page.getByRole("heading", { name: "Try it" }));
+  });
+  await lesson.beat("default", async () => {
+    await lesson.click(nav.getByRole("link", { name: "Grading" }));
+    const actions = page.getByRole("button", { name: "Actions for Class 10 grading" });
+    await lesson.click(actions);
+    const make = page.getByRole("menuitem", { name: "Make default" });
+    if (await make.isVisible()) await lesson.click(make);
+    else await page.keyboard.press("Escape");
+    await lesson.point(page.getByText("Default").first());
+  });
+  await lesson.beat("versions");
+  await lesson.beat("outro");
+  await lesson.finish();
+});
+
+const STUDENTS_BAD = [
+  "Enrollment no.,Full name,Cohort",
+  "SPS1002,Priya Verma,10A",
+  "SPS1003,Rohan Mehta,10A",
+  "SPS1004,,10A",
+  "SPS1003,Rohan Mehta,10A",
+  "SPS1005,Kavya Iyer,10B",
+].join("\n");
+const STUDENTS_FIXED = [
+  "Enrollment no.,Full name,Cohort",
+  "SPS1002,Priya Verma,10A",
+  "SPS1003,Rohan Mehta,10A",
+  "SPS1004,Ananya Singh,10A",
+  "SPS1005,Kavya Iyer,10A",
+  "SPS1006,Vihaan Gupta,10A",
+].join("\n");
+
+test("m05-students", async ({ browser }) => {
+  const slug = state().slug!;
+  const lesson = await Lesson.start(browser, "m05-students");
+  const { page } = lesson;
+  await signInAs(lesson, slug, SCHOOL.ownerEmail, SCHOOL.ownerPassword);
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await lesson.beat("intro");
+  let dialog = page.getByRole("dialog");
+  await lesson.beat("open", async () => {
+    await lesson.click(nav.getByRole("link", { name: "Students" }));
+    await lesson.click(page.getByRole("button", { name: "Add student" }).first());
+    dialog = page.getByRole("dialog");
+  });
+  await lesson.beat("fill", async () => {
+    await lesson.type(dialog.getByLabel("Enrollment no."), SCHOOL.student.enrollment);
+    await lesson.type(dialog.getByLabel("Full name"), SCHOOL.student.name);
+  });
+  await lesson.beat("cohort", async () => {
+    await lesson.chooseContaining(dialog.getByLabel(/^Cohort/), "10A");
+  });
+  await lesson.beat("added", async () => {
+    await lesson.click(dialog.getByRole("button", { name: "Add student" }));
+    await expect(page.getByRole("heading", { name: /Aarav Sharma/ })).toBeVisible();
+    await lesson.point(page.getByText("10A").first());
+  });
+  await lesson.beat("code", async () => {
+    await lesson.click(page.getByRole("button", { name: "Issue activation code" }));
+    const slip = page.getByRole("dialog");
+    await expect(slip.getByText("Shown only now")).toBeVisible();
+    const code = (await slip.locator("p.font-mono").first().textContent())?.trim() ?? "";
+    expect(code).toMatch(/^[0-9A-Z]{5}-[0-9A-Z]{5}$/);
+    saveState({ aaravCode: code });
+    await lesson.point(slip.locator("p.font-mono").first());
+    await page.waitForTimeout(1500);
+    await lesson.click(slip.getByRole("button", { name: "Close" }));
+  });
+  await lesson.beat("import_intro", async () => {
+    await lesson.click(nav.getByRole("link", { name: "Imports" }));
+    await expect(page.getByRole("heading", { name: "Imports", exact: true })).toBeVisible();
+  });
+  await lesson.beat("upload_bad", async () => {
+    await lesson.upload(
+      page.getByRole("button", { name: /Choose a file/ }),
+      "class-10a-students.csv",
+      STUDENTS_BAD,
+    );
+    await expect(page).toHaveURL(/\/admin\/imports\/[0-9a-f-]+$/);
+  });
+  await lesson.beat("errors", async () => {
+    const table = page.getByRole("table").first();
+    await expect(table).toBeVisible({ timeout: 30_000 });
+    await lesson.point(table);
+    await expect(page.getByRole("button", { name: /^Import \d+ valid rows?$/ })).toBeVisible();
+  });
+  await lesson.beat("fix", async () => {
+    await lesson.point(page.getByRole("link", { name: /Download checked file/ }));
+    await lesson.click(page.getByRole("button", { name: "Upload fixed file" }));
+    await lesson.upload(
+      page.getByRole("dialog").getByRole("button", { name: /Choose a file/ }),
+      "class-10a-students-fixed.csv",
+      STUDENTS_FIXED,
+    );
+  });
+  await lesson.beat("ready", async () => {
+    const summary = page.getByText("5 new students will be added.");
+    await expect(summary).toBeVisible({ timeout: 30_000 });
+    await lesson.point(summary);
+  });
+  await lesson.beat("commit", async () => {
+    await lesson.click(page.getByRole("button", { name: "Import 5 rows" }));
+    await lesson.click(page.getByRole("dialog").getByRole("button", { name: "Import" }));
+    await expect(page.getByRole("heading", { name: "Import complete" })).toBeVisible({ timeout: 30_000 });
+  });
+  await lesson.beat("done", async () => {
+    await lesson.point(page.getByText(/5 added/));
+    await lesson.click(page.getByRole("link", { name: "View students" }));
+    await expect(page.getByRole("table").getByRole("row")).toHaveCount(7); // header + Aarav + five
+  });
+  await lesson.beat("outro");
+  await lesson.finish();
+});
+
+test("m06-staff", async ({ browser }) => {
+  const slug = state().slug!;
+  const lesson = await Lesson.start(browser, "m06-staff");
+  const { page } = lesson;
+  await signInAs(lesson, slug, SCHOOL.ownerEmail, SCHOOL.ownerPassword);
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await lesson.beat("intro");
+  let dialog = page.getByRole("dialog");
+  await lesson.beat("open", async () => {
+    await lesson.click(nav.getByRole("link", { name: "Staff" }));
+    await lesson.click(page.getByRole("button", { name: "Invite staff" }).first());
+    dialog = page.getByRole("dialog");
+  });
+  await lesson.beat("fill", async () => {
+    await lesson.type(dialog.getByLabel("Full name"), SCHOOL.teacherName);
+    await lesson.type(dialog.getByLabel("Work email"), SCHOOL.teacherEmail);
+  });
+  await lesson.beat("role", async () => {
+    await lesson.point(dialog.getByText("Administrator", { exact: true }));
+    await lesson.click(dialog.getByText("Faculty", { exact: true }));
+  });
+  await lesson.beat("send", async () => {
+    await lesson.click(dialog.getByRole("button", { name: "Send invitation" }));
+    await expect(dialog).toBeHidden();
+  });
+  await lesson.beat("listed", async () => {
+    await expect(page.getByText(SCHOOL.teacherName).first()).toBeVisible();
+    await lesson.point(page.getByText(SCHOOL.teacherName).first());
+  });
+  await lesson.beat("accept", async () => {
+    await lesson.click(page.getByRole("button", { name: "Account menu" }));
+    await lesson.click(page.getByRole("menuitem", { name: "Sign out" }));
+    await expect(page).toHaveURL(/\/login/);
+    const mail = await latestEmail(SCHOOL.teacherEmail);
+    await page.goto(linkFrom(mail.text, /http:\/\/\S+\/accept-invite\?token=[\w-]+/));
+    await lesson.point(page.getByLabel("Password", { exact: true }));
+    await page
+      .getByLabel("Password", { exact: true })
+      .pressSequentially(SCHOOL.teacherPassword, { delay: 35 });
+    await page.getByLabel("Confirm password").pressSequentially(SCHOOL.teacherPassword, { delay: 35 });
+    await lesson.click(page.getByRole("button", { name: "Create account" }));
+    await expect(page).toHaveURL(url(slug, "/marking"), { timeout: 20_000 });
+  });
+  await lesson.beat("teacher_home", async () => {
+    await lesson.point(page.getByRole("navigation", { name: "Main" }));
+  });
+  await lesson.beat("outro");
+  await lesson.finish();
+});
+
+test("m07-student-activation", async ({ browser }) => {
+  const { slug, aaravCode } = state();
+  const lesson = await Lesson.start(browser, "m07-student-activation");
+  const { page } = lesson;
+  await page.goto(url(slug!, "/login"));
+  await lesson.beat("intro");
+  await lesson.beat("open", async () => {
+    await lesson.click(page.getByRole("link", { name: "Activate your student account" }));
+  });
+  await lesson.beat("fill", async () => {
+    await lesson.type(page.getByLabel("Enrollment / roll number"), SCHOOL.student.enrollment);
+    await lesson.type(page.getByLabel("Activation code"), aaravCode!);
+  });
+  await lesson.beat("password", async () => {
+    await lesson.point(page.getByLabel("New password"));
+    await page.getByLabel("New password").pressSequentially(SCHOOL.student.password, { delay: 40 });
+    await page.getByLabel("Confirm password").pressSequentially(SCHOOL.student.password, { delay: 40 });
+  });
+  await lesson.beat("activate", async () => {
+    await lesson.click(page.getByRole("button", { name: "Activate and sign in" }));
+    await expect(page).toHaveURL(/\/me$/, { timeout: 20_000 });
+  });
+  await lesson.beat("portal", async () => {
+    await expect(page.getByRole("heading", { name: "Hello, Aarav" })).toBeVisible();
+    await lesson.point(page.getByText("No results yet"));
+  });
+  await lesson.beat("signout", async () => {
+    await lesson.click(page.getByRole("button", { name: "Account menu" }));
+    await lesson.click(page.getByRole("button", { name: "Sign out" }));
+    await expect(page).toHaveURL(/\/login/);
+  });
+  await lesson.beat("outro");
   await lesson.finish();
 });

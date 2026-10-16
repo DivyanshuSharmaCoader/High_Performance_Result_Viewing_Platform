@@ -106,7 +106,9 @@ def assemble(recordings: Path) -> None:
             filt = f"{delays}{mix}amix=inputs={len(clips)}:normalize=0,loudnorm=I=-16:TP=-1.5[aout]"
             out = RENDERED / lang / f"{m['id']}.mp4"
             out.parent.mkdir(parents=True, exist_ok=True)
-            args += ["-i", str(srt_path), "-filter_complex", filt, "-map", "0:v", "-map", "[aout]",
+            # The window is recorded at 1440×810 and scaled to 1080p, so text stays large on a phone.
+            filt = f"[0:v]scale=1920:1080:flags=lanczos,format=yuv420p[vout];{filt}"
+            args += ["-i", str(srt_path), "-filter_complex", filt, "-map", "[vout]", "-map", "[aout]",
                      "-map", f"{len(clips) + 1}:s",
                      "-c:v", "libx264", "-preset", "medium", "-crf", "23", "-pix_fmt", "yuv420p", "-r", "25",
                      "-c:a", "aac", "-b:a", "128k", "-c:s", "mov_text",

@@ -1,0 +1,56 @@
+{
+ "id": "m04-grading",
+ "title": {
+  "en": "Module 4 · Choose your grading scheme",
+  "hi": "भाग 4 · अपनी grading scheme चुनें"
+ },
+ "role": "Owner or Administrator",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "A grading scheme turns marks into grades and decides who passes. You choose a starting template, then adjust it to your school's rules.",
+   "hi": "Grading scheme अंकों को grades में बदलती है और तय करती है कि कौन पास है। आप एक template से शुरू करते हैं, फिर उसे अपने स्कूल के नियमों के हिसाब से बदल सकते हैं।"
+  },
+  {
+   "id": "open",
+   "en": "Open Grading in the menu, then click New scheme.",
+   "hi": "मेन्यू में Grading खोलें, फिर New scheme पर क्लिक करें।"
+  },
+  {
+   "id": "template",
+   "en": "Choose the 9-band scale, CBSE-style. It gives grades A1 to E from percentage bands, with 33 percent to pass each subject. This is a starting template: please check it against your board's current rules.",
+   "hi": "9-band scale, CBSE-style चुनें। इसमें प्रतिशत के हिसाब से A1 से E तक grades मिलते हैं, और हर विषय में पास होने के लिए 33 प्रतिशत चाहिए। यह सिर्फ़ शुरुआती template है: इसे अपने बोर्ड के मौजूदा नियमों से मिलाकर ज़रूर देखें।"
+  },
+  {
+   "id": "name",
+   "en": "Give the scheme a clear name, such as Class 10 grading, and click Create scheme.",
+   "hi": "Scheme को साफ़ नाम दें, जैसे Class 10 grading, और Create scheme पर क्लिक करें।"
+  },
+  {
+   "id": "bands",
+   "en": "Here you see every band and the pass mark. You can change any of them before you use the scheme.",
+   "hi": "यहाँ हर band और पास होने के अंक दिखते हैं। Scheme इस्तेमाल करने से पहले आप इनमें से कुछ भी बदल सकते हैं।"
+  },
+  {
+   "id": "tryit",
+   "en": "The Try it box calculates sample marks with this scheme, so you can check the result before any real examination.",
+   "hi": "Try it बॉक्स इस scheme से उदाहरण वाले अंकों का नतीजा निकालता है, ताकि असली परीक्षा से पहले आप परिणाम जाँच सकें।"
+  },
+  {
+   "id": "default",
+   "en": "Back in the list, make this scheme your school's default. New examinations will use it unless you choose another.",
+   "hi": "सूची में वापस जाकर इस scheme को स्कूल की default बनाएँ। नई परीक्षाएँ यही scheme इस्तेमाल करेंगी, जब तक आप कोई और न चुनें।"
+  },
+  {
+   "id": "versions",
+   "en": "If you change a scheme later, ScoreCode saves a new version. Results that were already processed keep the version they used.",
+   "hi": "अगर बाद में आप scheme बदलते हैं, तो ScoreCode उसका नया version बनाता है। जिन परिणामों की गणना पहले हो चुकी है, वे पुराने version पर ही रहते हैं।"
+  },
+  {
+   "id": "outro",
+   "en": "Next, we add the students of Class 10, Section A.",
+   "hi": "अगले भाग में हम Class 10, Section A के विद्यार्थी जोड़ेंगे।"
+  }
+ ]
+}
