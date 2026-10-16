@@ -1042,16 +1042,26 @@ test("m01-orientation", async ({ browser }) => {
   await lesson.beat("school", async () => {
     await lesson.point(page.getByText(SCHOOL.name).filter({ visible: true }).first());
   });
-  await lesson.beat("roles");
-  await lesson.beat("no_parent");
   await lesson.beat("dashboard", async () => {
     await lesson.type(page.getByLabel("Email or enrollment number"), SCHOOL.ownerEmail);
     await page.getByLabel("Password", { exact: true }).fill(SCHOOL.ownerPassword);
     await lesson.click(page.getByRole("button", { name: "Sign in" }));
     await expect(page).toHaveURL(url(slug, "/admin"), { timeout: 20_000 });
   });
+  const nav = page.getByRole("navigation", { name: "Main" });
+  await lesson.beat("roles", async () => {
+    await lesson.point(page.getByRole("button", { name: "Account menu" }));
+    await lesson.click(nav.getByRole("link", { name: "Staff" }));
+    const amit = page.getByText(SCHOOL.teacherName).filter({ visible: true }).first();
+    await expect(amit).toBeVisible();
+    await lesson.point(amit);
+  });
+  await lesson.beat("no_parent", async () => {
+    await lesson.click(nav.getByRole("link", { name: "Students" }));
+  });
   await lesson.beat("menu", async () => {
-    await lesson.point(page.getByRole("navigation", { name: "Main" }));
+    await lesson.click(nav.getByRole("link", { name: "Dashboard" }));
+    await lesson.point(nav);
   });
   await lesson.beat("outro");
   await lesson.finish();

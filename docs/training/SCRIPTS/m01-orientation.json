@@ -18,19 +18,19 @@
    "hi": "इस series में हम एक काल्पनिक स्कूल, Sunrise Public School, के साथ Class 10, Section A का Periodic Test 1 पूरा करेंगे।"
   },
   {
+   "id": "dashboard",
+   "en": "Mrs. Sunita Sharma, the principal, signs in. As the owner, she sees the dashboard first.",
+   "hi": "प्रधानाचार्या श्रीमती सुनीता शर्मा sign in करती हैं। Owner होने के नाते, उन्हें सबसे पहले dashboard दिखता है।"
+  },
+  {
    "id": "roles",
-   "en": "There are four kinds of account. The Owner, here the principal, Mrs. Sunita Sharma. Administrators, such as the exam coordinator. Faculty, the teachers. And Students.",
-   "hi": "Account चार तरह के होते हैं। Owner, यहाँ प्रधानाचार्या श्रीमती सुनीता शर्मा। Administrators, जैसे परीक्षा समन्वयक। Faculty, यानी शिक्षक। और Students।"
+   "en": "There are four kinds of account. The Owner, here the principal. Administrators, such as the exam coordinator. Faculty, the teachers, like Mr. Amit Kumar on the Staff page. And Students.",
+   "hi": "Account चार तरह के होते हैं। Owner, यहाँ प्रधानाचार्या। Administrators, जैसे परीक्षा समन्वयक। Faculty, यानी शिक्षक, जैसे Staff पेज पर श्री अमित कुमार। और Students।"
   },
   {
    "id": "no_parent",
    "en": "There is no separate role for parents, principals or coordinators. Give each person the closest of these four.",
    "hi": "माता-पिता, प्रधानाचार्य या समन्वयक के लिए अलग role नहीं है। हर व्यक्ति को इन चार में से सबसे सही role दें।"
-  },
-  {
-   "id": "dashboard",
-   "en": "After signing in, the owner sees the dashboard.",
-   "hi": "Sign in करने के बाद owner को dashboard दिखता है।"
   },
   {
    "id": "menu",
