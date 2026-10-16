@@ -104,7 +104,7 @@ Counts: PASS 27, PARTIAL 3, FAIL 1, BLOCKED 3, NOT TESTED 72, NOT IMPLEMENTED 1,
 | [ ] | SEC-10 | Audit logs | Browser | You | **NOT TESTED** |  | test_audit | |
 | [ ] | SEC-11 | Monitoring and internal ports aren't public | Mac Terminal | Claude ran | **PASS** | /metrics → text/html; only 22 and 443 open |  | |
 | [ ] | SEC-12 | SSH is keys-only, and root can be recovered | Mac Terminal | Claude ran | **PASS** | 2026-10-16: passwords refused; root key works; root by key only; ufw active |  | |
-| [ ] | OBS-01 | Health endpoints | Mac Terminal | Claude ran | **PASS** | /healthz, /readyz, /plans 200 in ~0.14 s |  | |
+| [ ] | OBS-01 | API liveness and readiness | Mac Terminal | Claude ran | **PASS** | 2026-10-16 12:4x: `/livez` ok and `/readyz` ok/database up/cache redis inside; public `/api/v1/plans` and test-school-1 `/tenant/config` JSON 200. Corrected: the earlier public `/healthz` 200 was the web app's HTML | | |
 | [ ] | OBS-02 | DNS and Cloudflare settings | Mac Terminal | Claude ran | **PASS** | 4 proxied A records; Brevo records present; strict, HTTPS on, TLS 1.2 |  | |
 | [ ] | OBS-03 | Logs: structured and free of personal data | Mac Terminal | You | **NOT TESTED** |  |  | |
 | [ ] | OBS-04 | Sentry receives a scrubbed error | Mac Terminal + Dashboard | Claude ran | **PARTIAL** | accepted by Sentry, HTTP 200 (2026-10-14); content not yet viewed in Sentry |  | |

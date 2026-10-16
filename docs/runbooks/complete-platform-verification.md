@@ -728,11 +728,24 @@ Never paste a file without `.pub`: that's a private key.
 
 ## Part N — Monitoring and operations
 
-### OBS-01 Health endpoints · 🖥️ · `READ-ONLY`
-```bash
-for p in /healthz /readyz /api/v1/plans; do curl -sS --max-time 15 -o /dev/null -w "%{http_code} %{time_total}s $p\n" "https://scorecode.website$p"; done
-```
-**Expect:** `200` three times, each under 2 s.
+### OBS-01 API liveness and readiness · 🖥️ · `READ-ONLY`
+The API's health routes are `/livez` and `/readyz`, served only **inside** the server; the edge forwards
+only `/api/*` and `/v/*` to the API. A public `https://scorecode.website/healthz` or `/readyz` returns the
+web app's own HTML page (768 bytes, `text/html`), which proves nothing about the API. (The audit of
+2026-10-16 first counted it by mistake; corrected.)
+1. Inside, through the deploy account's fixed commands. The API container is `healthy` only when
+   `/readyz` answers `{"status":"ok","database":"up",...}`:
+   ```bash
+   cd ~/Desktop/ResultHub && infra/ops/with-secrets.sh run -- infra/ops/server/remote.sh deploy ctl status | grep -E "^(api|postgres|redis|proxy) "
+   ```
+2. Outside, real API routes that return JSON:
+   ```bash
+   for u in https://scorecode.website/api/v1/plans https://test-school-1.scorecode.website/api/v1/tenant/config; do curl -sS --max-time 15 -o /dev/null -w "%{http_code} %{content_type} $u\n" "$u"; done
+   ```
+
+**Expect:**
+- (1) `api ... (healthy)`, and the same for postgres, redis and proxy;
+- (2) `200 application/json` twice; if `test-school-1` doesn't exist yet, the second is `404`.
 
 ### OBS-02 DNS and Cloudflare settings · 🖥️ · `READ-ONLY`
 ```bash

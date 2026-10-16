@@ -39,6 +39,18 @@ The step-by-step checks are in [complete-platform-verification.md](../runbooks/c
     each step, and has time limits. Re-run with BAK-05.
 - Nightly backups run (21:00 UTC on 14 and 15 Oct present; 8 dumps under `prod/db/`, 2.4 MB in total).
 
+**Outage 2026-10-16 11:55–12:27 UTC (32 minutes).**
+- **Cause:** the hypervisor shut the VM down. The guest agent logged `guest-shutdown called` at 11:55:11,
+  then `System is powering down (hypervisor initiated shutdown)` and a clean power-off. No OOM, hung task
+  or kernel error in that boot's journal.
+- **CPU:** idle (about 5% user, 3% steal) for the 25 minutes before. The load test had ended at about
+  11:30 (11:00–11:30 averaged up to 53% user, steal at most 8%).
+- **Who or what sent the shutdown** (an hPanel action, Hostinger maintenance or an automatic measure)
+  can't be seen from inside the VM: check hPanel's activity log or ask Hostinger.
+- **Recovery:** booted 12:27; all 11 containers came back by themselves (`v0.1.4`).
+- **Data:** test-school-1 (created 11:49) intact. The owner's second sign-up never reached the API (no
+  POST after 11:52) and created nothing.
+
 ## 2. Feature matrix
 
 Status words, as asked: **IMPLEMENTED** (code exists) · **DEPLOYED** (in v0.1.4) · **AUTO PASS** (a named
@@ -85,7 +97,7 @@ schools), H high, M medium, L low.
 | F-35 | Cost safeguards: backup-size alert at 4 GB; email budget; container limits; AWS budget | App side IMPLEMENTED | DEPLOYED | AUTO PASS (alert unit tests in Ops) | `alerts.yml`, docs/16 §5 | BAK-09: AWS Budget and Free Tier alerts (owner; the backup key can't see billing) | M | Owner |
 | F-36 | Sentry, errors only, scrubbed (emails, phones, IDs, marks, tokens, mixed enrollment numbers) | IMPLEMENTED | DEPLOYED | AUTO PASS (`test_sentry_scrub.py`); PROD VERIFIED (`sentry-test` HTTP 200 accepted, 2026-10-14) | `core/sentry.py` | OBS-04: owner opens the event in Sentry and confirms it carries nothing personal | H | Owner's Sentry login |
 | F-37 | Monitoring: Prometheus, Alertmanager (email), node and Postgres exporters; alerts for health, queue, disk, memory, backup age and size, SMTP failures, email budget, near-limit | IMPLEMENTED | DEPLOYED (monitoring profile up) | Alert rules AUTO PASS (Ops `promtool test`); test alerts accepted by Brevo (2026-10-14, and 2026-10-16 10:54 UTC: notifications 0→1, 0 failed); **receipt not confirmed** | `infra/monitoring` | OBS-05 (owner confirms the alert emails arrived) | H | Owner |
-| F-38 | Health and readiness (`/healthz`, `/readyz`), structured logs, 365-day log archive in India, NIC/NPL time | IMPLEMENTED | DEPLOYED | PROD VERIFIED (`/healthz`, `/readyz` 200 publicly; log timer enabled; time from samay1.nic.in, 2026-10-14) | `scorecode-ctl archive-logs` | OBS-01, OBS-06 | M | — |
+| F-38 | Health and readiness (`/healthz`, `/readyz`), structured logs, 365-day log archive in India, NIC/NPL time | IMPLEMENTED | DEPLOYED | PROD VERIFIED: `/livez` and `/readyz` answer JSON inside the server (2026-10-16: ok, database up, cache redis) and drive the container health; they are **not** public (a public `/healthz` is the web app's HTML, and was wrongly counted earlier in this audit); log timer enabled; time from samay1.nic.in | `scorecode-ctl archive-logs` | OBS-01, OBS-06 | M | — |
 | F-39 | Release pipeline: build, Trivy scan (critical stops it), private GHCR, sudo-only deploy, automatic restore-point backup, automatic rollback, branch-level image scan | IMPLEMENTED | v0.1.1–v0.1.4 released this way | PROD VERIFIED (v0.1.0 stopped by Trivy as designed; four releases; rollback drill v0.1.3→v0.1.2→v0.1.3, 59 s / 58 s) | `.github/workflows/release.yml` | DEP-05 migration rollback | M | — |
 | F-40 | Server hardening: deploy user without docker group, sudo for two programs, key-only SSH, ufw 22/443, swap, unattended upgrades | IMPLEMENTED | Applied 2026-10-14 | PROD VERIFIED 2026-10-14 and 2026-10-16 (passwords refused, root by key only, ufw active) | `infra/ops/server/bootstrap.sh` | Keep the root key loaded after restarts (SEC-12 note) | L | Owner |
 | F-41 | Security controls: tenant isolation (RLS + host-bound sessions), authorisation matrix, CSRF, rate limits, breached-password check, security headers, honeypot on sign-up | IMPLEMENTED | DEPLOYED | AUTO PASS (`test_isolation.py`, `test_authz_matrix.py`, `test_security_hardening.py`, `test_breached_passwords.py`); headers and CSRF PROD VERIFIED | docs/security/threat-model.md | SEC-01–04 with two test schools | C | ONB-01 ×2 |
