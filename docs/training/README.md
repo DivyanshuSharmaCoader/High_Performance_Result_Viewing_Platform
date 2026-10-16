@@ -17,14 +17,20 @@ through Periodic Test 1 for Class 10, Section A.
 | `RENDERED/en`, `RENDERED/hi` | The videos (MP4, 1920×1080, H.264 and AAC, subtitles inside). Not in git: made locally |
 | `RECORDINGS/` | The raw screen recordings downloaded from GitHub Actions. Not in git |
 | `AUDIO/` | The narration clips. Not in git |
-| `tools/build.py` | The pipeline |
+| `tools/build.py`, `tools/serve.py` | The pipeline, and a local server for the player |
 
 ## Watching
 
-Open `PLAYER/index.html` in a browser after building (below). Choose the language at the top: the
-video, its subtitles and the page switch together, and the video keeps its place, because both
-languages share one recording. The MP4s also play in any video player; their subtitles can be turned
-on in the player.
+```bash
+python3 docs/training/tools/serve.py
+```
+
+Then open http://127.0.0.1:8765/PLAYER/ and choose the language at the top. The video, its subtitles
+and the page switch together, and the video keeps its place, because both languages share one
+recording. (`serve.py` sends byte ranges, which video seeking needs; Python's plain `http.server`
+does not.) The page is also meant to work opened straight from disk, since its subtitles are inlined,
+but only the served version has been tested. The MP4s also play in any video player; turn their
+subtitles on there.
 
 ## Building the videos
 

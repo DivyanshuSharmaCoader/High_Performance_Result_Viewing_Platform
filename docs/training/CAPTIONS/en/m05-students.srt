@@ -1,0 +1,55 @@
+1
+00:00:00,400 --> 00:00:07,259
+There are two ways to add students: one at a time, or many at once from a spreadsheet. We show both.
+
+2
+00:00:08,686 --> 00:00:11,694
+Open Students in the menu and click Add student.
+
+3
+00:00:13,258 --> 00:00:23,124
+Enter the enrollment number and the full name. The enrollment number must be unique, because the student will use it to sign in. Here we add Aarav Sharma.
+
+4
+00:00:25,855 --> 00:00:30,090
+In the Cohort field, choose his section: Class 10, Section A.
+
+5
+00:00:31,432 --> 00:00:35,189
+Click Add student. Aarav's page opens, with his section.
+
+6
+00:00:37,479 --> 00:00:46,144
+To let Aarav create his own password, click Issue activation code. The code is shown only once: give it to the student or print it.
+
+7
+00:00:48,706 --> 00:00:55,959
+Now the faster way. Open Imports. You can upload a CSV or Excel file with one row for each student.
+
+8
+00:00:58,161 --> 00:01:06,717
+We upload a file with some mistakes on purpose: a missing name, an enrollment number written twice, and a section that doesn't exist.
+
+9
+00:01:10,317 --> 00:01:16,616
+ScoreCode checks every row first and saves nothing yet. Each problem is listed with its row and a reason.
+
+10
+00:01:19,438 --> 00:01:27,184
+Correct the file and click Upload fixed file. You can also download the checked file to see the problems inside your spreadsheet.
+
+11
+00:01:29,007 --> 00:01:34,704
+Now every row is correct. ScoreCode tells you exactly how many new students will be added.
+
+12
+00:01:35,510 --> 00:01:39,516
+Only now does anything change. Click Import, and confirm.
+
+13
+00:01:41,069 --> 00:01:45,698
+The import is complete. Open the student list to check the new students.
+
+14
+00:01:46,893 --> 00:01:53,902
+Remember the order: upload, check, fix, and only then import. Next, we invite the teachers.

@@ -1,0 +1,35 @@
+1
+00:00:00,400 --> 00:00:08,884
+A grading scheme turns marks into grades and decides who passes. You choose a starting template, then adjust it to your school's rules.
+
+2
+00:00:12,952 --> 00:00:15,960
+Open Grading in the menu, then click New scheme.
+
+3
+00:00:17,334 --> 00:00:31,820
+Choose the 9-band scale, CBSE-style. It gives grades A1 to E from percentage bands, with 33 percent to pass each subject. This is a starting template: please check it against your board's current rules.
+
+4
+00:00:35,835 --> 00:00:40,906
+Give the scheme a clear name, such as Class 10 grading, and click Create scheme.
+
+5
+00:00:42,309 --> 00:00:47,957
+Here you see every band and the pass mark. You can change any of them before you use the scheme.
+
+6
+00:00:50,730 --> 00:00:57,902
+The Try it box calculates sample marks with this scheme, so you can check the result before any real examination.
+
+7
+00:01:00,050 --> 00:01:10,275
+Back in the list, the first scheme is already your school's default, so new examinations use it. With more than one scheme, choose Make default from its menu.
+
+8
+00:01:14,511 --> 00:01:22,078
+If you change a scheme later, ScoreCode saves a new version. Results that were already processed keep the version they used.
+
+9
+00:01:25,828 --> 00:01:29,679
+Next, we add the students of Class 10, Section A.

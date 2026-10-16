@@ -1,0 +1,39 @@
+1
+00:00:00,400 --> 00:00:07,293
+Results are live. Aarav Sharma signs in on the school's portal with his enrollment number and the password he chose.
+
+2
+00:00:10,036 --> 00:00:15,072
+The bell shows a new notification: his Periodic Test 1 results are available.
+
+3
+00:00:15,836 --> 00:00:19,649
+His home page shows the latest result, and whether he passed.
+
+4
+00:00:22,101 --> 00:00:29,374
+He opens it: his percentage, his overall grade, and the marks for every subject, component by component.
+
+5
+00:00:30,084 --> 00:00:36,548
+The student portal can also be read in Hindi. Choose it from Language; the choice stays on this device.
+
+6
+00:00:38,415 --> 00:00:43,985
+Below is the official PDF marksheet. Download saves it to the phone or computer.
+
+7
+00:00:46,245 --> 00:00:52,872
+Every marksheet has a verification link and code. A college or anyone else can check that it is genuine.
+
+8
+00:00:55,169 --> 00:01:04,891
+Here is that check, with no account needed. It says Valid, and shows the file's fingerprint. Names are partly hidden, and marks are never shown here.
+
+9
+00:01:06,979 --> 00:01:15,997
+There is no separate parent login. Parents, like Mr. Anil Sharma, see results with their child, or receive the PDF marksheet.
+
+10
+00:01:18,266 --> 00:01:21,502
+Next, the plan, usage and school settings.

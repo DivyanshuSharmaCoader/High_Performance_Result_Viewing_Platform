@@ -1,0 +1,31 @@
+1
+00:00:00,400 --> 00:00:05,096
+Here are the problems schools meet most often, and what to do about each one.
+
+2
+00:00:06,333 --> 00:00:14,910
+A wrong password. ScoreCode asks you to check your details. After several wrong attempts, the account is locked for a few minutes.
+
+3
+00:00:15,706 --> 00:00:25,383
+Forgot password sends a reset link by email. It only works if the person has an email address on record, so add students' emails where you can.
+
+4
+00:00:27,065 --> 00:00:36,841
+An activation code that does not match. Check the enrollment number and the code on the slip. If the slip is lost, an administrator can replace the code.
+
+5
+00:00:37,874 --> 00:00:45,557
+A teacher sees nothing to mark. Papers appear only while marks entry is open, and only for the papers assigned to them.
+
+6
+00:00:47,165 --> 00:00:55,974
+If the school reaches a plan limit, such as the number of students, ScoreCode says so on the page, and Plan and usage shows the numbers.
+
+7
+00:00:58,598 --> 00:01:07,860
+The whole year, in order: structure, grading, students, staff, the exam, marks, then process, approve and publish.
+
+8
+00:01:08,571 --> 00:01:13,200
+That is the complete ScoreCode workflow for a school. Thank you for watching.

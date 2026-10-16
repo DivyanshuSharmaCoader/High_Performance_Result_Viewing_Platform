@@ -1,0 +1,59 @@
+1
+00:00:00,400 --> 00:00:12,425
+Before you create an examination, ScoreCode needs your academic structure: the session and its terms, the class and its sections, and the subjects. You set this up once a year.
+
+2
+00:00:13,175 --> 00:00:15,695
+Open Structure, in the menu on the left.
+
+3
+00:00:16,408 --> 00:00:24,240
+Click New academic session. Keep the code short, like 2026 dash 27, and write the name in full.
+
+4
+00:00:25,297 --> 00:00:35,988
+Enter the session dates, from the first of April 2026 to the thirty-first of March 2027. Make this the current session is already ticked.
+
+5
+00:00:36,693 --> 00:00:40,322
+Click Create session. The new session is now marked Current.
+
+6
+00:00:41,457 --> 00:00:49,441
+Now add the terms. Many CBSE schools use Term 1 and Term 2. Click Add term, enter the code T1 and the name Term 1.
+
+7
+00:00:51,307 --> 00:00:54,188
+Add Term 2 the same way, with the code T2.
+
+8
+00:00:56,469 --> 00:01:04,384
+Next, open the Programs tab. In ScoreCode, a program is a class, such as Class 10. Click New program.
+
+9
+00:01:05,559 --> 00:01:12,592
+Enter the code C10 and the name Class 10. The level, Secondary, is optional. Click Create program.
+
+10
+00:01:14,906 --> 00:01:20,731
+Now open Cohorts. A cohort is one section of a class in this session. Click New cohort.
+
+11
+00:01:23,044 --> 00:01:30,088
+Choose the session and the program, then enter the code 10A and the name Class 10, Section A. Click Create cohort.
+
+12
+00:01:31,804 --> 00:01:39,264
+Finally, open Courses and add every subject you examine. Click New course, enter a short code and the subject name.
+
+13
+00:01:41,918 --> 00:01:50,063
+Credits are optional. They are only used for university-style SGPA grading, so a CBSE school can leave them empty.
+
+14
+00:01:52,927 --> 00:01:59,033
+We add the remaining subjects the same way: Science, English, Hindi and Social Science.
+
+15
+00:01:59,742 --> 00:02:10,455
+The academic structure is ready: session 2026-27, Class 10 Section A, and five subjects. Next, we choose the grading scheme.

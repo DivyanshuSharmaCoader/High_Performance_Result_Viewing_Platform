@@ -1,0 +1,63 @@
+1
+00:00:00,400 --> 00:00:07,897
+Mr. Amit Kumar teaches Mathematics. He signs in with his own account, and sees only the papers assigned to him.
+
+2
+00:00:09,120 --> 00:00:16,304
+Marks entry lists his paper: Mathematics for Class 10, Section A, with how many students are done.
+
+3
+00:00:17,642 --> 00:00:23,812
+He opens it. Each row is a student; there is a column for each component, Internal and Written.
+
+4
+00:00:25,134 --> 00:00:34,264
+He types Aarav's marks: 36 out of 40, and 52 out of 60. Press Enter to move down. The total appears straight away.
+
+5
+00:00:35,961 --> 00:00:44,945
+A typing mistake: 65 in Written, where the most is 60. The cell turns red and says what is wrong. Nothing wrong is saved.
+
+6
+00:00:46,086 --> 00:00:47,937
+He corrects it to 55.
+
+7
+00:00:49,408 --> 00:00:54,919
+Rohan was absent. Type A B instead of a mark; it counts for the whole paper.
+
+8
+00:00:56,281 --> 00:01:01,488
+For the rest, he copies the marks from his Excel sheet and pastes them in one go.
+
+9
+00:01:02,822 --> 00:01:06,917
+Marks save as he types. Here it says: All changes saved.
+
+10
+00:01:08,309 --> 00:01:16,250
+When every student is done, he submits the paper. After that, only an administrator can send it back for changes.
+
+11
+00:01:17,629 --> 00:01:25,846
+Marks can also come from a spreadsheet. Mrs. Sunita Sharma, signed in as the owner, enters the Science marks this way.
+
+12
+00:01:27,298 --> 00:01:33,702
+She opens the Science paper and chooses Import from Excel. The template has the right columns already.
+
+13
+00:01:34,962 --> 00:01:41,958
+She uploads the file. The check finds one mark above 40 in Internal, and saves nothing until she decides.
+
+14
+00:01:44,541 --> 00:01:48,797
+She corrects the file and uploads it again. Now every row is ready.
+
+15
+00:01:50,026 --> 00:01:54,376
+Import, then Save marks. The Science marks are now in the grid.
+
+16
+00:01:55,215 --> 00:02:02,178
+English, Hindi and Social Science are entered the same way. Next, we turn these marks into results.

@@ -1,0 +1,35 @@
+1
+00:00:00,400 --> 00:00:08,912
+Each teacher gets their own account. A teacher, called Faculty in ScoreCode, can enter marks only for the subjects you assign to them.
+
+2
+00:00:11,608 --> 00:00:14,662
+Open Staff in the menu and click Invite staff.
+
+3
+00:00:16,027 --> 00:00:24,024
+Enter the teacher's name and email. Here, our mathematics teacher, Mr. Amit Kumar. The email address is fictional.
+
+4
+00:00:24,734 --> 00:00:34,808
+Choose the role. Faculty enters marks. Administrator manages students, examinations, results and settings. For a teacher, choose Faculty.
+
+5
+00:00:35,899 --> 00:00:39,807
+Click Send invitation. The teacher receives an email with a link.
+
+6
+00:00:41,851 --> 00:00:46,121
+The teacher appears in the staff list as invited, until they accept.
+
+7
+00:00:47,647 --> 00:00:54,575
+Now we see what the teacher does. They open the link in the email, choose a password, and click Create account.
+
+8
+00:00:56,942 --> 00:01:04,021
+The teacher lands on Marks entry. They see only their own assignments, and none of the administrative menus.
+
+9
+00:01:04,731 --> 00:01:09,500
+Next, a student activates their account and signs in for the first time.

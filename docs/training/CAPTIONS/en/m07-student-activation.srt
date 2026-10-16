@@ -1,0 +1,31 @@
+1
+00:00:00,400 --> 00:00:09,070
+This module is for students, and for staff who help them. The student needs their enrollment number and the activation code from the school.
+
+2
+00:00:11,953 --> 00:00:16,203
+On the school's sign-in page, click Activate your student account.
+
+3
+00:00:17,330 --> 00:00:21,797
+Enter the enrollment number and the activation code exactly as printed.
+
+4
+00:00:23,026 --> 00:00:27,551
+Choose a password of at least ten characters and type it again to confirm.
+
+5
+00:00:28,855 --> 00:00:34,539
+Click Activate and sign in. The code now stops working, so nobody else can use it.
+
+6
+00:00:37,926 --> 00:00:44,893
+Aarav is now in his student portal. There are no results yet. They will appear here when the school publishes them.
+
+7
+00:00:47,169 --> 00:00:55,520
+To sign out, open the account menu and click Sign out. Next time, Aarav signs in with his enrollment number and password.
+
+8
+00:00:57,450 --> 00:01:01,429
+Next, we create the examination: Periodic Test 1.

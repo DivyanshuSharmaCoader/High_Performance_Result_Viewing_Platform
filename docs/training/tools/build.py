@@ -115,7 +115,8 @@ def assemble(recordings: Path) -> None:
             srt_path = CAPTIONS / lang / f"{m['id']}.srt"
             srt_path.write_text("\n".join(srt))
             (CAPTIONS / lang / f"{m['id']}.vtt").write_text("\n".join(vtt))
-            # Audio: every clip delayed to its start, mixed (they never overlap), loudness normalised.
+            # Audio: every clip delayed to its start, mixed (they never overlap), loudness normalised, back to
+            # 48 kHz (loudnorm's output came out at 96 kHz) and limited to -1 dB so resampling can't make a peak clip.
             args = [ffmpeg(), "-y", "-loglevel", "error", "-i", str(video)]
             for _, path, _ in clips:
                 args += ["-i", str(path)]
@@ -124,7 +125,7 @@ def assemble(recordings: Path) -> None:
                 for i, (at, _, _) in enumerate(clips)
             )
             mix = "".join(f"[a{i}]" for i in range(len(clips)))
-            filt = f"{delays}{mix}amix=inputs={len(clips)}:normalize=0,loudnorm=I=-16:TP=-1.5[aout]"
+            filt = f"{delays}{mix}amix=inputs={len(clips)}:normalize=0,loudnorm=I=-16:TP=-1.5,aresample=48000,alimiter=limit=0.89:level=false[aout]"
             out = RENDERED / lang / f"{m['id']}.mp4"
             out.parent.mkdir(parents=True, exist_ok=True)
             # The window is recorded at 1440×810 and scaled to 1080p, so text stays large on a phone.

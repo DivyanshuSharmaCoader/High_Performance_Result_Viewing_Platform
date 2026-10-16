@@ -1,0 +1,28 @@
+WEBVTT
+
+00:00:00.400 --> 00:00:06.248
+ScoreCode records every important action: who did it, and when. This is the audit log.
+
+00:00:07.580 --> 00:00:11.134
+Open Audit log. The newest activity is at the top.
+
+00:00:12.114 --> 00:00:18.146
+Filter by kind of activity. Here, Marks: every mark that was entered or changed.
+
+00:00:18.861 --> 00:00:22.983
+Or filter by person. These are the marks Mr. Amit Kumar entered.
+
+00:00:24.297 --> 00:00:28.779
+Open an entry to see exactly what changed, before and after.
+
+00:00:30.027 --> 00:00:34.263
+Approval and publication are recorded too, with the reasons people gave.
+
+00:00:35.871 --> 00:00:42.664
+Only the owner can export all of the school's data: in Settings, Your data, choose Export everything.
+
+00:00:44.340 --> 00:00:54.461
+The export is a set of CSV files that open in Excel. Downloading it asks for the password again, and each export is deleted after seven days.
+
+00:00:56.791 --> 00:00:59.830
+Next, common problems and how to solve them.

@@ -1,0 +1,43 @@
+1
+00:00:00,400 --> 00:00:07,855
+Only the owner and administrators see these pages: the school's plan and usage, its settings, and its branding.
+
+2
+00:00:08,586 --> 00:00:12,952
+Open Plan and usage. Sunrise Public School is on the Free plan.
+
+3
+00:00:13,676 --> 00:00:22,894
+Usage shows how much of each limit is used: students, staff accounts, administrators, storage, and publications this year.
+
+4
+00:00:23,633 --> 00:00:31,866
+Compare plans shows what each plan includes. ScoreCode does not take payments in the app; to change plan, write to ScoreCode.
+
+5
+00:00:33,207 --> 00:00:42,388
+The owner can start one free trial of the Pro features, for thirty days. No card is needed, and afterwards the school simply returns to Free.
+
+6
+00:00:43,809 --> 00:00:49,984
+Now Settings. The official name and address appear on every marksheet, so check them carefully.
+
+7
+00:00:51,226 --> 00:00:55,907
+Add the board under Affiliation, here C B S E, and save the changes.
+
+8
+00:00:57,089 --> 00:01:07,070
+Results policy decides how students activate their accounts, what the verification page shows, what class statistics students see, and their language.
+
+9
+00:01:08,975 --> 00:01:14,490
+Under Branding, upload the school's logo. It appears on the portal and on marksheets.
+
+10
+00:01:15,227 --> 00:01:20,876
+Colours and the login page design come with the Starter plan and above, so they are locked here.
+
+11
+00:01:22,819 --> 00:01:27,831
+Next, the audit log, notifications, and exporting the school's data.

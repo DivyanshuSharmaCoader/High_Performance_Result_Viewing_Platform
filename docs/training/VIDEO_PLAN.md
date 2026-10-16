@@ -10,12 +10,12 @@ throwaway copy of the application in GitHub Actions, never on production.
 
 | Person | Job at the school | ScoreCode role | Appears in |
 |---|---|---|---|
-| Mrs. Sunita Sharma | Principal; signed the school up | Owner | 2–5, 8, 10, 12–14 |
+| Mrs. Sunita Sharma | Principal; signed the school up | Owner | 1–6, 8–10, 12–14 |
 | Mr. Rajesh Verma | Office administrator | Administrator | not on screen: module 6 shows the Administrator choice; he would be invited the same way |
 | Mrs. Neha Gupta | Examination coordinator | Administrator | not on screen: module 1 names the coordinator as an Administrator |
-| Mr. Amit Kumar | Mathematics teacher | Faculty | 6, 8, 9, 13, 14 |
-| Aarav Sharma (SPS1001) | Student, Class 10-A | Student | 5, 7, 9–11 |
-| Priya Verma (SPS1002) and four classmates | Students, Class 10-A | Students (imported) | 5, 9, 10 |
+| Mr. Amit Kumar | Mathematics teacher | Faculty | 1, 6, 8, 9, 13, 14 |
+| Aarav Sharma (SPS1001) | Student, Class 10-A | Student | 5, 7, 9–11, 14 |
+| Priya Verma (SPS1002) and four classmates | Students, Class 10-A | Students (imported) | 5, 9, 10, 14 |
 | Mr. Anil Sharma | Aarav's father | none: ScoreCode has no parent login | 11 |
 
 ScoreCode has exactly four school roles. There is no separate principal, coordinator or parent role,
@@ -23,27 +23,26 @@ and the videos say so (module 1, module 11).
 
 ## Modules
 
-Lengths are the narration time (the longer of the two languages per beat, plus pauses); the final
-video is about that long.
+Lengths are those of the final videos (the same in both languages: one recording carries both).
 
 | # | English title | हिंदी शीर्षक | Who | Plan | Beats | Length |
 |---|---|---|---|---|---|---|
-| M01 | Welcome to ScoreCode | ScoreCode में आपका स्वागत है | Everyone | Every plan | 7 | ~1:04 |
-| M02 | Create your school's portal | अपने स्कूल का पोर्टल बनाएँ | Owner | Every plan (a new portal starts on Free) | 12 | ~1:44 |
-| M03 | Academic structure: session, class, section and subjects | Academic structure: सत्र, कक्षा, सेक्शन और विषय | Owner or Administrator | Every plan | 15 | ~2:09 |
-| M04 | Choose your grading scheme | अपनी grading scheme चुनें | Owner or Administrator | Every plan | 9 | ~1:25 |
-| M05 | Add and import students | विद्यार्थी जोड़ें और import करें | Owner or Administrator | Every plan (Free: 150 active students; 5,000 rows per import) | 14 | ~1:55 |
-| M06 | Invite teachers and staff | शिक्षकों और स्टाफ़ को आमंत्रित करें | Owner or Administrator; the teacher accepts | Every plan (Free: 5 staff accounts, 2 administrators) | 9 | ~1:10 |
-| M07 | A student activates their account | विद्यार्थी अपना account activate करता है | Student | Every plan | 8 | ~1:01 |
-| M08 | Set up an exam | परीक्षा तैयार करें | Owner or Administrator | Every plan | 13 | ~1:34 |
-| M09 | Enter and import marks | अंक भरें और import करें | Faculty (own papers); Owner or Administrator (any paper, imports) | Every plan | 16 | ~2:03 |
-| M10 | Process, approve and publish results | Results बनाएँ, approve और publish करें | Owner or Administrator | Every plan (two-person approval and scheduling: Growth and Pro) | 12 | ~1:56 |
-| M11 | What students see, and verifying a marksheet | छात्र क्या देखते हैं, और marksheet की जाँच | Student; anyone verifying | Every plan | 10 | ~1:21 |
-| M12 | Plan, usage, settings and branding | Plan, usage, settings और branding | Owner; Owner or Administrator | Every plan (theme and login page: Starter and above) | 11 | ~1:27 |
-| M13 | Audit log and data export | Audit log और data export | Owner or Administrator; export: Owner only | Every plan | 9 | ~1:00 |
-| M14 | Common problems, and the whole year at a glance | आम समस्याएँ, और पूरा साल एक नज़र में | Everyone | Every plan | 8 | ~1:14 |
+| M01 | Welcome to ScoreCode | ScoreCode में आपका स्वागत है | Everyone | Every plan | 7 | 1:15 |
+| M02 | Create your school's portal | अपने स्कूल का पोर्टल बनाएँ | Owner | Every plan (a new portal starts on Free) | 12 | 1:47 |
+| M03 | Academic structure: session, class, section and subjects | Academic structure: सत्र, कक्षा, सेक्शन और विषय | Owner or Administrator | Every plan | 15 | 2:15 |
+| M04 | Choose your grading scheme | अपनी grading scheme चुनें | Owner or Administrator | Every plan | 9 | 1:35 |
+| M05 | Add and import students | विद्यार्थी जोड़ें और import करें | Owner or Administrator | Every plan (Free: 150 active students; 5,000 rows per import) | 14 | 1:59 |
+| M06 | Invite teachers and staff | शिक्षकों और स्टाफ़ को आमंत्रित करें | Owner or Administrator; the teacher accepts | Every plan (Free: 5 staff accounts, 2 administrators) | 9 | 1:14 |
+| M07 | A student activates their account | विद्यार्थी अपना account activate करता है | Student | Every plan | 8 | 1:05 |
+| M08 | Set up an exam | परीक्षा तैयार करें | Owner or Administrator | Every plan | 13 | 1:38 |
+| M09 | Enter and import marks | अंक भरें और import करें | Faculty (own papers); Owner or Administrator (any paper, imports) | Every plan | 16 | 2:08 |
+| M10 | Process, approve and publish results | Results बनाएँ, approve और publish करें | Owner or Administrator | Every plan (two-person approval and scheduling: Growth and Pro) | 12 | 2:02 |
+| M11 | What students see, and verifying a marksheet | छात्र क्या देखते हैं, और marksheet की जाँच | Student; anyone verifying | Every plan | 10 | 1:24 |
+| M12 | Plan, usage, settings and branding | Plan, usage, settings और branding | Owner; Owner or Administrator | Every plan (theme and login page: Starter and above) | 11 | 1:32 |
+| M13 | Audit log and data export | Audit log और data export | Owner or Administrator; export: Owner only | Every plan | 9 | 1:04 |
+| M14 | Common problems, and the whole year at a glance | आम समस्याएँ, और पूरा साल एक नज़र में | Everyone | Every plan | 8 | 1:18 |
 
-Total: about 21 minutes per language.
+Total: 22 minutes 16 seconds per language.
 
 ## What each module shows (and the check the recording makes)
 
