@@ -109,7 +109,7 @@ test("m03-academic-structure", async ({ browser }) => {
     await lesson.type(dialog.getByLabel("Code"), "T1");
     await lesson.type(dialog.getByLabel("Name"), "Term 1");
     await lesson.click(dialog.getByRole("button", { name: "Add term" }));
-    await expect(page.getByRole("cell", { name: /Term 1/ })).toBeVisible();
+    await expect(page.getByRole("cell", { name: /Term 1/ }).first()).toBeVisible();
   });
   await lesson.beat("term2", async () => {
     await lesson.click(page.getByRole("button", { name: "Add term" }).first());
@@ -117,7 +117,7 @@ test("m03-academic-structure", async ({ browser }) => {
     await lesson.type(dialog.getByLabel("Code"), "T2");
     await lesson.type(dialog.getByLabel("Name"), "Term 2");
     await lesson.click(dialog.getByRole("button", { name: "Add term" }));
-    await expect(page.getByRole("cell", { name: /Term 2/ })).toBeVisible();
+    await expect(page.getByRole("cell", { name: /Term 2/ }).first()).toBeVisible();
   });
   const tabs = page.getByRole("navigation", { name: "Academic structure" });
   await lesson.beat("programs", async () => {
@@ -130,7 +130,7 @@ test("m03-academic-structure", async ({ browser }) => {
     await lesson.type(dialog.getByLabel("Name"), "Class 10");
     await lesson.type(dialog.getByLabel(/^Level/), "Secondary");
     await lesson.click(dialog.getByRole("button", { name: "Create program" }));
-    await expect(page.getByRole("cell", { name: "Class 10" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Class 10" }).first()).toBeVisible();
   });
   await lesson.beat("cohorts", async () => {
     await lesson.click(tabs.getByRole("link", { name: "Cohorts" }));
@@ -196,12 +196,12 @@ test("m04-grading", async ({ browser }) => {
     dialog = page.getByRole("dialog");
   });
   await lesson.beat("template", async () => {
-    await lesson.click(dialog.getByText("9-band scale (CBSE-style)"));
+    await lesson.click(dialog.getByText("9-band scale (CBSE-style)").first());
   });
   await lesson.beat("name", async () => {
     await lesson.type(dialog.getByLabel("Name"), "Class 10 grading");
     await lesson.click(dialog.getByRole("button", { name: "Create scheme" }));
-    await expect(page.getByRole("heading", { name: "Class 10 grading" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Class 10 grading" }).first()).toBeVisible();
   });
   await lesson.beat("bands", async () => {
     await lesson.point(page.getByText("A1", { exact: true }).first());
@@ -263,7 +263,7 @@ test("m05-students", async ({ browser }) => {
   });
   await lesson.beat("added", async () => {
     await lesson.click(dialog.getByRole("button", { name: "Add student" }));
-    await expect(page.getByRole("heading", { name: /Aarav Sharma/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Aarav Sharma/ }).first()).toBeVisible();
     await lesson.point(page.getByText("10A").first());
   });
   await lesson.beat("code", async () => {
@@ -315,7 +315,7 @@ test("m05-students", async ({ browser }) => {
     await expect(page.getByRole("heading", { name: "Import complete" })).toBeVisible({ timeout: 30_000 });
   });
   await lesson.beat("done", async () => {
-    await lesson.point(page.getByText(/5 added/));
+    await lesson.point(page.getByText(/5 added/).first());
     await lesson.click(page.getByRole("link", { name: "View students" }));
     await expect(page.getByRole("table").getByRole("row")).toHaveCount(7); // header + Aarav + five
   });
@@ -869,18 +869,18 @@ test("m12-plan-settings", async ({ browser }) => {
   });
   await lesson.beat("settings", async () => {
     await lesson.click(nav.getByRole("link", { name: "Settings" }));
-    await lesson.point(page.getByLabel("Official name"));
-    await lesson.point(page.getByLabel("Address"));
+    await lesson.point(page.getByLabel("Official name", { exact: true }).first());
+    await lesson.point(page.getByLabel("Address", { exact: true }).first());
   });
   await lesson.beat("affiliation", async () => {
-    await lesson.type(page.getByLabel("Affiliation"), "CBSE");
+    await lesson.type(page.getByLabel("Affiliation", { exact: true }).first(), "CBSE");
     await lesson.click(page.getByRole("button", { name: "Save changes" }));
     await expect(page.getByText("Settings saved")).toBeVisible();
   });
   await lesson.beat("policy", async () => {
     await lesson.point(page.getByRole("heading", { name: "Results policy" }));
-    await lesson.point(page.getByLabel("Verification page"));
-    await lesson.point(page.getByLabel("Language for students and marksheets"));
+    await lesson.point(page.getByLabel("Verification page").first());
+    await lesson.point(page.getByLabel("Language for students and marksheets").first());
   });
   await lesson.beat("branding", async () => {
     await lesson.click(

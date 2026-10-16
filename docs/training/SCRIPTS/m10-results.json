@@ -5,7 +5,7 @@
   "hi": "भाग 10 · Results बनाएँ, approve और publish करें"
  },
  "role": "Owner or Administrator",
- "plan": "Every plan (Growth and Pro: a second administrator approves, and publication can be scheduled)",
+ "plan": "Every plan (two-person approval and scheduled publication: Growth and Pro)",
  "beats": [
   {
    "id": "intro",

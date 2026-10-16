@@ -4,6 +4,7 @@
     uv run --no-project --with imageio-ffmpeg python docs/training/tools/build.py narrate
     uv run --no-project --with imageio-ffmpeg python docs/training/tools/build.py assemble RECORDINGS_DIR
     uv run --no-project --with imageio-ffmpeg python docs/training/tools/build.py check
+    uv run --no-project --with imageio-ffmpeg python docs/training/tools/build.py player
 
 narrate   macOS `say` (Rishi: Indian English; Lekha: Hindi) writes AUDIO/<lang>/<module>/<beat>.m4a and
           SCRIPTS/durations.json, the time each beat needs (the longer language, plus a pause). The
@@ -13,6 +14,9 @@ assemble  For each recording (<module>.webm + <module>.timeline.json from the tr
           VTT) from the same times, and renders RENDERED/<lang>/<module>.mp4 (H.264, AAC, soft subtitles).
 check     Reads every rendered file back: duration, resolution, audio and subtitle streams, loudness, and
           that no narration runs past the end.
+player    Writes PLAYER/index.html: every rendered module, an English/हिंदी switch that swaps both the
+          video and its subtitles (and keeps the position: both languages share one recording), with
+          the subtitles inlined so the page also works opened straight from disk.
 """
 
 from __future__ import annotations
@@ -208,6 +212,111 @@ def check() -> None:
     sys.exit(0 if ok else 1)
 
 
+PLAYER_HTML = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScoreCode School Training</title>
+<style>
+:root{--bg:#f7f7f5;--panel:#fff;--fg:#1c1917;--muted:#57534e;--line:#e7e5e4;--brand:#c2410c;--soft:#fff7ed}
+@media (prefers-color-scheme:dark){:root{--bg:#141210;--panel:#1f1c19;--fg:#f5f5f4;--muted:#a8a29e;--line:#36312c;--brand:#fb923c;--soft:#2a1d12}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI","Noto Sans Devanagari",sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+h1{font-size:17px;margin:0}label{font-size:13px;color:var(--muted)}select{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg)}
+main{display:grid;gap:16px;padding:16px;max-width:1400px;margin:0 auto}@media(min-width:960px){main{grid-template-columns:minmax(0,1fr) 340px}}
+video{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px}
+.meta h2{font-size:18px;margin:12px 0 4px}.meta p{margin:2px 0;color:var(--muted);font-size:13px}
+ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+button.item{all:unset;box-sizing:border-box;display:block;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);cursor:pointer}
+button.item[aria-current=true]{border-color:var(--brand);background:var(--soft)}button.item:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.item b{display:block;font-size:14px}.item span{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="heading">ScoreCode · School training</h1>
+  <div><label for="lang" id="lang-label">Language</label>
+    <select id="lang"><option value="en">English</option><option value="hi" lang="hi">हिंदी</option></select></div>
+</header>
+<main>
+  <section>
+    <video id="video" controls preload="metadata" playsinline></video>
+    <div class="meta"><h2 id="title"></h2><p id="role"></p><p id="plan"></p></div>
+  </section>
+  <nav aria-label="Modules"><ol id="list"></ol></nav>
+</main>
+<script>
+const MODULES = __MODULES__;
+const UI = {en:{heading:"ScoreCode · School training",lang:"Language",role:"Who: ",plan:"Plan: "},
+            hi:{heading:"ScoreCode · स्कूल प्रशिक्षण",lang:"भाषा",role:"किसके लिए: ",plan:"Plan: "}};
+const video = document.getElementById("video"), list = document.getElementById("list"), langSel = document.getElementById("lang");
+let lang = "en", current = 0;
+try { lang = localStorage.getItem("sc-training-lang") || "en"; } catch (e) {}
+langSel.value = lang;
+const vttUrl = (text) => URL.createObjectURL(new Blob([text], {type: "text/vtt"}));
+function load(i, keepTime) {
+  const m = MODULES[i], t = keepTime ? video.currentTime : 0, playing = keepTime && !video.paused;
+  current = i;
+  video.querySelectorAll("track").forEach((x) => x.remove());
+  video.src = `../RENDERED/${lang}/${m.id}.mp4`;
+  const tr = document.createElement("track");
+  Object.assign(tr, {kind: "subtitles", srclang: lang, label: lang === "hi" ? "हिंदी" : "English", src: vttUrl(m.vtt[lang]), default: true});
+  video.appendChild(tr);
+  video.addEventListener("loadedmetadata", () => {
+    video.textTracks[0].mode = "showing";
+    if (t) video.currentTime = t;
+    if (playing) video.play();
+  }, {once: true});
+  document.getElementById("title").textContent = m.title[lang];
+  document.getElementById("role").textContent = UI[lang].role + m.role;
+  document.getElementById("plan").textContent = UI[lang].plan + m.plan;
+  render();
+}
+function render() {
+  document.documentElement.lang = lang;
+  document.getElementById("heading").textContent = UI[lang].heading;
+  document.getElementById("lang-label").textContent = UI[lang].lang;
+  list.replaceChildren(...MODULES.map((m, i) => {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.className = "item"; b.setAttribute("aria-current", String(i === current));
+    b.innerHTML = "<b></b><span></span>";
+    b.querySelector("b").textContent = m.title[lang];
+    b.querySelector("span").textContent = m.minutes;
+    b.onclick = () => { load(i, false); video.play(); };
+    li.appendChild(b); return li;
+  }));
+}
+langSel.onchange = () => { lang = langSel.value; try { localStorage.setItem("sc-training-lang", lang); } catch (e) {} load(current, true); };
+video.addEventListener("ended", () => { if (current + 1 < MODULES.length) { load(current + 1, false); video.play(); } });
+load(0, false);
+</script>
+</body>
+</html>
+"""
+
+
+def player() -> None:
+    entries = []
+    for m in modules():
+        files = {lang: RENDERED / lang / f"{m['id']}.mp4" for lang in VOICES}
+        vtts = {lang: CAPTIONS / lang / f"{m['id']}.vtt" for lang in VOICES}
+        if not all(f.exists() for f in [*files.values(), *vtts.values()]):
+            print(f"{m['id']}: not rendered in both languages, left out")
+            continue
+        seconds = probe(files["en"])["seconds"]
+        entries.append({
+            "id": m["id"], "title": m["title"], "role": m["role"], "plan": m["plan"],
+            "minutes": f"{int(seconds // 60)}:{int(seconds % 60):02d}",
+            "vtt": {lang: v.read_text() for lang, v in vtts.items()},
+        })  # fmt: skip
+    out = ROOT / "PLAYER" / "index.html"
+    out.parent.mkdir(exist_ok=True)
+    data = json.dumps(entries, ensure_ascii=False).replace("</", "<\\/")
+    out.write_text(PLAYER_HTML.replace("__MODULES__", data))
+    print(f"{out.relative_to(ROOT)}: {len(entries)} modules")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
     if cmd == "narrate":
@@ -216,6 +325,8 @@ if __name__ == "__main__":
         narrate()
     elif cmd == "assemble" and len(sys.argv) == 3:
         assemble(Path(sys.argv[2]))
+    elif cmd == "player":
+        player()
     elif cmd == "check":
         check()
     else:
