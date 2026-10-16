@@ -1,0 +1,33 @@
+{
+ "m02-create-portal": {
+  "intro": 9208,
+  "open": 4536,
+  "name": 8484,
+  "address": 10968,
+  "type": 5349,
+  "owner": 11610,
+  "password": 8852,
+  "submit": 7121,
+  "verify": 10270,
+  "landed": 10197,
+  "plan": 10315,
+  "outro": 7860
+ },
+ "m03-academic-structure": {
+  "intro": 12725,
+  "open": 3220,
+  "session": 8865,
+  "dates": 10787,
+  "create": 4741,
+  "term1": 9837,
+  "term2": 3973,
+  "programs": 9082,
+  "program_fill": 9269,
+  "cohorts": 8130,
+  "cohort_fill": 8751,
+  "courses": 10104,
+  "credits": 10999,
+  "more_courses": 6806,
+  "outro": 11413
+ }
+}

@@ -50,11 +50,11 @@ export default tseslint.config(
     rules: { "no-restricted-properties": "off" },
   },
   {
-    files: ["**/*.test.{ts,tsx}", "**/__tests__/**", "e2e/**"],
+    files: ["**/*.test.{ts,tsx}", "**/__tests__/**", "e2e/**", "training/**"],
     rules: { "@typescript-eslint/no-non-null-assertion": "off" },
   },
   {
-    files: ["**/*.config.{js,ts}", "scripts/**", "apps/*/scripts/**"],
+    files: ["**/*.config.{js,ts}", "scripts/**", "apps/*/scripts/**", "training/**"],
     languageOptions: { globals: { ...globals.node } },
   },
 );

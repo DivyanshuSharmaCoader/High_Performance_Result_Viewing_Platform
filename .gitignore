@@ -46,3 +46,8 @@ benchmarks/results/runs/
 # Load-test data (synthetic sessions; never commit)
 benchmarks/data/
 benchmarks/results/runs-vps/
+
+# Training videos: regenerable media (docs/training/README.md)
+docs/training/AUDIO/
+docs/training/RENDERED/
+docs/training/RECORDINGS/

@@ -1,0 +1,59 @@
+# Training-video recordings (docs/training/README.md): a fresh stack, then frontend/training/specs, which
+# drive the real interface as the fictional Sunrise Public School and record one video per module. Run
+# by hand only (it costs Actions minutes):
+#
+#   gh workflow run training.yml
+#
+# Modules always run in order from the start: each one continues the school the previous one built.
+#
+# Narration and the final videos are made on a Mac afterwards (docs/training/tools/build.py).
+name: Training recordings
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "frontend/training/**"
+      - "docs/training/SCRIPTS/**"
+      - ".github/workflows/training.yml"
+
+concurrency:
+  group: training-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  record:
+    name: Record the training modules on the real application
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start the full stack (fresh database: the recordings create everything they show)
+        run: docker compose --profile app up -d --build --wait
+      - uses: pnpm/action-setup@v6
+        with: { package_json_file: frontend/package.json }
+      - uses: actions/setup-node@v7
+        with: { node-version: 24, cache: pnpm, cache-dependency-path: frontend/pnpm-lock.yaml }
+      - name: Install Playwright
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile && pnpm exec playwright install --with-deps chromium
+      - name: Record
+        working-directory: frontend
+        env: { CI: "1" }
+        run: pnpm exec playwright test -c training/playwright.config.ts
+      - name: Upload the recordings
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: training-recordings-${{ github.run_id }}
+          path: |
+            frontend/test-results/training/*.webm
+            frontend/test-results/training/*.timeline.json
+            frontend/test-results/training-artifacts/
+          retention-days: 14
+      - name: Stack logs on failure
+        if: failure()
+        run: docker compose --profile app logs --tail 200 api worker proxy
