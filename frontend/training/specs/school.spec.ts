@@ -204,7 +204,7 @@ test("m04-grading", async ({ browser }) => {
     await expect(page.getByRole("heading", { name: "Class 10 grading" }).first()).toBeVisible();
   });
   await lesson.beat("bands", async () => {
-    await lesson.point(page.getByRole("textbox", { name: "Band 1 grade" }));
+    await lesson.point(page.getByRole("textbox", { name: "Band 1 grade", exact: true }));
     await lesson.point(page.getByLabel("Pass mark per paper (%)", { exact: false }).first());
   });
   await lesson.beat("tryit", async () => {
