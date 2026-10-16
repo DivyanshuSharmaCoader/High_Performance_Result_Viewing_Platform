@@ -114,7 +114,7 @@ services:
       TLS_CERT_FILE: /certs/origin.pem
       TLS_KEY_FILE: /certs/origin-key.pem
       BASE_DOMAIN: ${BASE_DOMAIN:?set BASE_DOMAIN}
-      FILES_ORIGIN: https://files.${BASE_DOMAIN}
+      FILES_ORIGIN: ${FILES_ORIGIN:-https://files.${BASE_DOMAIN}}  # render-env.py: the object store's endpoint
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-private_ranges}
     volumes:
       - ./certs:/certs:ro

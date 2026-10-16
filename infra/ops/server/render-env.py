@@ -23,6 +23,7 @@ import pwd
 import re
 import secrets
 import sys
+import urllib.parse
 from pathlib import Path
 
 ROOT = Path(os.environ.get("SCORECODE_ROOT", "/opt/scorecode"))
@@ -118,6 +119,14 @@ def address(mail_from: str) -> str:
     return m[1] if m else mail_from
 
 
+def origin(url: str) -> str:
+    """scheme://host[:port] of a URL, as a Content-Security-Policy source."""
+    p = urllib.parse.urlsplit(url)
+    if p.scheme not in ("https", "http") or not p.netloc:
+        die("FILES_S3_ENDPOINT must be an http(s) URL")
+    return f"{p.scheme}://{p.netloc}"
+
+
 def main() -> None:
     if os.geteuid() != 0:
         die("run as root (through sudo scorecode-ctl render-env)")
@@ -135,6 +144,10 @@ def main() -> None:
         "TRUSTED_PROXIES": f"private_ranges {CLOUDFLARE}",
         "API_WORKERS": v.get("API_WORKERS") or "2",
         "PDF_PROCESSES": v.get("PDF_PROCESSES") or "1",
+        # The edge's Content-Security-Policy must allow images from where signed links point: the object
+        # store's public endpoint (SCORECODE_S3_PUBLIC_ENDPOINT_URL below). A logo that redirects there was
+        # blocked while the policy named files.<domain>, which nothing serves (2026-10-16).
+        "FILES_ORIGIN": origin(v["FILES_S3_ENDPOINT"]),
         # app.env
         "SCORECODE_BASE_DOMAIN": domain,
         "SCORECODE_SECRET_KEY": g["SCORECODE_SECRET_KEY"],

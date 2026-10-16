@@ -133,6 +133,14 @@ jobs:
           cd /opt/scorecode
           if sudo SCORECODE_VERSION="$V1" REGISTRY=rehearsal docker compose -f compose.prod.yml -f infra/ops/rehearsal/compose.override.yml \
             --env-file env/deploy.env exec -T api scorecode seed --students 5; then echo "seeded production"; exit 1; fi
+      - name: The edge allows images from where signed links point (logo regression, 2026-10-16)
+        run: |
+          set -euo pipefail
+          csp=$(curl -sS --max-time 15 --connect-to ::127.0.0.1:443 --cacert /opt/scorecode/certs/origin-ca.pem \
+            -o /dev/null -D - "https://any-institution.$DOMAIN/login" | tr -d '\r' | grep -i '^content-security-policy:')
+          echo "$csp" | tr ';' '\n' | grep -i 'img-src'
+          # The rehearsal's object store endpoint (FILES_S3_ENDPOINT) is http://s3:8333.
+          echo "$csp" | grep -qE "img-src [^;]*http://s3:8333" || { echo "img-src doesn't allow the object store"; exit 1; }
       - name: Upgrade (v0.0.2), with an encrypted backup of the database and the files first
         run: |
           set -euo pipefail
