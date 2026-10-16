@@ -328,6 +328,9 @@ jobs:
       - name: Smoke test through Cloudflare, with real certificates
         env:
           DOMAIN: ${{ vars.PRODUCTION_DOMAIN }}
+          SMOKE_TENANT: ${{ vars.SMOKE_TENANT }}
         run: |
           if [ -z "$DOMAIN" ]; then echo "::notice::PRODUCTION_DOMAIN not set"; exit 0; fi
-          SMOKE_BASE_DOMAIN="$DOMAIN" SMOKE_SCHEME=https infra/ops/smoke.sh
+          # No school is assumed to exist in production (smoke.sh's default, thapar, is the demo's);
+          # SMOKE_TENANT (a repository variable) names one to check as well.
+          SMOKE_BASE_DOMAIN="$DOMAIN" SMOKE_SCHEME=https SMOKE_TENANT="${SMOKE_TENANT:-}" infra/ops/smoke.sh

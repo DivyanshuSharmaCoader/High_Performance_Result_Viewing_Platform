@@ -202,8 +202,11 @@ Hindi). Save.
 
 ### ONB-04 Branding and logo · 🌐 · `TEST DATA`
 Settings → **Branding**: upload a small PNG logo and pick a colour.
-**Expect:** the logo and colour show on the login page and in the portal. A file that isn't an image,
-or is too large, is refused with a message.
+**Expect:** the logo and colour show on the login page, the admin dashboard and the portal, also after a
+reload and after signing out and in. Removing the logo shows the school's initials; uploading another
+replaces it. A file that isn't an image, or is too large, is refused with a message.
+*Fixed in v0.1.5:* until then, the browser blocked every uploaded logo under the page's own image policy
+(see CHECKLIST 2026-10-16).
 
 ### ONB-05 Export the school's data · 🌐 · `TEST DATA`
 Settings → **Your data** → *Export everything* (owner only).

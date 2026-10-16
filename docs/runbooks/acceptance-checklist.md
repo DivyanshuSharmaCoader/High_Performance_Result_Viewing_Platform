@@ -33,7 +33,7 @@ Counts: PASS 27, PARTIAL 3, FAIL 1, BLOCKED 3, NOT TESTED 72, NOT IMPLEMENTED 1,
 | [ ] | ONB-01 | Sign up a test school | Browser | You | **NOT TESTED** |  | test_trials, signup.spec | |
 | [ ] | ONB-02 | Second test school (for isolation tests) | Browser | You | **NOT TESTED** |  |  | |
 | [ ] | ONB-03 | Institution settings | Browser | You | **NOT TESTED** |  | test_admin_flows | |
-| [ ] | ONB-04 | Branding and logo | Browser | You | **NOT TESTED** |  | test_admin_flows | |
+| [ ] | ONB-04 | Branding and logo | Browser | You | **PARTIAL** | v0.1.5 (2026-10-16): test-school-2's logo renders on its login page (286×211, no CSP violation, Claude in browser); dashboard after sign-in, remove and replace: yours to check | test_admin_flows | |
 | [ ] | ONB-05 | Export the school's data | Browser | You | **NOT TESTED** |  | test_exports | |
 | [ ] | AUTH-01 | Wrong password is refused | Browser | You | **NOT TESTED** |  | test_auth, auth.spec | |
 | [ ] | AUTH-02 | Repeated failures lock the account for a while | Browser | You | **NOT TESTED** |  | test_auth | |
