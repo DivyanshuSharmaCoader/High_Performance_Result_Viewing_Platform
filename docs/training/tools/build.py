@@ -25,7 +25,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]  # docs/training
-SCRIPTS, AUDIO, CAPTIONS, RENDERED = ROOT / "SCRIPTS", ROOT / "AUDIO", ROOT / "CAPTIONS", ROOT / "RENDERED"
+SCRIPTS, AUDIO, CAPTIONS, RENDERED = (
+    ROOT / "SCRIPTS",
+    ROOT / "AUDIO",
+    ROOT / "CAPTIONS",
+    ROOT / "RENDERED",
+)
 VOICES = {"en": ("Rishi", 165), "hi": ("Lekha", 160)}
 PAUSE_MS = 700  # silence after each beat before the next starts
 
@@ -41,7 +46,9 @@ def modules() -> list[dict]:
 
 
 def duration_ms(path: Path) -> int:
-    out = subprocess.run(["afinfo", str(path)], capture_output=True, text=True, check=True).stdout
+    out = subprocess.run(
+        ["afinfo", str(path)], capture_output=True, text=True, check=True
+    ).stdout
     return int(float(re.search(r"estimated duration: ([\d.]+)", out)[1]) * 1000)
 
 
@@ -80,13 +87,20 @@ def assemble(recordings: Path) -> None:
         if not video.exists() or not timeline_file.exists():
             print(f"{m['id']}: no recording yet, skipped")
             continue
-        timeline = json.loads(timeline_file.read_text())  # [{"id": beat, "at": ms from video start}]
-        starts = {t["id"]: t["at"] for t in timeline}
+        timeline = json.loads(
+            timeline_file.read_text()
+        )  # [{"id": beat, "at": ms from video start}]
+        # The video starts at the first beat: sign-in before it is set-up, not part of the lesson.
+        cut = max(0, min(t["at"] for t in timeline) - 400)
+        starts = {t["id"]: t["at"] - cut for t in timeline}
         missing = [b["id"] for b in m["beats"] if b["id"] not in starts]
         if missing:
             sys.exit(f"{m['id']}: the recording has no start time for beats {missing}")
         for lang in VOICES:
-            clips = [(starts[b["id"]], AUDIO / lang / m["id"] / f"{b['id']}.m4a", b[lang]) for b in m["beats"]]
+            clips = [
+                (starts[b["id"]], AUDIO / lang / m["id"] / f"{b['id']}.m4a", b[lang])
+                for b in m["beats"]
+            ]
             # Subtitles: each beat from its start until its narration ends.
             CAPTIONS.joinpath(lang).mkdir(parents=True, exist_ok=True)
             srt, vtt = [], ["WEBVTT", ""]
@@ -101,13 +115,16 @@ def assemble(recordings: Path) -> None:
             args = [ffmpeg(), "-y", "-loglevel", "error", "-i", str(video)]
             for _, path, _ in clips:
                 args += ["-i", str(path)]
-            delays = "".join(f"[{i + 1}:a]adelay={at}|{at},aresample=48000[a{i}];" for i, (at, _, _) in enumerate(clips))
+            delays = "".join(
+                f"[{i + 1}:a]adelay={at}|{at},aresample=48000[a{i}];"
+                for i, (at, _, _) in enumerate(clips)
+            )
             mix = "".join(f"[a{i}]" for i in range(len(clips)))
             filt = f"{delays}{mix}amix=inputs={len(clips)}:normalize=0,loudnorm=I=-16:TP=-1.5[aout]"
             out = RENDERED / lang / f"{m['id']}.mp4"
             out.parent.mkdir(parents=True, exist_ok=True)
             # The window is recorded at 1440×810 and scaled to 1080p, so text stays large on a phone.
-            filt = f"[0:v]scale=1920:1080:flags=lanczos,format=yuv420p[vout];{filt}"
+            filt = f"[0:v]trim=start={cut / 1000:.3f},setpts=PTS-STARTPTS,scale=1920:1080:flags=lanczos,format=yuv420p[vout];{filt}"
             args += ["-i", str(srt_path), "-filter_complex", filt, "-map", "[vout]", "-map", "[aout]",
                      "-map", f"{len(clips) + 1}:s",
                      "-c:v", "libx264", "-preset", "medium", "-crf", "23", "-pix_fmt", "yuv420p", "-r", "25",
@@ -117,15 +134,23 @@ def assemble(recordings: Path) -> None:
                      "-metadata:s:s:0", f"language={'hin' if lang == 'hi' else 'eng'}",
                      "-movflags", "+faststart", str(out)]  # fmt: skip
             subprocess.run(args, check=True)
-            print(f"{m['id']} [{lang}] → {out.relative_to(ROOT)} ({out.stat().st_size // 1024} KB)")
+            print(
+                f"{m['id']} [{lang}] → {out.relative_to(ROOT)} ({out.stat().st_size // 1024} KB)"
+            )
 
 
 def probe(path: Path) -> dict:
     """What ffmpeg says about a file (ffprobe isn't bundled): streams, duration, loudness."""
-    info = subprocess.run([ffmpeg(), "-hide_banner", "-i", str(path)], capture_output=True, text=True).stderr
+    # ffmpeg -i with no output exits non-zero by design: check=False, read what it printed.
+    info = subprocess.run(
+        [ffmpeg(), "-hide_banner", "-i", str(path)],
+        check=False,
+        capture_output=True,
+        text=True,
+    ).stderr
     vol = subprocess.run(
         [ffmpeg(), "-hide_banner", "-i", str(path), "-map", "0:a", "-af", "volumedetect", "-f", "null", "-"],
-        capture_output=True, text=True,
+        check=False, capture_output=True, text=True,
     ).stderr  # fmt: skip
     dur = re.search(r"Duration: (\d+):(\d+):([\d.]+)", info)
     return {
@@ -133,8 +158,12 @@ def probe(path: Path) -> dict:
         "video": re.search(r"Video: (\w+).*?(\d{3,4}x\d{3,4})", info),
         "audio": "Audio: aac" in info,
         "subtitles": "Subtitle: mov_text" in info,
-        "mean_db": float(m[1]) if (m := re.search(r"mean_volume: (-?[\d.]+) dB", vol)) else None,
-        "max_db": float(m[1]) if (m := re.search(r"max_volume: (-?[\d.]+) dB", vol)) else None,
+        "mean_db": float(m[1])
+        if (m := re.search(r"mean_volume: (-?[\d.]+) dB", vol))
+        else None,
+        "max_db": float(m[1])
+        if (m := re.search(r"max_volume: (-?[\d.]+) dB", vol))
+        else None,
     }
 
 
@@ -155,9 +184,23 @@ def check() -> None:
         if p["mean_db"] is not None and p["mean_db"] < -40:
             problems.append(f"very quiet (mean {p['mean_db']} dB)")
         srt = CAPTIONS / path.parent.name / f"{path.stem}.srt"
-        last_end = max((int(h) * 3600 + int(mi) * 60 + int(s) for h, mi, s in re.findall(r"--> (\d+):(\d+):(\d+)", srt.read_text())), default=0) if srt.exists() else 0
+        last_end = (
+            max(
+                (
+                    int(h) * 3600 + int(mi) * 60 + int(s)
+                    for h, mi, s in re.findall(
+                        r"--> (\d+):(\d+):(\d+)", srt.read_text()
+                    )
+                ),
+                default=0,
+            )
+            if srt.exists()
+            else 0
+        )
         if last_end > p["seconds"] + 1:
-            problems.append(f"narration runs past the end ({last_end}s > {p['seconds']:.0f}s)")
+            problems.append(
+                f"narration runs past the end ({last_end}s > {p['seconds']:.0f}s)"
+            )
         ok &= not problems
         print(f"{'ok  ' if not problems else 'FAIL'} {path.relative_to(ROOT)}: {p['seconds']:.0f}s, "
               f"{v[1] + ' ' + v[2] if v else '-'}, mean {p['mean_db']} dB, max {p['max_db']} dB"

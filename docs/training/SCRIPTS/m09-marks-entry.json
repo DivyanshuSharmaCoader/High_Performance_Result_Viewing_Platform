@@ -1,0 +1,91 @@
+{
+ "id": "m09-marks-entry",
+ "title": {
+  "en": "Module 9 · Enter and import marks",
+  "hi": "भाग 9 · अंक भरें और import करें"
+ },
+ "role": "Faculty (their own papers); Owner or Administrator (every paper, and imports)",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "Mr. Amit Kumar teaches Mathematics. He signs in with his own account, and sees only the papers assigned to him.",
+   "hi": "श्री अमित कुमार Mathematics पढ़ाते हैं। वे अपने account से sign in करते हैं, और उन्हें सिर्फ़ अपने paper दिखते हैं।"
+  },
+  {
+   "id": "home",
+   "en": "Marks entry lists his paper: Mathematics for Class 10, Section A, with how many students are done.",
+   "hi": "Marks entry में उनका paper दिखता है: Class 10, Section A का Mathematics, और कितने बच्चों के अंक भरे गए।"
+  },
+  {
+   "id": "open",
+   "en": "He opens it. Each row is a student; there is a column for each component, Internal and Written.",
+   "hi": "वे इसे खोलते हैं। हर पंक्ति एक छात्र है; हर हिस्से का अलग कॉलम है, Internal और Written।"
+  },
+  {
+   "id": "type",
+   "en": "He types Aarav's marks: 36 out of 40, and 52 out of 60. Press Enter to move down. The total appears straight away.",
+   "hi": "वे आरव के अंक लिखते हैं: 40 में से 36, और 60 में से 52। Enter दबाने पर नीचे की पंक्ति आती है। Total तुरंत दिख जाता है।"
+  },
+  {
+   "id": "invalid",
+   "en": "A typing mistake: 65 in Written, where the most is 60. The cell turns red and says what is wrong. Nothing wrong is saved.",
+   "hi": "एक गलती: Written में 65, जबकि ज़्यादा से ज़्यादा 60 हैं। खाना लाल हो जाता है और गलती बताता है। गलत अंक save नहीं होते।"
+  },
+  {
+   "id": "fix",
+   "en": "He corrects it to 55.",
+   "hi": "वे इसे सुधारकर 55 कर देते हैं।"
+  },
+  {
+   "id": "absent",
+   "en": "Rohan was absent. Type A B instead of a mark; it counts for the whole paper.",
+   "hi": "रोहन अनुपस्थित था। अंक की जगह AB लिखें; यह पूरे paper के लिए माना जाता है।"
+  },
+  {
+   "id": "paste",
+   "en": "For the rest, he copies the marks from his Excel sheet and pastes them in one go.",
+   "hi": "बाकी बच्चों के अंक वे अपनी Excel sheet से copy करके एक बार में paste कर देते हैं।"
+  },
+  {
+   "id": "saved",
+   "en": "Marks save as he types. Here it says: All changes saved.",
+   "hi": "अंक लिखते ही save हो जाते हैं। यहाँ लिखा है: All changes saved।"
+  },
+  {
+   "id": "submit",
+   "en": "When every student is done, he submits the paper. After that, only an administrator can send it back for changes.",
+   "hi": "सब बच्चों के अंक भरने के बाद वे paper Submit करते हैं। इसके बाद सिर्फ़ administrator ही इसे बदलाव के लिए लौटा सकते हैं।"
+  },
+  {
+   "id": "switch",
+   "en": "Marks can also come from a spreadsheet. Mrs. Sunita Sharma, signed in as the owner, enters the Science marks this way.",
+   "hi": "अंक spreadsheet से भी आ सकते हैं। श्रीमती सुनीता शर्मा, owner के रूप में sign in करके, Science के अंक इसी तरह भरती हैं।"
+  },
+  {
+   "id": "import_open",
+   "en": "She opens the Science paper and chooses Import from Excel. The template has the right columns already.",
+   "hi": "वे Science का paper खोलकर Import from Excel चुनती हैं। Template में सही कॉलम पहले से होते हैं।"
+  },
+  {
+   "id": "import_bad",
+   "en": "She uploads the file. The check finds one mark above 40 in Internal, and saves nothing until she decides.",
+   "hi": "वे file upload करती हैं। जाँच में Internal में 40 से ज़्यादा का एक अंक मिलता है, और फ़ैसला होने तक कुछ भी save नहीं होता।"
+  },
+  {
+   "id": "import_fix",
+   "en": "She corrects the file and uploads it again. Now every row is ready.",
+   "hi": "वे file सुधारकर फिर से upload करती हैं। अब हर पंक्ति तैयार है।"
+  },
+  {
+   "id": "import_save",
+   "en": "Import, then Save marks. The Science marks are now in the grid.",
+   "hi": "Import, फिर Save marks दबाएँ। Science के अंक अब grid में हैं।"
+  },
+  {
+   "id": "outro",
+   "en": "English, Hindi and Social Science are entered the same way. Next, we turn these marks into results.",
+   "hi": "English, Hindi और Social Science के अंक भी इसी तरह भरे जाते हैं। आगे, हम इन अंकों से result बनाएँगे।"
+  }
+ ]
+}

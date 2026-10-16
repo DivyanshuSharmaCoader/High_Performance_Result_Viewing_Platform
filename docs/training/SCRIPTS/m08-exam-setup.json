@@ -1,0 +1,76 @@
+{
+ "id": "m08-exam-setup",
+ "title": {
+  "en": "Module 8 · Set up an exam",
+  "hi": "भाग 8 · परीक्षा तैयार करें"
+ },
+ "role": "Owner or Administrator",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "Now we set up the exam itself: Periodic Test 1, October 2026, for Class 10, Section A.",
+   "hi": "अब हम परीक्षा बनाते हैं: Periodic Test 1, October 2026, Class 10, Section A के लिए।"
+  },
+  {
+   "id": "open",
+   "en": "Open Exams from the menu and choose New exam.",
+   "hi": "मेनू में Exams खोलें और New exam चुनें।"
+  },
+  {
+   "id": "name",
+   "en": "Type the exam's name, and choose its kind: Unit test.",
+   "hi": "परीक्षा का नाम लिखें, और Kind में Unit test चुनें।"
+  },
+  {
+   "id": "term",
+   "en": "The session and term are filled in for you. The grading scheme is the default we made: Class 10 grading.",
+   "hi": "Session और Term अपने आप भर जाते हैं। Grading scheme वही है जो हमने default बनाई थी: Class 10 grading।"
+  },
+  {
+   "id": "cohort",
+   "en": "Tick the section that sits this exam: Class 10, Section A. Then create the exam.",
+   "hi": "जो सेक्शन यह परीक्षा देगा उसे चुनें: Class 10, Section A। फिर Create exam दबाएँ।"
+  },
+  {
+   "id": "draft",
+   "en": "The exam starts as a draft. This list shows what is still needed before teachers can enter marks.",
+   "hi": "परीक्षा पहले Draft रहती है। यह सूची बताती है कि अंक भरने से पहले और क्या करना बाकी है।"
+  },
+  {
+   "id": "paper",
+   "en": "Each subject is a paper. Add paper, and choose Mathematics.",
+   "hi": "हर विषय एक paper होता है। Add paper दबाएँ और Mathematics चुनें।"
+  },
+  {
+   "id": "components",
+   "en": "A paper is made of components. Choose the Internal 40 plus External 60 preset, and rename External to Written.",
+   "hi": "Paper के हिस्से होते हैं, जिन्हें components कहते हैं। Internal 40 + External 60 वाला preset चुनें, और External का नाम बदलकर Written रखें।"
+  },
+  {
+   "id": "total",
+   "en": "The paper is out of 100. The pass mark comes from the grading scheme: 33 percent.",
+   "hi": "Paper 100 अंकों का है। पास होने के अंक grading scheme से आते हैं: 33 प्रतिशत।"
+  },
+  {
+   "id": "more_papers",
+   "en": "Add the other four subjects the same way: Science, English, Hindi and Social Science.",
+   "hi": "बाकी चार विषय भी इसी तरह जोड़ें: Science, English, Hindi और Social Science।"
+  },
+  {
+   "id": "faculty",
+   "en": "Now assign the teacher. From the Mathematics paper's menu, choose Assign faculty, tick Amit Kumar, and save.",
+   "hi": "अब शिक्षक तय करें। Mathematics paper के menu से Assign faculty चुनें, Amit Kumar को चुनें और Save करें।"
+  },
+  {
+   "id": "open_entry",
+   "en": "Everything is ready. Open marks entry, and teachers can start entering marks for their papers.",
+   "hi": "सब तैयार है। Open marks entry दबाएँ, अब शिक्षक अपने paper के अंक भर सकते हैं।"
+  },
+  {
+   "id": "outro",
+   "en": "Papers can still be added while entry is open. Next, Mr. Amit Kumar enters the Mathematics marks.",
+   "hi": "Entry खुली होने पर भी paper जोड़े जा सकते हैं। आगे, श्री अमित कुमार Mathematics के अंक भरेंगे।"
+  }
+ ]
+}

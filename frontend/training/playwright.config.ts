@@ -17,6 +17,7 @@ export default defineConfig({
   use: {
     locale: "en-IN",
     timezoneId: "Asia/Kolkata",
+    actionTimeout: 20_000, // a missing element fails in seconds, not at the 15-minute test timeout
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

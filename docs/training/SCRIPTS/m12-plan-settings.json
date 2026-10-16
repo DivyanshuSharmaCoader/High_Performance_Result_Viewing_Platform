@@ -1,0 +1,66 @@
+{
+ "id": "m12-plan-settings",
+ "title": {
+  "en": "Module 12 · Plan, usage, settings and branding",
+  "hi": "भाग 12 · Plan, usage, settings और branding"
+ },
+ "role": "Owner (trial, data export); Owner or Administrator (settings, branding)",
+ "plan": "Every plan (theme and login page: Starter and above)",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "Only the owner and administrators see these pages: the school's plan and usage, its settings, and its branding.",
+   "hi": "ये पेज सिर्फ़ owner और administrators देखते हैं: स्कूल का plan और usage, उसकी settings, और branding।"
+  },
+  {
+   "id": "plan",
+   "en": "Open Plan and usage. Sunrise Public School is on the Free plan.",
+   "hi": "Plan & usage खोलें। Sunrise Public School Free plan पर है।"
+  },
+  {
+   "id": "usage",
+   "en": "Usage shows how much of each limit is used: students, staff accounts, administrators, storage, and publications this year.",
+   "hi": "Usage में हर सीमा का इस्तेमाल दिखता है: छात्र, staff accounts, administrators, storage, और इस साल के publications।"
+  },
+  {
+   "id": "compare",
+   "en": "Compare plans shows what each plan includes. ScoreCode does not take payments in the app; to change plan, write to ScoreCode.",
+   "hi": "Compare plans में हर plan की सुविधाएँ दिखती हैं। ScoreCode app में payment नहीं लेता; plan बदलने के लिए ScoreCode को लिखें।"
+  },
+  {
+   "id": "trial",
+   "en": "The owner can start one free trial of the Pro features, for thirty days. No card is needed, and afterwards the school simply returns to Free.",
+   "hi": "Owner एक बार Pro सुविधाओं का तीस दिन का free trial शुरू कर सकते हैं। कोई card नहीं चाहिए, और बाद में स्कूल अपने आप Free पर लौट आता है।"
+  },
+  {
+   "id": "settings",
+   "en": "Now Settings. The official name and address appear on every marksheet, so check them carefully.",
+   "hi": "अब Settings। आधिकारिक नाम और पता हर marksheet पर छपते हैं, इसलिए इन्हें ध्यान से जाँचें।"
+  },
+  {
+   "id": "affiliation",
+   "en": "Add the board under Affiliation, here C B S E, and save the changes.",
+   "hi": "Affiliation में board लिखें, यहाँ CBSE, और Save changes दबाएँ।"
+  },
+  {
+   "id": "policy",
+   "en": "Results policy decides how students activate their accounts, what the verification page shows, what class statistics students see, and their language.",
+   "hi": "Results policy तय करती है कि छात्र account कैसे शुरू करें, verification page पर क्या दिखे, छात्रों को कक्षा के कौन से आँकड़े दिखें, और उनकी भाषा।"
+  },
+  {
+   "id": "branding",
+   "en": "Under Branding, upload the school's logo. It appears on the portal and on marksheets.",
+   "hi": "Branding में स्कूल का logo upload करें। यह portal और marksheets पर दिखता है।"
+  },
+  {
+   "id": "theme",
+   "en": "Colours and the login page design come with the Starter plan and above, so they are locked here.",
+   "hi": "Colours और login page का design Starter plan और उससे ऊपर मिलता है, इसलिए यहाँ ये बंद हैं।"
+  },
+  {
+   "id": "outro",
+   "en": "Next, the audit log, notifications, and exporting the school's data.",
+   "hi": "आगे, audit log, सूचनाएँ, और स्कूल का data export करना।"
+  }
+ ]
+}

@@ -100,7 +100,7 @@ export class Lesson {
   }
 
   async point(target: Locator): Promise<void> {
-    await target.scrollIntoViewIfNeeded();
+    await target.scrollIntoViewIfNeeded({ timeout: 20_000 });
     const box = await target.boundingBox();
     if (box) {
       await this.page.evaluate(

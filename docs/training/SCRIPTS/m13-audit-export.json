@@ -1,0 +1,56 @@
+{
+ "id": "m13-audit-export",
+ "title": {
+  "en": "Module 13 · Audit log and data export",
+  "hi": "भाग 13 · Audit log और data export"
+ },
+ "role": "Owner or Administrator (audit log); Owner only (export)",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "ScoreCode records every important action: who did it, and when. This is the audit log.",
+   "hi": "ScoreCode हर ज़रूरी काम दर्ज करता है: किसने किया, और कब। इसे audit log कहते हैं।"
+  },
+  {
+   "id": "open",
+   "en": "Open Audit log. The newest activity is at the top.",
+   "hi": "Audit log खोलें। सबसे नया काम सबसे ऊपर है।"
+  },
+  {
+   "id": "filter",
+   "en": "Filter by kind of activity. Here, Marks: every mark that was entered or changed.",
+   "hi": "काम के प्रकार से filter करें। यहाँ Marks: हर अंक जो भरा या बदला गया।"
+  },
+  {
+   "id": "person",
+   "en": "Or filter by person. These are the marks Mr. Amit Kumar entered.",
+   "hi": "या व्यक्ति से filter करें। ये वो अंक हैं जो श्री अमित कुमार ने भरे।"
+  },
+  {
+   "id": "entry",
+   "en": "Open an entry to see exactly what changed, before and after.",
+   "hi": "किसी entry को खोलकर देखें कि ठीक-ठीक क्या बदला, पहले और बाद में।"
+  },
+  {
+   "id": "results",
+   "en": "Approval and publication are recorded too, with the reasons people gave.",
+   "hi": "Approval और publication भी दर्ज होते हैं, लोगों के दिए गए कारणों के साथ।"
+  },
+  {
+   "id": "export",
+   "en": "Only the owner can export all of the school's data: in Settings, Your data, choose Export everything.",
+   "hi": "स्कूल का पूरा data सिर्फ़ owner export कर सकते हैं: Settings में Your data खोलें, और Export everything चुनें।"
+  },
+  {
+   "id": "ready",
+   "en": "The export is a set of CSV files that open in Excel. Downloading it asks for the password again, and each export is deleted after seven days.",
+   "hi": "Export CSV files का एक सेट होता है जो Excel में खुलता है। Download करते समय password फिर से पूछा जाता है, और हर export सात दिन बाद मिट जाता है।"
+  },
+  {
+   "id": "outro",
+   "en": "Next, common problems and how to solve them.",
+   "hi": "आगे, आम समस्याएँ और उनके हल।"
+  }
+ ]
+}

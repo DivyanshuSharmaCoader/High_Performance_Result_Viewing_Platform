@@ -1,0 +1,46 @@
+{
+ "id": "m01-orientation",
+ "title": {
+  "en": "Module 1 · Welcome to ScoreCode",
+  "hi": "भाग 1 · ScoreCode में आपका स्वागत है"
+ },
+ "role": "Everyone",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "Welcome. ScoreCode is where a school keeps its students, enters marks, and publishes results that students can see and anyone can verify.",
+   "hi": "स्वागत है। ScoreCode में स्कूल अपने छात्रों का रिकॉर्ड रखता है, अंक भरता है, और results publish करता है, जिन्हें छात्र देख सकते हैं और कोई भी जाँच सकता है।"
+  },
+  {
+   "id": "school",
+   "en": "In this series we follow a made-up school, Sunrise Public School, through Periodic Test 1 for Class 10, Section A.",
+   "hi": "इस series में हम एक काल्पनिक स्कूल, Sunrise Public School, के साथ Class 10, Section A का Periodic Test 1 पूरा करेंगे।"
+  },
+  {
+   "id": "roles",
+   "en": "There are four kinds of account. The Owner, here the principal, Mrs. Sunita Sharma. Administrators, such as the exam coordinator. Faculty, the teachers. And Students.",
+   "hi": "Account चार तरह के होते हैं। Owner, यहाँ प्रधानाचार्या श्रीमती सुनीता शर्मा। Administrators, जैसे परीक्षा समन्वयक। Faculty, यानी शिक्षक। और Students।"
+  },
+  {
+   "id": "no_parent",
+   "en": "There is no separate role for parents, principals or coordinators. Give each person the closest of these four.",
+   "hi": "माता-पिता, प्रधानाचार्य या समन्वयक के लिए अलग role नहीं है। हर व्यक्ति को इन चार में से सबसे सही role दें।"
+  },
+  {
+   "id": "dashboard",
+   "en": "After signing in, the owner sees the dashboard.",
+   "hi": "Sign in करने के बाद owner को dashboard दिखता है।"
+  },
+  {
+   "id": "menu",
+   "en": "The menu on the left has everything: people, examinations, academics, and the institution's settings.",
+   "hi": "बाईं ओर के menu में सब कुछ है: लोग, परीक्षाएँ, academics, और संस्था की settings।"
+  },
+  {
+   "id": "outro",
+   "en": "Each module shows one task, on the real application. Let's begin by creating the school's portal.",
+   "hi": "हर module असली application पर एक काम दिखाता है। चलिए, स्कूल का portal बनाने से शुरू करते हैं।"
+  }
+ ]
+}

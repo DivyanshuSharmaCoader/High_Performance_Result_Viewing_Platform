@@ -1,0 +1,61 @@
+{
+ "id": "m11-student-result",
+ "title": {
+  "en": "Module 11 · What students see, and verifying a marksheet",
+  "hi": "भाग 11 · छात्र क्या देखते हैं, और marksheet की जाँच"
+ },
+ "role": "Student; anyone verifying (no account)",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "Results are live. Aarav Sharma signs in on the school's portal with his enrollment number and the password he chose.",
+   "hi": "Results live हो गए हैं। आरव शर्मा स्कूल के portal पर अपनी enrollment number और अपने चुने हुए password से sign in करते हैं।"
+  },
+  {
+   "id": "bell",
+   "en": "The bell shows a new notification: his Periodic Test 1 results are available.",
+   "hi": "घंटी में नई सूचना है: उनके Periodic Test 1 के results आ गए हैं।"
+  },
+  {
+   "id": "latest",
+   "en": "His home page shows the latest result, and whether he passed.",
+   "hi": "उनके home page पर सबसे नया result दिखता है, और यह कि वे पास हुए या नहीं।"
+  },
+  {
+   "id": "open",
+   "en": "He opens it: his percentage, his overall grade, and the marks for every subject, component by component.",
+   "hi": "वे इसे खोलते हैं: उनका प्रतिशत, कुल grade, और हर विषय के अंक, हर हिस्से के साथ।"
+  },
+  {
+   "id": "language",
+   "en": "The student portal can also be read in Hindi. Choose it from Language; the choice stays on this device.",
+   "hi": "छात्र portal हिंदी में भी पढ़ा जा सकता है। Language में हिंदी चुनें; यह चुनाव इसी device पर बना रहता है।"
+  },
+  {
+   "id": "marksheet",
+   "en": "Below is the official PDF marksheet. Download saves it to the phone or computer.",
+   "hi": "नीचे आधिकारिक PDF marksheet है। Download दबाने पर यह phone या computer में save हो जाती है।"
+  },
+  {
+   "id": "share",
+   "en": "Every marksheet has a verification link and code. A college or anyone else can check that it is genuine.",
+   "hi": "हर marksheet के साथ एक verification link और code होता है। कोई college या कोई और जाँच सकता है कि यह असली है।"
+  },
+  {
+   "id": "verify",
+   "en": "Here is that check, with no account needed. It says Valid, and shows the file's fingerprint. Names are partly hidden, and marks are never shown here.",
+   "hi": "यह वही जाँच है, बिना किसी account के। यहाँ Valid लिखा है, और file का fingerprint दिखता है। नाम आधे छिपे रहते हैं, और अंक यहाँ कभी नहीं दिखते।"
+  },
+  {
+   "id": "parents",
+   "en": "There is no separate parent login. Parents, like Mr. Anil Sharma, see results with their child, or receive the PDF marksheet.",
+   "hi": "माता-पिता के लिए अलग login नहीं है। श्री अनिल शर्मा जैसे अभिभावक अपने बच्चे के साथ result देखते हैं, या उन्हें PDF marksheet मिलती है।"
+  },
+  {
+   "id": "outro",
+   "en": "Next, the plan, usage and school settings.",
+   "hi": "आगे, plan, usage और स्कूल की settings।"
+  }
+ ]
+}

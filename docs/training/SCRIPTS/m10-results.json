@@ -1,0 +1,71 @@
+{
+ "id": "m10-results",
+ "title": {
+  "en": "Module 10 · Process, approve and publish results",
+  "hi": "भाग 10 · Results बनाएँ, approve और publish करें"
+ },
+ "role": "Owner or Administrator",
+ "plan": "Every plan (Growth and Pro: a second administrator approves, and publication can be scheduled)",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "All five subjects have marks. Now Mrs. Sunita Sharma turns them into results, checks them, approves them, and publishes them to students.",
+   "hi": "पाँचों विषयों के अंक भर गए हैं। अब श्रीमती सुनीता शर्मा इनसे result बनाएँगी, जाँचेंगी, approve करेंगी, और छात्रों के लिए publish करेंगी।"
+  },
+  {
+   "id": "close",
+   "en": "First, on the exam's Setup page, close marks entry. Teachers can no longer change marks; it can be reopened, with a reason, if needed.",
+   "hi": "पहले, परीक्षा के Setup पेज पर Close marks entry दबाएँ। अब शिक्षक अंक नहीं बदल सकते; ज़रूरत हो तो कारण लिखकर इसे फिर खोला जा सकता है।"
+  },
+  {
+   "id": "results_tab",
+   "en": "Open the Results tab. Only Mathematics was submitted by its teacher; the others were entered by the office, so ScoreCode asks for a reason.",
+   "hi": "Results tab खोलें। सिर्फ़ Mathematics शिक्षक ने submit किया था; बाकी अंक office ने भरे, इसलिए ScoreCode कारण पूछता है।"
+  },
+  {
+   "id": "process",
+   "en": "Choose Process results, write the reason, and confirm. Every result is computed with the Class 10 grading scheme.",
+   "hi": "Process results चुनें, कारण लिखें, और पुष्टि करें। हर result Class 10 grading scheme से बनता है।"
+  },
+  {
+   "id": "summary",
+   "en": "Here is the summary: how many students passed, and how many did not. Nothing is visible to students yet.",
+   "hi": "यह सारांश है: कितने छात्र पास हुए, और कितने नहीं। छात्रों को अभी कुछ नहीं दिखता।"
+  },
+  {
+   "id": "worth_a_look",
+   "en": "Worth a look lists things to check before approving, such as missing marks. Here it notes that some papers were processed before they were submitted.",
+   "hi": "Worth a look में वो बातें होती हैं जिन्हें approve करने से पहले देखना चाहिए, जैसे छूटे हुए अंक। यहाँ बताया गया है कि कुछ paper submit होने से पहले process हुए।"
+  },
+  {
+   "id": "preview",
+   "en": "Open any student to see their result exactly as they will see it. This is Aarav's.",
+   "hi": "किसी भी छात्र को खोलकर उसका result वैसे ही देखें जैसे वह देखेगा। यह आरव का result है।"
+  },
+  {
+   "id": "approve",
+   "en": "Everything looks right, so approve the results. Approving locks every mark and records this exact set of results.",
+   "hi": "सब सही है, इसलिए results approve करें। Approve करते ही सारे अंक lock हो जाते हैं और यही results दर्ज हो जाते हैं।"
+  },
+  {
+   "id": "schedule",
+   "en": "On Growth and Pro you can schedule results to go live at a set time. Sunrise is on the Free plan, so we publish now.",
+   "hi": "Growth और Pro plan पर results तय समय पर live करने के लिए schedule किए जा सकते हैं। Sunrise Free plan पर है, इसलिए हम अभी publish करेंगे।"
+  },
+  {
+   "id": "publish",
+   "en": "Publish now, and confirm. Each student sees their own result straight away.",
+   "hi": "Publish now दबाएँ और पुष्टि करें। हर छात्र को उसका अपना result तुरंत दिखता है।"
+  },
+  {
+   "id": "marksheets",
+   "en": "ScoreCode now prepares a PDF marksheet for every student. Here it shows them being prepared, and then ready.",
+   "hi": "अब ScoreCode हर छात्र की PDF marksheet तैयार करता है। यहाँ दिखता है कि marksheets बन रही हैं, और फिर तैयार हो जाती हैं।"
+  },
+  {
+   "id": "outro",
+   "en": "If a mistake is found later, results can be withdrawn with a reason, or corrected and published again. Next, what a student sees.",
+   "hi": "अगर बाद में कोई गलती मिले, तो कारण लिखकर results वापस लिए जा सकते हैं, या सुधारकर फिर से publish किए जा सकते हैं। आगे देखेंगे कि छात्र को क्या दिखता है।"
+  }
+ ]
+}

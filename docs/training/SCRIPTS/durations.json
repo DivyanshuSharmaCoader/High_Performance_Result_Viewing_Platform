@@ -1,4 +1,13 @@
 {
+ "m01-orientation": {
+  "intro": 12501,
+  "school": 9777,
+  "roles": 13401,
+  "no_parent": 8749,
+  "dashboard": 4083,
+  "menu": 7814,
+  "outro": 8065
+ },
  "m02-create-portal": {
   "intro": 9208,
   "open": 4536,
@@ -17,7 +26,7 @@
   "intro": 12725,
   "open": 3220,
   "session": 8865,
-  "dates": 10787,
+  "dates": 11391,
   "create": 4741,
   "term1": 9837,
   "term2": 3973,
@@ -77,5 +86,98 @@
   "portal": 9233,
   "signout": 10272,
   "outro": 4679
+ },
+ "m08-exam-setup": {
+  "intro": 9094,
+  "open": 3884,
+  "name": 4442,
+  "term": 8485,
+  "cohort": 7284,
+  "draft": 7526,
+  "paper": 5615,
+  "components": 11276,
+  "total": 6980,
+  "more_papers": 6729,
+  "faculty": 8281,
+  "open_entry": 6963,
+  "outro": 7638
+ },
+ "m09-marks-entry": {
+  "intro": 8694,
+  "home": 8514,
+  "open": 7484,
+  "type": 10816,
+  "invalid": 10121,
+  "fix": 3316,
+  "absent": 6860,
+  "paste": 6532,
+  "saved": 5483,
+  "submit": 9296,
+  "switch": 9546,
+  "import_open": 7658,
+  "import_bad": 9550,
+  "import_fix": 5476,
+  "import_save": 5182,
+  "outro": 8525
+ },
+ "m10-results": {
+  "intro": 10858,
+  "close": 11218,
+  "results_tab": 10016,
+  "process": 8223,
+  "summary": 7660,
+  "worth_a_look": 12302,
+  "preview": 7414,
+  "approve": 9436,
+  "schedule": 10781,
+  "publish": 6760,
+  "marksheets": 9906,
+  "outro": 12136
+ },
+ "m11-student-result": {
+  "intro": 9530,
+  "bell": 5791,
+  "latest": 6260,
+  "open": 7973,
+  "language": 8323,
+  "marksheet": 7809,
+  "share": 8912,
+  "verify": 11803,
+  "parents": 11278,
+  "outro": 4032
+ },
+ "m12-plan-settings": {
+  "intro": 8155,
+  "plan": 5076,
+  "usage": 9945,
+  "compare": 9560,
+  "trial": 10591,
+  "settings": 7410,
+  "affiliation": 5843,
+  "policy": 11878,
+  "branding": 6215,
+  "theme": 7587,
+  "outro": 5712
+ },
+ "m13-audit-export": {
+  "intro": 7137,
+  "open": 4523,
+  "filter": 6732,
+  "person": 5429,
+  "entry": 5719,
+  "results": 5832,
+  "export": 8460,
+  "ready": 12445,
+  "outro": 3739
+ },
+ "m14-troubleshooting": {
+  "intro": 5859,
+  "wrong_password": 9367,
+  "forgot": 11343,
+  "bad_code": 10801,
+  "no_papers": 9286,
+  "limits": 11416,
+  "recap": 9962,
+  "outro": 6033
  }
 }

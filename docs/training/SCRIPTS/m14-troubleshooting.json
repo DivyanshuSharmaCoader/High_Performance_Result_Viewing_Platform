@@ -1,0 +1,51 @@
+{
+ "id": "m14-troubleshooting",
+ "title": {
+  "en": "Module 14 · Common problems, and the whole year at a glance",
+  "hi": "भाग 14 · आम समस्याएँ, और पूरा साल एक नज़र में"
+ },
+ "role": "Everyone",
+ "plan": "Every plan",
+ "beats": [
+  {
+   "id": "intro",
+   "en": "Here are the problems schools meet most often, and what to do about each one.",
+   "hi": "ये वो समस्याएँ हैं जो स्कूलों को सबसे ज़्यादा आती हैं, और हर एक का हल।"
+  },
+  {
+   "id": "wrong_password",
+   "en": "A wrong password. ScoreCode asks you to check your details. After several wrong attempts, the account is locked for a few minutes.",
+   "hi": "गलत password। ScoreCode details जाँचने को कहता है। कई बार गलत होने पर account कुछ मिनट के लिए lock हो जाता है।"
+  },
+  {
+   "id": "forgot",
+   "en": "Forgot password sends a reset link by email. It only works if the person has an email address on record, so add students' emails where you can.",
+   "hi": "Forgot password ईमेल से reset link भेजता है। यह तभी काम करता है जब उस व्यक्ति का email दर्ज हो, इसलिए जहाँ हो सके छात्रों के email जोड़ें।"
+  },
+  {
+   "id": "bad_code",
+   "en": "An activation code that does not match. Check the enrollment number and the code on the slip. If the slip is lost, an administrator can replace the code.",
+   "hi": "Activation code मेल नहीं खाता। Slip पर लिखी enrollment number और code जाँचें। Slip खो जाए, तो administrator नया code दे सकते हैं।"
+  },
+  {
+   "id": "no_papers",
+   "en": "A teacher sees nothing to mark. Papers appear only while marks entry is open, and only for the papers assigned to them.",
+   "hi": "शिक्षक को अंक भरने के लिए कुछ नहीं दिखता। Paper तभी दिखते हैं जब marks entry खुली हो, और सिर्फ़ वही जो उन्हें दिए गए हों।"
+  },
+  {
+   "id": "limits",
+   "en": "If the school reaches a plan limit, such as the number of students, ScoreCode says so on the page, and Plan and usage shows the numbers.",
+   "hi": "अगर स्कूल plan की किसी सीमा तक पहुँच जाए, जैसे छात्रों की संख्या, तो ScoreCode उसी पेज पर बताता है, और Plan & usage में संख्या दिखती है।"
+  },
+  {
+   "id": "recap",
+   "en": "The whole year, in order: structure, grading, students, staff, the exam, marks, then process, approve and publish.",
+   "hi": "पूरा साल, क्रम से: structure, grading, छात्र, staff, परीक्षा, अंक, फिर process, approve और publish।"
+  },
+  {
+   "id": "outro",
+   "en": "That is the complete ScoreCode workflow for a school. Thank you for watching.",
+   "hi": "यह एक स्कूल के लिए ScoreCode का पूरा तरीका है। देखने के लिए धन्यवाद।"
+  }
+ ]
+}
