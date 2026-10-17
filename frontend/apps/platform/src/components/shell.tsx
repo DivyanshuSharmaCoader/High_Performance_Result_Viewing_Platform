@@ -31,7 +31,9 @@ export function Shell() {
     <div className="min-h-dvh md:grid md:grid-cols-[232px_minmax(0,1fr)]">
       <aside className="flex flex-col border-b border-border bg-surface md:sticky md:top-0 md:h-dvh md:border-b-0 md:border-r">
         <div className="flex h-14 items-center gap-2.5 border-b border-border px-4">
-          <img src="/logo-mark.png" alt="" className="size-7" width={28} height={28} />
+          <span className="flex size-7 items-center justify-center rounded-md bg-white">
+            <img src="/logo-mark.png" alt="" className="size-5" width={20} height={20} />
+          </span>
           <span className="text-sm font-semibold">ScoreCode</span>
           <Badge tone="info" className="ml-auto">
             Console

@@ -40,8 +40,8 @@ export default function LoginPage() {
     <main className="flex min-h-dvh items-center justify-center bg-bg px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-[#1e1b4b] text-sm font-bold text-white">
-            SC
+          <span className="flex size-9 items-center justify-center rounded-lg bg-white">
+            <img src="/logo-mark.png" alt="" className="size-7" width={28} height={28} />
           </span>
           <div>
             <p className="text-sm font-semibold">ScoreCode Console</p>
