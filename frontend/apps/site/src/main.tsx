@@ -27,9 +27,7 @@ function Layout() {
       <header className="sticky top-0 z-30 border-b border-border bg-surface/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <Link to="/" className="flex items-center gap-2.5" aria-label="ScoreCode home">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-[#1e1b4b] text-xs font-bold text-white">
-              SC
-            </span>
+            <img src="/logo-mark.png" alt="" className="size-8" width={32} height={32} />
             <span className="text-[15px] font-semibold tracking-[-0.01em]">ScoreCode</span>
           </Link>
           <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
