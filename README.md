@@ -4,10 +4,12 @@
 
 Institutions import marks, catch errors before students do, publish with one click, and give every student a branded, verifiable marksheet on a portal built to stay up on result day. Every institution (schools, colleges, coaching institutes) is a tenant on one shared platform with strict data isolation. *Thapar Institute of Engineering & Technology is one demo tenant, not the product.*
 
-> **Status: implementation in progress.** Platform kernel, tenancy, identity, entitlements, onboarding, the
-> tenant admin app, the platform console, self-serve sign-up, academic structure, the student directory,
-> spreadsheet imports (check → fix → commit) and student activation are built and verified in CI. The grading
-> engine, exams, marks, results and publication are next. Exact progress: [docs/CHECKLIST.md](docs/CHECKLIST.md).
+> **Status: released (v0.1.7, October 2026).** The full flow (tenancy, imports, grading, results, publication,
+> verifiable marksheets) is built, tested in CI and was deployed to production at `scorecode.website`.
+> **The live demo has been offline since 7 Nov 2026 because the VPS hosting plan lapsed.** Everything runs
+> locally with one command (see [Run it locally](#run-it-locally)). Measured results:
+> [test report](docs/reports/test-report.md) · [benchmark report](docs/reports/benchmark-report.md).
+> Remaining work: [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ---
 
@@ -67,7 +69,7 @@ flowchart LR
 
 **Key decisions:** modular monolith · shared PostgreSQL schema with `tenant_id` + composite FKs + Row-Level Security · host-based tenancy (`slug.scorecode.in`, custom domains on Pro) · opaque server-side sessions · immutable published-result snapshots as the read model · PostgreSQL-backed job queue · Redis only as a degradable cache · no Kubernetes/Kafka/microservices until a measured need appears.
 
-**Performance policy:** no number is claimed unless measured. Targets and the benchmark method are in [docs/11](docs/11-performance-architecture.md); results will appear in [benchmarks/results/](benchmarks/README.md).
+**Performance policy:** no number is claimed unless measured. Targets and the benchmark method are in [docs/11](docs/11-performance-architecture.md); results are in [benchmarks/results/](benchmarks/README.md).
 
 ## Run it locally
 
@@ -127,6 +129,16 @@ CI runs the same checks plus security scans, a Docker build with Trivy, and the 
 React 19 + TypeScript + Vite · FastAPI (Python 3.12) · PostgreSQL 16 · Redis 7 · S3-compatible storage
 (SeaweedFS in development) · Caddy · Docker · GitHub Actions — justified in [docs/17](docs/17-tech-stack.md);
 deviations are recorded as ADRs in [docs/adr/](docs/adr/README.md).
+
+## How this was built
+
+I built ScoreCode with Claude Code (Anthropic's AI coding assistant) as a pair programmer; the
+`Co-Authored-By` lines in the history come from that. I owned the product and engineering decisions: the
+requirements and design documents in `docs/`, the architecture choices recorded as ADRs (modular monolith,
+shared-schema multi-tenancy with Row-Level Security, a PostgreSQL job queue, Redis as a degradable cache)
+and the order of work in the checklist. Claude drafted much of the code and tests under that direction. I
+reviewed the changes, ran the load tests and profiling behind the performance fixes, ran the chaos and
+restore drills, and deployed and operated the releases.
 
 ## Repository layout
 ```
